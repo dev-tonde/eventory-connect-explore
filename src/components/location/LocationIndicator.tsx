@@ -9,10 +9,10 @@ const LocationIndicator = () => {
 
   useEffect(() => {
     // Auto-request location on first load if not already available
-    if (!location && !error) {
+    if (!location && !error && !loading) {
       requestLocation();
     }
-  }, []);
+  }, [location, error, loading, requestLocation]);
 
   if (loading) {
     return (
