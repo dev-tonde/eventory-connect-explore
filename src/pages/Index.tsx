@@ -1,14 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, MapPin, Search, Users, Heart, DollarSign } from "lucide-react";
+import { Calendar, MapPin, Search, Users, Heart, DollarSign, TrendingUp, ArrowRight, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import EventMap from "@/components/map/EventMap";
 import TestimonialsSection from "@/components/testimonials/TestimonialsSection";
 import FeaturedEventsSection from "@/components/events/FeaturedEventsSection";
+import NewsletterSignup from "@/components/newsletter/NewsletterSignup";
 import { Event } from "@/types/event";
 
 // Mock events data
@@ -117,6 +120,8 @@ const Index = () => {
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [attendedEvents, setAttendedEvents] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("nearby");
 
   useEffect(() => {
     // Load stored data
@@ -159,6 +164,36 @@ const Index = () => {
   const familyFriendlyEvents = events.filter(event => 
     event.tags?.includes('family') || event.category === 'Family'
   );
+
+  // Sort all events by popularity (sales + favorites + shares)
+  const allEventsByPopularity = [...events].sort((a, b) => {
+    const aPopularity = a.attendeeCount + (favorites.includes(a.id) ? 10 : 0);
+    const bPopularity = b.attendeeCount + (favorites.includes(b.id) ? 10 : 0);
+    return bPopularity - aPopularity;
+  });
+
+  // Filter events based on search term
+  const getFilteredEvents = (eventList: Event[]) => {
+    if (!searchTerm) return eventList;
+    return eventList.filter(event => 
+      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const getEventsForTab = () => {
+    switch (activeTab) {
+      case "nearby": return getFilteredEvents(nearbyEvents);
+      case "attended": return getFilteredEvents(pastAttendedEvents);
+      case "favorites": return getFilteredEvents(favoriteEvents);
+      case "free": return getFilteredEvents(freeEvents);
+      case "family": return getFilteredEvents(familyFriendlyEvents);
+      case "all": return getFilteredEvents(allEventsByPopularity);
+      default: return getFilteredEvents(nearbyEvents);
+    }
+  };
 
   const EventGrid = ({ events: gridEvents }: { events: Event[] }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -241,6 +276,20 @@ const Index = () => {
         <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
           Connect with events you care about while empowering organizers to promote, manage, and monetize their experiences effortlessly.
         </p>
+        
+        {/* Search Bar */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <Input
+              placeholder="Search events, locations, or organizers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-12 h-12 text-lg"
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/events">
             <Button size="lg" className="text-lg px-8 py-3">
@@ -255,22 +304,25 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Map Section */}
-      <section className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-          Events Near You
-        </h2>
-        <EventMap events={nearbyEvents} userLocation={location} />
-      </section>
+      {/* Featured Events */}
+      <FeaturedEventsSection events={events} />
 
-      {/* Tabbed Events Section */}
+      {/* Tabbed Events Section with Map */}
       <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-          Find Your Perfect Event
-        </h2>
+        <div className="flex justify-between items-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900">
+            Find Your Perfect Event
+          </h2>
+          <Link to="/events">
+            <Button variant="outline" className="flex items-center gap-2">
+              See All Events
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
         
-        <Tabs defaultValue="nearby" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="nearby" className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
               Nearby
@@ -291,30 +343,40 @@ const Index = () => {
               <Users className="h-4 w-4" />
               Family
             </TabsTrigger>
+            <TabsTrigger value="all" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              All Events
+            </TabsTrigger>
           </TabsList>
           
+          {/* Map Section */}
+          <div className="mt-8 mb-8">
+            <h3 className="text-xl font-semibold mb-4">Events Near You</h3>
+            <EventMap events={getEventsForTab().slice(0, 10)} userLocation={location} />
+          </div>
+
           <TabsContent value="nearby" className="mt-8">
             <div className="mb-4">
               <h3 className="text-xl font-semibold mb-2">Events within 10km</h3>
               <p className="text-gray-600">
-                {nearbyEvents.length} events found near your location
+                {getFilteredEvents(nearbyEvents).length} events found near your location
               </p>
             </div>
-            <EventGrid events={nearbyEvents} />
+            <EventGrid events={getFilteredEvents(nearbyEvents)} />
           </TabsContent>
           
           <TabsContent value="attended" className="mt-8">
             <div className="mb-4">
               <h3 className="text-xl font-semibold mb-2">Based on Past Events</h3>
               <p className="text-gray-600">
-                {pastAttendedEvents.length > 0 
-                  ? `Recommendations based on ${pastAttendedEvents.length} past events`
+                {getFilteredEvents(pastAttendedEvents).length > 0 
+                  ? `Recommendations based on ${getFilteredEvents(pastAttendedEvents).length} past events`
                   : "Start attending events to get personalized recommendations"
                 }
               </p>
             </div>
-            {pastAttendedEvents.length > 0 ? (
-              <EventGrid events={pastAttendedEvents} />
+            {getFilteredEvents(pastAttendedEvents).length > 0 ? (
+              <EventGrid events={getFilteredEvents(pastAttendedEvents)} />
             ) : (
               <div className="text-center py-12">
                 <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -330,11 +392,11 @@ const Index = () => {
             <div className="mb-4">
               <h3 className="text-xl font-semibold mb-2">Your Favorite Events</h3>
               <p className="text-gray-600">
-                {favoriteEvents.length} favorite events and organizers
+                {getFilteredEvents(favoriteEvents).length} favorite events and organizers
               </p>
             </div>
-            {favoriteEvents.length > 0 ? (
-              <EventGrid events={favoriteEvents} />
+            {getFilteredEvents(favoriteEvents).length > 0 ? (
+              <EventGrid events={getFilteredEvents(favoriteEvents)} />
             ) : (
               <div className="text-center py-12">
                 <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -347,26 +409,33 @@ const Index = () => {
             <div className="mb-4">
               <h3 className="text-xl font-semibold mb-2">Free Events</h3>
               <p className="text-gray-600">
-                {freeEvents.length} free events available
+                {getFilteredEvents(freeEvents).length} free events available
               </p>
             </div>
-            <EventGrid events={freeEvents} />
+            <EventGrid events={getFilteredEvents(freeEvents)} />
           </TabsContent>
           
           <TabsContent value="family" className="mt-8">
             <div className="mb-4">
               <h3 className="text-xl font-semibold mb-2">Family-Friendly Events</h3>
               <p className="text-gray-600">
-                {familyFriendlyEvents.length} events perfect for families
+                {getFilteredEvents(familyFriendlyEvents).length} events perfect for families
               </p>
             </div>
-            <EventGrid events={familyFriendlyEvents} />
+            <EventGrid events={getFilteredEvents(familyFriendlyEvents)} />
+          </TabsContent>
+
+          <TabsContent value="all" className="mt-8">
+            <div className="mb-4">
+              <h3 className="text-xl font-semibold mb-2">All Events by Popularity</h3>
+              <p className="text-gray-600">
+                {getFilteredEvents(allEventsByPopularity).length} events sorted by popularity
+              </p>
+            </div>
+            <EventGrid events={getFilteredEvents(allEventsByPopularity)} />
           </TabsContent>
         </Tabs>
       </section>
-
-      {/* Featured Events */}
-      <FeaturedEventsSection events={events} />
 
       {/* Features Section */}
       <section className="container mx-auto px-4 py-16">
@@ -495,6 +564,9 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Newsletter Signup */}
+      <NewsletterSignup />
+
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-16 text-center">
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-12 text-white">
@@ -522,14 +594,85 @@ const Index = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <Calendar className="h-6 w-6 text-purple-400" />
-              <span className="text-xl font-bold">Eventory</span>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <Calendar className="h-6 w-6 text-purple-400" />
+                <span className="text-xl font-bold">Eventory</span>
+              </div>
+              <p className="text-gray-400">
+                Connecting people through meaningful events.
+              </p>
             </div>
-            <p className="text-gray-400 text-center md:text-right">
-              © 2024 Eventory. Connecting people through meaningful events.
-            </p>
+
+            {/* Support Links */}
+            <div>
+              <h3 className="font-semibold mb-4">Support</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><Link to="/help" className="hover:text-white transition-colors">Get Help</Link></li>
+                <li><Link to="/faq" className="hover:text-white transition-colors">FAQs</Link></li>
+                <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link></li>
+              </ul>
+            </div>
+
+            {/* Account Links (for logged in users) */}
+            <div>
+              <h3 className="font-semibold mb-4">Account</h3>
+              {user ? (
+                <ul className="space-y-2 text-gray-400">
+                  <li><Link to="/profile" className="hover:text-white transition-colors">My Profile</Link></li>
+                  <li><Link to="/profile" className="hover:text-white transition-colors">My Orders</Link></li>
+                  <li><Link to="/profile" className="hover:text-white transition-colors">Favorites</Link></li>
+                  <li><Link to="/profile" className="hover:text-white transition-colors">Following</Link></li>
+                </ul>
+              ) : (
+                <div>
+                  <Link to="/login">
+                    <Button variant="outline" size="sm" className="text-white border-white hover:bg-white hover:text-gray-900">
+                      Sign In
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Organizers */}
+            <div>
+              <h3 className="font-semibold mb-4">For Organizers</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><Link to="/switch-to-selling" className="hover:text-white transition-colors">Switch to Selling</Link></li>
+                <li><Link to="/dashboard" className="hover:text-white transition-colors">Organizer Dashboard</Link></li>
+              </ul>
+              
+              {/* Social Media */}
+              <div className="mt-6">
+                <h4 className="font-semibold mb-4">Follow Us</h4>
+                <div className="flex space-x-4">
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <span className="sr-only">Facebook</span>
+                    📘
+                  </a>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <span className="sr-only">Twitter</span>
+                    🐦
+                  </a>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <span className="sr-only">Instagram</span>
+                    📷
+                  </a>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <span className="sr-only">LinkedIn</span>
+                    💼
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>© 2024 Eventory. All rights reserved.</p>
           </div>
         </div>
       </footer>
