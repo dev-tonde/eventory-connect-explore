@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, User, Plus } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import LocationIndicator from "@/components/location/LocationIndicator";
 
 const Header = () => {
   const location = useLocation();
@@ -47,6 +48,8 @@ const Header = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            <LocationIndicator />
+            
             {isAuthenticated ? (
               <>
                 <span className="text-sm text-gray-600">
