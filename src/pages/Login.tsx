@@ -4,18 +4,50 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [role, setRole] = useState<'attendee' | 'organizer'>('attendee');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { login, signup } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement authentication logic with Supabase
-    console.log("Form submitted:", { email, password, name });
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        await login(email, password);
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully logged in.",
+        });
+      } else {
+        await signup(email, password, name, role);
+        toast({
+          title: "Account created!",
+          description: "Welcome to Eventory! You can now start exploring events.",
+        });
+      }
+      navigate('/');
+    } catch (error) {
+      toast({
+        title: "Authentication failed",
+        description: "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -39,19 +71,36 @@ const Login = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
-                </label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your full name"
-                  required={!isLogin}
-                />
-              </div>
+              <>
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter your full name"
+                    required={!isLogin}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                    Account Type
+                  </label>
+                  <select
+                    id="role"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value as 'attendee' | 'organizer')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="attendee">Attendee - Discover and attend events</option>
+                    <option value="organizer">Organizer - Create and manage events</option>
+                  </select>
+                </div>
+              </>
             )}
             
             <div>
@@ -82,8 +131,8 @@ const Login = () => {
               />
             </div>
             
-            <Button type="submit" className="w-full">
-              {isLogin ? "Sign In" : "Create Account"}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Please wait...' : (isLogin ? "Sign In" : "Create Account")}
             </Button>
           </form>
           

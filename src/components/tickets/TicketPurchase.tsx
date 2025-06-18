@@ -1,0 +1,249 @@
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { AlertTriangle, CreditCard, User, Mail, Phone } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Event } from "@/types/event";
+
+interface TicketPurchaseProps {
+  event: Event;
+  onPurchaseComplete?: () => void;
+}
+
+const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [quantity, setQuantity] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [buyerInfo, setBuyerInfo] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: ''
+  });
+
+  const ticketsRemaining = event.maxAttendees - event.attendeeCount;
+  const isLowStock = ticketsRemaining <= 20;
+  const isSoldOut = ticketsRemaining <= 0;
+  const totalPrice = event.price * quantity;
+
+  const handlePurchase = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to purchase tickets.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (quantity > ticketsRemaining) {
+      toast({
+        title: "Not enough tickets",
+        description: `Only ${ticketsRemaining} tickets remaining.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Mock payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Mock ticket purchase
+      const purchase = {
+        id: Math.random().toString(36).substr(2, 9),
+        eventId: event.id,
+        userId: user?.id,
+        quantity,
+        totalPrice,
+        buyerInfo,
+        purchaseDate: new Date().toISOString(),
+        ticketNumbers: Array.from({ length: quantity }, (_, i) => 
+          `TKT-${event.id.toUpperCase()}-${(event.attendeeCount + i + 1).toString().padStart(4, '0')}`
+        )
+      };
+
+      // Store purchase
+      const existingPurchases = JSON.parse(localStorage.getItem('eventory_purchases') || '[]');
+      existingPurchases.push(purchase);
+      localStorage.setItem('eventory_purchases', JSON.stringify(existingPurchases));
+
+      // Update event attendance
+      const events = JSON.parse(localStorage.getItem('eventory_events') || '[]');
+      const eventIndex = events.findIndex((e: Event) => e.id === event.id);
+      if (eventIndex !== -1) {
+        events[eventIndex].attendeeCount += quantity;
+        localStorage.setItem('eventory_events', JSON.stringify(events));
+      }
+
+      toast({
+        title: "Purchase Successful!",
+        description: `You've successfully purchased ${quantity} ticket(s) for ${event.title}.`,
+      });
+
+      onPurchaseComplete?.();
+    } catch (error) {
+      toast({
+        title: "Purchase Failed",
+        description: "There was an error processing your purchase. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  if (isSoldOut) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-red-600 mb-2">Sold Out</h3>
+          <p className="text-gray-600">This event is sold out. Check back later for additional tickets.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <CreditCard className="h-5 w-5" />
+          Purchase Tickets
+        </CardTitle>
+        {isLowStock && (
+          <div className="flex items-center gap-2 text-orange-600 bg-orange-50 p-2 rounded">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              Only {ticketsRemaining} tickets remaining!
+            </span>
+          </div>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Price Display */}
+        <div className="text-center p-4 bg-gray-50 rounded-lg">
+          <div className="text-2xl font-bold text-purple-600">
+            {event.price === 0 ? 'Free' : `$${event.price.toFixed(2)}`}
+          </div>
+          <div className="text-sm text-gray-600">per ticket</div>
+        </div>
+
+        {/* Quantity Selector */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Number of tickets
+          </label>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              disabled={quantity <= 1}
+            >
+              -
+            </Button>
+            <Input
+              type="number"
+              min="1"
+              max={Math.min(10, ticketsRemaining)}
+              value={quantity}
+              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+              className="w-20 text-center"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setQuantity(Math.min(quantity + 1, ticketsRemaining, 10))}
+              disabled={quantity >= Math.min(10, ticketsRemaining)}
+            >
+              +
+            </Button>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Maximum 10 tickets per purchase
+          </p>
+        </div>
+
+        {/* Buyer Information */}
+        {!isAuthenticated && (
+          <div className="space-y-3">
+            <h4 className="font-medium">Buyer Information</h4>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <User className="inline h-4 w-4 mr-1" />
+                Full Name
+              </label>
+              <Input
+                value={buyerInfo.name}
+                onChange={(e) => setBuyerInfo({ ...buyerInfo, name: e.target.value })}
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Mail className="inline h-4 w-4 mr-1" />
+                Email
+              </label>
+              <Input
+                type="email"
+                value={buyerInfo.email}
+                onChange={(e) => setBuyerInfo({ ...buyerInfo, email: e.target.value })}
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Phone className="inline h-4 w-4 mr-1" />
+                Phone Number
+              </label>
+              <Input
+                type="tel"
+                value={buyerInfo.phone}
+                onChange={(e) => setBuyerInfo({ ...buyerInfo, phone: e.target.value })}
+                placeholder="Enter your phone number"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Total & Purchase Button */}
+        <div className="pt-4 border-t">
+          <div className="flex justify-between items-center mb-4">
+            <span className="font-medium">Total:</span>
+            <span className="text-xl font-bold">
+              {event.price === 0 ? 'Free' : `$${totalPrice.toFixed(2)}`}
+            </span>
+          </div>
+          
+          <Button 
+            className="w-full" 
+            size="lg"
+            onClick={handlePurchase}
+            disabled={isProcessing || (!isAuthenticated && (!buyerInfo.name || !buyerInfo.email || !buyerInfo.phone))}
+          >
+            {isProcessing ? 'Processing...' : (event.price === 0 ? 'Register for Free' : 'Purchase Tickets')}
+          </Button>
+        </div>
+
+        <div className="text-center text-sm text-gray-600">
+          <p>{ticketsRemaining} tickets remaining</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default TicketPurchase;

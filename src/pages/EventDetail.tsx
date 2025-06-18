@@ -1,11 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin, Users, Clock, Tag, ArrowLeft } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, Tag, ArrowLeft, Share2, Heart } from "lucide-react";
 import Header from "@/components/layout/Header";
+import TicketPurchase from "@/components/tickets/TicketPurchase";
 import { Event } from "@/types/event";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data - in real app this would come from API
 const mockEvent: Event = {
@@ -27,10 +30,88 @@ const mockEvent: Event = {
 
 const EventDetail = () => {
   const { id } = useParams();
-  const [ticketQuantity, setTicketQuantity] = useState(1);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [event, setEvent] = useState<Event | null>(null);
+  const [isFavorited, setIsFavorited] = useState(false);
 
-  // In a real app, you'd fetch the event based on the ID
-  const event = mockEvent;
+  useEffect(() => {
+    // Load event data
+    const storedEvents = JSON.parse(localStorage.getItem('eventory_events') || '[]');
+    const allEvents = [mockEvent, ...storedEvents];
+    const foundEvent = allEvents.find(e => e.id === id);
+    setEvent(foundEvent || null);
+
+    // Check if favorited
+    if (user && foundEvent) {
+      const favorites = JSON.parse(localStorage.getItem('eventory_favorites') || '[]');
+      const isFav = favorites.some((f: any) => f.userId === user.id && f.eventId === foundEvent.id);
+      setIsFavorited(isFav);
+    }
+  }, [id, user]);
+
+  const toggleFavorite = () => {
+    if (!user || !event) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to favorite events.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const existingFavorites = JSON.parse(localStorage.getItem('eventory_favorites') || '[]');
+
+    if (isFavorited) {
+      // Remove from favorites
+      const updatedFavorites = existingFavorites.filter(
+        (f: any) => !(f.userId === user.id && f.eventId === event.id)
+      );
+      localStorage.setItem('eventory_favorites', JSON.stringify(updatedFavorites));
+      setIsFavorited(false);
+      toast({
+        title: "Removed from favorites",
+        description: "Event removed from your favorites.",
+      });
+    } else {
+      // Add to favorites
+      const newFavorite = { userId: user.id, eventId: event.id, addedAt: new Date().toISOString() };
+      existingFavorites.push(newFavorite);
+      localStorage.setItem('eventory_favorites', JSON.stringify(existingFavorites));
+      setIsFavorited(true);
+      toast({
+        title: "Added to favorites",
+        description: "Event added to your favorites.",
+      });
+    }
+  };
+
+  const shareEvent = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: event?.title,
+        text: event?.description,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link copied!",
+        description: "Event link has been copied to your clipboard.",
+      });
+    }
+  };
+
+  const handlePurchaseComplete = () => {
+    // Refresh event data to show updated attendance
+    if (event) {
+      const storedEvents = JSON.parse(localStorage.getItem('eventory_events') || '[]');
+      const updatedEvent = storedEvents.find((e: Event) => e.id === event.id);
+      if (updatedEvent) {
+        setEvent(updatedEvent);
+      }
+    }
+  };
 
   if (!event) {
     return (
@@ -53,10 +134,23 @@ const EventDetail = () => {
       <Header />
       
       <div className="container mx-auto px-4 py-8">
-        <Link to="/events" className="inline-flex items-center text-purple-600 hover:text-purple-800 mb-6">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Events
-        </Link>
+        <div className="flex items-center justify-between mb-6">
+          <Link to="/events" className="inline-flex items-center text-purple-600 hover:text-purple-800">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Events
+          </Link>
+          
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={toggleFavorite}>
+              <Heart className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
+              {isFavorited ? 'Favorited' : 'Add to Favorites'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={shareEvent}>
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
@@ -137,61 +231,9 @@ const EventDetail = () => {
 
           {/* Booking Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-4">
-              <CardHeader>
-                <CardTitle className="text-xl">Get Tickets</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-600">
-                    {event.price === 0 ? 'Free' : `$${event.price}`}
-                  </div>
-                  <div className="text-sm text-gray-600">per ticket</div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Number of tickets
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setTicketQuantity(Math.max(1, ticketQuantity - 1))}
-                    >
-                      -
-                    </Button>
-                    <span className="px-4 py-2 bg-gray-50 rounded text-center min-w-[60px]">
-                      {ticketQuantity}
-                    </span>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setTicketQuantity(ticketQuantity + 1)}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="font-medium">Total:</span>
-                    <span className="text-xl font-bold">
-                      {event.price === 0 ? 'Free' : `$${event.price * ticketQuantity}`}
-                    </span>
-                  </div>
-                  
-                  <Button className="w-full" size="lg">
-                    {event.price === 0 ? 'Register for Free' : 'Buy Tickets'}
-                  </Button>
-                </div>
-
-                <div className="text-center text-sm text-gray-600">
-                  <p>{event.maxAttendees - event.attendeeCount} tickets remaining</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="sticky top-4">
+              <TicketPurchase event={event} onPurchaseComplete={handlePurchaseComplete} />
+            </div>
           </div>
         </div>
       </div>

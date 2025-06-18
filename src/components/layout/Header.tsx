@@ -1,10 +1,12 @@
 
 import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
+import { Calendar, User, Plus } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
   const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
   
   return (
     <header className="border-b bg-white">
@@ -30,17 +32,51 @@ const Header = () => {
                 location.pathname === '/dashboard' ? 'text-purple-600 font-medium' : 'text-gray-600'
               }`}
             >
-              Organizer Dashboard
+              Dashboard
             </Link>
+            {isAuthenticated && (
+              <Link 
+                to="/profile" 
+                className={`hover:text-purple-600 transition-colors ${
+                  location.pathname === '/profile' ? 'text-purple-600 font-medium' : 'text-gray-600'
+                }`}
+              >
+                Profile
+              </Link>
+            )}
           </div>
           
           <div className="flex items-center space-x-4">
-            <Link to="/login">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link to="/dashboard">
-              <Button>Create Event</Button>
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <span className="text-sm text-gray-600">
+                  Welcome, {user?.name}
+                </span>
+                {user?.role === 'organizer' && (
+                  <Link to="/create-event">
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Event
+                    </Button>
+                  </Link>
+                )}
+                <Link to="/profile">
+                  <Button variant="ghost" size="sm">
+                    <User className="h-4 w-4 mr-2" />
+                    Profile
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost">Sign In</Button>
+                </Link>
+                <Link to="/login">
+                  <Button>Get Started</Button>
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       </div>

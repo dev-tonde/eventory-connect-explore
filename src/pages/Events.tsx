@@ -1,12 +1,15 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, MapPin, Calendar, Users } from "lucide-react";
+import { Search, MapPin, Calendar, Users, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
-import { Event } from "@/types/event";
+import EventFilters from "@/components/filters/EventFilters";
+import { Event, EventFilters as EventFiltersType } from "@/types/event";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for demonstration
 const mockEvents: Event[] = [
@@ -61,63 +64,157 @@ const mockEvents: Event[] = [
 ];
 
 const Events = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [events, setEvents] = useState<Event[]>(mockEvents);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [filters, setFilters] = useState<EventFiltersType>({});
 
-  const filteredEvents = mockEvents.filter(event => {
+  useEffect(() => {
+    // Load events and favorites from localStorage
+    const storedEvents = JSON.parse(localStorage.getItem('eventory_events') || '[]');
+    if (storedEvents.length > 0) {
+      setEvents([...mockEvents, ...storedEvents]);
+    }
+
+    if (user) {
+      const storedFavorites = JSON.parse(localStorage.getItem('eventory_favorites') || '[]');
+      const userFavorites = storedFavorites
+        .filter((f: any) => f.userId === user.id)
+        .map((f: any) => f.eventId);
+      setFavorites(userFavorites);
+    }
+  }, [user]);
+
+  const toggleFavorite = (eventId: string) => {
+    if (!user) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to favorite events.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const existingFavorites = JSON.parse(localStorage.getItem('eventory_favorites') || '[]');
+    const isFavorited = favorites.includes(eventId);
+
+    if (isFavorited) {
+      // Remove from favorites
+      const updatedFavorites = existingFavorites.filter(
+        (f: any) => !(f.userId === user.id && f.eventId === eventId)
+      );
+      localStorage.setItem('eventory_favorites', JSON.stringify(updatedFavorites));
+      setFavorites(favorites.filter(id => id !== eventId));
+      toast({
+        title: "Removed from favorites",
+        description: "Event removed from your favorites.",
+      });
+    } else {
+      // Add to favorites
+      const newFavorite = { userId: user.id, eventId, addedAt: new Date().toISOString() };
+      existingFavorites.push(newFavorite);
+      localStorage.setItem('eventory_favorites', JSON.stringify(existingFavorites));
+      setFavorites([...favorites, eventId]);
+      toast({
+        title: "Added to favorites",
+        description: "Event added to your favorites.",
+      });
+    }
+  };
+
+  const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || event.category.toLowerCase() === selectedCategory.toLowerCase();
-    return matchesSearch && matchesCategory;
+                         event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         event.location.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = !filters.category || event.category.toLowerCase() === filters.category.toLowerCase();
+    
+    const matchesLocation = !filters.location || 
+                           event.location.toLowerCase().includes(filters.location.toLowerCase()) ||
+                           event.address.toLowerCase().includes(filters.location.toLowerCase());
+    
+    const matchesDateRange = !filters.dateRange || 
+                            (!filters.dateRange.start || event.date >= filters.dateRange.start) &&
+                            (!filters.dateRange.end || event.date <= filters.dateRange.end);
+    
+    const matchesPriceRange = !filters.priceRange ||
+                             (event.price >= (filters.priceRange.min || 0) && 
+                              event.price <= (filters.priceRange.max || 1000));
+
+    return matchesSearch && matchesCategory && matchesLocation && matchesDateRange && matchesPriceRange;
   });
+
+  const clearFilters = () => {
+    setFilters({});
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Search and Filters */}
-        <div className="mb-8">
+        {/* Search */}
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Discover Events</h1>
           
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search events..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <select 
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="all">All Categories</option>
-              <option value="music">Music</option>
-              <option value="technology">Technology</option>
-              <option value="food">Food</option>
-              <option value="sports">Sports</option>
-              <option value="arts">Arts</option>
-            </select>
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search events, locations, or organizers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
+        </div>
+
+        {/* Filters */}
+        <EventFilters 
+          filters={filters}
+          onFiltersChange={setFilters}
+          onClearFilters={clearFilters}
+        />
+
+        {/* Results Summary */}
+        <div className="mb-6">
+          <p className="text-gray-600">
+            Showing {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
+          </p>
         </div>
 
         {/* Events Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEvents.map((event) => (
-            <Card key={event.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-              <Link to={`/events/${event.id}`}>
-                <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
-                  <img 
-                    src={event.image} 
-                    alt={event.title}
-                    className="w-full h-full object-cover"
+            <Card key={event.id} className="hover:shadow-lg transition-shadow">
+              <div className="relative">
+                <Link to={`/events/${event.id}`}>
+                  <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
+                    <img 
+                      src={event.image} 
+                      alt={event.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 bg-white/80 hover:bg-white"
+                  onClick={() => toggleFavorite(event.id)}
+                >
+                  <Heart 
+                    className={`h-4 w-4 ${
+                      favorites.includes(event.id) 
+                        ? 'fill-red-500 text-red-500' 
+                        : 'text-gray-600'
+                    }`} 
                   />
-                </div>
+                </Button>
+              </div>
+              
+              <Link to={`/events/${event.id}`}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg">{event.title}</CardTitle>
@@ -156,6 +253,19 @@ const Events = () => {
             </Card>
           ))}
         </div>
+
+        {filteredEvents.length === 0 && (
+          <div className="text-center py-12">
+            <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">No events found</h3>
+            <p className="text-gray-600 mb-4">
+              Try adjusting your search terms or filters to find events.
+            </p>
+            <Button onClick={clearFilters} variant="outline">
+              Clear Filters
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
