@@ -27,14 +27,16 @@ const Header = () => {
             >
               Explore Events
             </Link>
-            <Link 
-              to="/dashboard" 
-              className={`hover:text-purple-600 transition-colors ${
-                location.pathname === '/dashboard' ? 'text-purple-600 font-medium' : 'text-gray-600'
-              }`}
-            >
-              Dashboard
-            </Link>
+            {isAuthenticated && user?.role === 'organizer' && (
+              <Link 
+                to="/dashboard" 
+                className={`hover:text-purple-600 transition-colors ${
+                  location.pathname === '/dashboard' ? 'text-purple-600 font-medium' : 'text-gray-600'
+                }`}
+              >
+                Dashboard
+              </Link>
+            )}
             {isAuthenticated && (
               <Link 
                 to="/profile" 

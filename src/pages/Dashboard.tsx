@@ -1,10 +1,11 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Calendar, Users, DollarSign, TrendingUp } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Event } from "@/types/event";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Mock data for organizer's events
 const mockOrganizerEvents: Event[] = [
@@ -43,7 +44,26 @@ const mockOrganizerEvents: Event[] = [
 ];
 
 const Dashboard = () => {
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [events] = useState<Event[]>(mockOrganizerEvents);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    
+    if (user?.role !== 'organizer') {
+      navigate('/');
+      return;
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  // Don't render anything if user is not authenticated or not an organizer
+  if (!isAuthenticated || user?.role !== 'organizer') {
+    return null;
+  }
 
   const totalRevenue = events.reduce((sum, event) => sum + (event.price * event.attendeeCount), 0);
   const totalAttendees = events.reduce((sum, event) => sum + event.attendeeCount, 0);

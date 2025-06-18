@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin, Users, Clock, Tag, ArrowLeft, Share2, Heart } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, Tag, ArrowLeft, Share2, Heart, UserPlus, UserCheck } from "lucide-react";
 import Header from "@/components/layout/Header";
 import TicketPurchase from "@/components/tickets/TicketPurchase";
 import { Event } from "@/types/event";
@@ -34,6 +33,7 @@ const EventDetail = () => {
   const { toast } = useToast();
   const [event, setEvent] = useState<Event | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isFollowingOrganizer, setIsFollowingOrganizer] = useState(false);
 
   useEffect(() => {
     // Load event data
@@ -47,6 +47,13 @@ const EventDetail = () => {
       const favorites = JSON.parse(localStorage.getItem('eventory_favorites') || '[]');
       const isFav = favorites.some((f: any) => f.userId === user.id && f.eventId === foundEvent.id);
       setIsFavorited(isFav);
+    }
+
+    // Check if following organizer
+    if (user && foundEvent) {
+      const follows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
+      const isFollowing = follows.some((f: any) => f.userId === user.id && f.organizerName === foundEvent.organizer);
+      setIsFollowingOrganizer(isFollowing);
     }
   }, [id, user]);
 
@@ -82,6 +89,46 @@ const EventDetail = () => {
       toast({
         title: "Added to favorites",
         description: "Event added to your favorites.",
+      });
+    }
+  };
+
+  const toggleFollowOrganizer = () => {
+    if (!user || !event) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to follow organizers.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const existingFollows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
+
+    if (isFollowingOrganizer) {
+      // Unfollow organizer
+      const updatedFollows = existingFollows.filter(
+        (f: any) => !(f.userId === user.id && f.organizerName === event.organizer)
+      );
+      localStorage.setItem('eventory_follows', JSON.stringify(updatedFollows));
+      setIsFollowingOrganizer(false);
+      toast({
+        title: "Unfollowed organizer",
+        description: `You are no longer following ${event.organizer}.`,
+      });
+    } else {
+      // Follow organizer
+      const newFollow = { 
+        userId: user.id, 
+        organizerName: event.organizer, 
+        followedAt: new Date().toISOString() 
+      };
+      existingFollows.push(newFollow);
+      localStorage.setItem('eventory_follows', JSON.stringify(existingFollows));
+      setIsFollowingOrganizer(true);
+      toast({
+        title: "Following organizer",
+        description: `You are now following ${event.organizer}.`,
       });
     }
   };
@@ -141,6 +188,21 @@ const EventDetail = () => {
           </Link>
           
           <div className="flex items-center gap-2">
+            {user && (
+              <Button variant="outline" size="sm" onClick={toggleFollowOrganizer}>
+                {isFollowingOrganizer ? (
+                  <>
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Following {event.organizer}
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Follow {event.organizer}
+                  </>
+                )}
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={toggleFavorite}>
               <Heart className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
               {isFavorited ? 'Favorited' : 'Add to Favorites'}
