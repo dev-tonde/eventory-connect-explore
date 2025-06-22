@@ -272,7 +272,12 @@ const EventDetail = () => {
                   </span>
                 </div>
                 <CardDescription className="text-base flex items-center gap-2">
-                  <span>Organized by {event.organizer}</span>
+                  <Link 
+                    to={`/organizer/${encodeURIComponent(event.organizer)}`}
+                    className="hover:text-purple-600 transition-colors"
+                  >
+                    <span>Organized by {event.organizer}</span>
+                  </Link>
                   {isVerifiedOrganizer && (
                     <CheckCircle className="h-4 w-4 text-blue-500" />
                   )}
