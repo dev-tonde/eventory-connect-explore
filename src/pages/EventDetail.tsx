@@ -1,19 +1,38 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin, Users, Clock, Tag, ArrowLeft, Share2, Heart, UserPlus, UserCheck } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Calendar,
+  MapPin,
+  Users,
+  Clock,
+  Tag,
+  ArrowLeft,
+  Share2,
+  Heart,
+  UserPlus,
+  UserCheck,
+} from "lucide-react";
 import Header from "@/components/layout/Header";
 import TicketPurchase from "@/components/tickets/TicketPurchase";
 import { Event } from "@/types/event";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 // Mock data - in real app this would come from API
 const mockEvent: Event = {
   id: "1",
   title: "Summer Music Festival",
-  description: "Join us for an amazing day of live music featuring local and international artists. This festival brings together the best of contemporary music with food trucks, art installations, and a vibrant community atmosphere. Whether you're a music lover or just looking for a great day out, this event promises unforgettable memories.",
+  description:
+    "Join us for an amazing day of live music featuring local and international artists. This festival brings together the best of contemporary music with food trucks, art installations, and a vibrant community atmosphere. Whether you're a music lover or just looking for a great day out, this event promises unforgettable memories.",
   date: "2024-07-15",
   time: "14:00",
   location: "Central Park",
@@ -24,7 +43,7 @@ const mockEvent: Event = {
   organizer: "Music Events Co.",
   attendeeCount: 150,
   maxAttendees: 500,
-  tags: ["outdoor", "festival", "music", "family-friendly"]
+  tags: ["outdoor", "festival", "music", "family-friendly"],
 };
 
 const EventDetail = () => {
@@ -37,22 +56,33 @@ const EventDetail = () => {
 
   useEffect(() => {
     // Load event data
-    const storedEvents = JSON.parse(localStorage.getItem('eventory_events') || '[]');
+    const storedEvents = JSON.parse(
+      localStorage.getItem("eventory_events") || "[]"
+    );
     const allEvents = [mockEvent, ...storedEvents];
-    const foundEvent = allEvents.find(e => e.id === id);
+    const foundEvent = allEvents.find((e) => e.id === id);
     setEvent(foundEvent || null);
 
     // Check if favorited
     if (user && foundEvent) {
-      const favorites = JSON.parse(localStorage.getItem('eventory_favorites') || '[]');
-      const isFav = favorites.some((f: any) => f.userId === user.id && f.eventId === foundEvent.id);
+      const favorites = JSON.parse(
+        localStorage.getItem("eventory_favorites") || "[]"
+      );
+      const isFav = favorites.some(
+        (f: any) => f.userId === user.id && f.eventId === foundEvent.id
+      );
       setIsFavorited(isFav);
     }
 
     // Check if following organizer
     if (user && foundEvent) {
-      const follows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
-      const isFollowing = follows.some((f: any) => f.userId === user.id && f.organizerName === foundEvent.organizer);
+      const follows = JSON.parse(
+        localStorage.getItem("eventory_follows") || "[]"
+      );
+      const isFollowing = follows.some(
+        (f: any) =>
+          f.userId === user.id && f.organizerName === foundEvent.organizer
+      );
       setIsFollowingOrganizer(isFollowing);
     }
   }, [id, user]);
@@ -67,14 +97,19 @@ const EventDetail = () => {
       return;
     }
 
-    const existingFavorites = JSON.parse(localStorage.getItem('eventory_favorites') || '[]');
+    const existingFavorites = JSON.parse(
+      localStorage.getItem("eventory_favorites") || "[]"
+    );
 
     if (isFavorited) {
       // Remove from favorites
       const updatedFavorites = existingFavorites.filter(
         (f: any) => !(f.userId === user.id && f.eventId === event.id)
       );
-      localStorage.setItem('eventory_favorites', JSON.stringify(updatedFavorites));
+      localStorage.setItem(
+        "eventory_favorites",
+        JSON.stringify(updatedFavorites)
+      );
       setIsFavorited(false);
       toast({
         title: "Removed from favorites",
@@ -82,9 +117,16 @@ const EventDetail = () => {
       });
     } else {
       // Add to favorites
-      const newFavorite = { userId: user.id, eventId: event.id, addedAt: new Date().toISOString() };
+      const newFavorite = {
+        userId: user.id,
+        eventId: event.id,
+        addedAt: new Date().toISOString(),
+      };
       existingFavorites.push(newFavorite);
-      localStorage.setItem('eventory_favorites', JSON.stringify(existingFavorites));
+      localStorage.setItem(
+        "eventory_favorites",
+        JSON.stringify(existingFavorites)
+      );
       setIsFavorited(true);
       toast({
         title: "Added to favorites",
@@ -103,14 +145,17 @@ const EventDetail = () => {
       return;
     }
 
-    const existingFollows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
+    const existingFollows = JSON.parse(
+      localStorage.getItem("eventory_follows") || "[]"
+    );
 
     if (isFollowingOrganizer) {
       // Unfollow organizer
       const updatedFollows = existingFollows.filter(
-        (f: any) => !(f.userId === user.id && f.organizerName === event.organizer)
+        (f: any) =>
+          !(f.userId === user.id && f.organizerName === event.organizer)
       );
-      localStorage.setItem('eventory_follows', JSON.stringify(updatedFollows));
+      localStorage.setItem("eventory_follows", JSON.stringify(updatedFollows));
       setIsFollowingOrganizer(false);
       toast({
         title: "Unfollowed organizer",
@@ -118,13 +163,13 @@ const EventDetail = () => {
       });
     } else {
       // Follow organizer
-      const newFollow = { 
-        userId: user.id, 
-        organizerName: event.organizer, 
-        followedAt: new Date().toISOString() 
+      const newFollow = {
+        userId: user.id,
+        organizerName: event.organizer,
+        followedAt: new Date().toISOString(),
       };
       existingFollows.push(newFollow);
-      localStorage.setItem('eventory_follows', JSON.stringify(existingFollows));
+      localStorage.setItem("eventory_follows", JSON.stringify(existingFollows));
       setIsFollowingOrganizer(true);
       toast({
         title: "Following organizer",
@@ -152,7 +197,9 @@ const EventDetail = () => {
   const handlePurchaseComplete = () => {
     // Refresh event data to show updated attendance
     if (event) {
-      const storedEvents = JSON.parse(localStorage.getItem('eventory_events') || '[]');
+      const storedEvents = JSON.parse(
+        localStorage.getItem("eventory_events") || "[]"
+      );
       const updatedEvent = storedEvents.find((e: Event) => e.id === event.id);
       if (updatedEvent) {
         setEvent(updatedEvent);
@@ -166,7 +213,9 @@ const EventDetail = () => {
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Event not found</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              Event not found
+            </h1>
             <Link to="/events">
               <Button>Back to Events</Button>
             </Link>
@@ -179,17 +228,24 @@ const EventDetail = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
-          <Link to="/events" className="inline-flex items-center text-purple-600 hover:text-purple-800">
+          <Link
+            to="/events"
+            className="inline-flex items-center text-purple-600 hover:text-purple-800"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Events
           </Link>
-          
+
           <div className="flex items-center gap-2">
             {user && (
-              <Button variant="outline" size="sm" onClick={toggleFollowOrganizer}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleFollowOrganizer}
+              >
                 {isFollowingOrganizer ? (
                   <>
                     <UserCheck className="h-4 w-4 mr-2" />
@@ -204,8 +260,12 @@ const EventDetail = () => {
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={toggleFavorite}>
-              <Heart className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
-              {isFavorited ? 'Favorited' : 'Add to Favorites'}
+              <Heart
+                className={`h-4 w-4 mr-2 ${
+                  isFavorited ? "fill-red-500 text-red-500" : ""
+                }`}
+              />
+              {isFavorited ? "Favorited" : "Add to Favorites"}
             </Button>
             <Button variant="outline" size="sm" onClick={shareEvent}>
               <Share2 className="h-4 w-4 mr-2" />
@@ -219,8 +279,8 @@ const EventDetail = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Event Image */}
             <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-              <img 
-                src={event.image} 
+              <img
+                src={event.image}
                 alt={event.title}
                 className="w-full h-full object-cover"
               />
@@ -244,11 +304,13 @@ const EventDetail = () => {
                   <div className="flex items-center gap-3">
                     <Calendar className="h-5 w-5 text-purple-600" />
                     <div>
-                      <div className="font-medium">{new Date(event.date).toLocaleDateString()}</div>
+                      <div className="font-medium">
+                        {new Date(event.date).toLocaleDateString()}
+                      </div>
                       <div className="text-sm text-gray-600">Date</div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
                     <Clock className="h-5 w-5 text-purple-600" />
                     <div>
@@ -256,32 +318,43 @@ const EventDetail = () => {
                       <div className="text-sm text-gray-600">Time</div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
                     <MapPin className="h-5 w-5 text-purple-600" />
                     <div>
                       <div className="font-medium">{event.location}</div>
-                      <div className="text-sm text-gray-600">{event.address}</div>
+                      <div className="text-sm text-gray-600">
+                        {event.address}
+                      </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
                     <Users className="h-5 w-5 text-purple-600" />
                     <div>
-                      <div className="font-medium">{event.attendeeCount}/{event.maxAttendees}</div>
+                      <div className="font-medium">
+                        {event.attendeeCount}/{event.maxAttendees}
+                      </div>
                       <div className="text-sm text-gray-600">Attendees</div>
                     </div>
                   </div>
                 </div>
 
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-2">About This Event</h3>
-                  <p className="text-gray-700 leading-relaxed">{event.description}</p>
+                  <h3 className="text-lg font-semibold mb-2">
+                    About This Event
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    {event.description}
+                  </p>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   {event.tags.map((tag) => (
-                    <span key={tag} className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm">
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm"
+                    >
                       <Tag className="h-3 w-3" />
                       {tag}
                     </span>
@@ -294,7 +367,10 @@ const EventDetail = () => {
           {/* Booking Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-4">
-              <TicketPurchase event={event} onPurchaseComplete={handlePurchaseComplete} />
+              <TicketPurchase
+                event={event}
+                onPurchaseComplete={handlePurchaseComplete}
+              />
             </div>
           </div>
         </div>

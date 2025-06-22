@@ -1,14 +1,13 @@
-
 import { Button } from "@/components/ui/button";
 import { Calendar, User, Plus } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import LocationIndicator from "@/components/location/LocationIndicator";
 
 const Header = () => {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
-  
+
   return (
     <header className="border-b bg-white">
       <div className="container mx-auto px-4 py-4">
@@ -17,47 +16,53 @@ const Header = () => {
             <Calendar className="h-8 w-8 text-purple-600" />
             <span className="text-2xl font-bold text-gray-900">Eventory</span>
           </Link>
-          
+
           <div className="hidden md:flex items-center space-x-6">
-            <Link 
-              to="/events" 
+            <Link
+              to="/events"
               className={`hover:text-purple-600 transition-colors ${
-                location.pathname === '/events' ? 'text-purple-600 font-medium' : 'text-gray-600'
+                location.pathname === "/events"
+                  ? "text-purple-600 font-medium"
+                  : "text-gray-600"
               }`}
             >
               Explore Events
             </Link>
-            {isAuthenticated && user?.role === 'organizer' && (
-              <Link 
-                to="/dashboard" 
+            {isAuthenticated && user?.role === "organizer" && (
+              <Link
+                to="/dashboard"
                 className={`hover:text-purple-600 transition-colors ${
-                  location.pathname === '/dashboard' ? 'text-purple-600 font-medium' : 'text-gray-600'
+                  location.pathname === "/dashboard"
+                    ? "text-purple-600 font-medium"
+                    : "text-gray-600"
                 }`}
               >
                 Dashboard
               </Link>
             )}
             {isAuthenticated && (
-              <Link 
-                to="/profile" 
+              <Link
+                to="/profile"
                 className={`hover:text-purple-600 transition-colors ${
-                  location.pathname === '/profile' ? 'text-purple-600 font-medium' : 'text-gray-600'
+                  location.pathname === "/profile"
+                    ? "text-purple-600 font-medium"
+                    : "text-gray-600"
                 }`}
               >
                 Profile
               </Link>
             )}
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <LocationIndicator />
-            
+
             {isAuthenticated ? (
               <>
                 <span className="text-sm text-gray-600">
                   Welcome, {user?.name}
                 </span>
-                {user?.role === 'organizer' && (
+                {user?.role === "organizer" && (
                   <Link to="/create-event">
                     <Button size="sm">
                       <Plus className="h-4 w-4 mr-2" />

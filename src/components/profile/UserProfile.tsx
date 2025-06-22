@@ -1,9 +1,14 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { User, Calendar, Heart, Settings, LogOut, Users } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import { Event } from "@/types/event";
 
 interface UserProfileProps {
@@ -14,23 +19,49 @@ interface UserProfileProps {
   followedOrganizerEvents?: Event[];
 }
 
-const UserProfile = ({ 
-  purchasedTickets = [], 
-  favoriteEvents = [], 
+const UserProfile = ({
+  purchasedTickets = [],
+  favoriteEvents = [],
   hostedEvents = [],
   followedOrganizers = [],
-  followedOrganizerEvents = []
+  followedOrganizerEvents = [],
 }: UserProfileProps) => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'tickets' | 'favorites' | 'hosted' | 'following'>('tickets');
+  const [activeTab, setActiveTab] = useState<
+    "tickets" | "favorites" | "hosted" | "following"
+  >("tickets");
 
   if (!user) return null;
 
   const tabs = [
-    { id: 'tickets' as const, label: 'My Tickets', icon: Calendar, count: purchasedTickets.length },
-    { id: 'favorites' as const, label: 'Favorites', icon: Heart, count: favoriteEvents.length },
-    { id: 'following' as const, label: 'Following', icon: Users, count: followedOrganizers.length },
-    ...(user.role === 'organizer' ? [{ id: 'hosted' as const, label: 'My Events', icon: User, count: hostedEvents.length }] : [])
+    {
+      id: "tickets" as const,
+      label: "My Tickets",
+      icon: Calendar,
+      count: purchasedTickets.length,
+    },
+    {
+      id: "favorites" as const,
+      label: "Favorites",
+      icon: Heart,
+      count: favoriteEvents.length,
+    },
+    {
+      id: "following" as const,
+      label: "Following",
+      icon: Users,
+      count: followedOrganizers.length,
+    },
+    ...(user.role === "organizer"
+      ? [
+          {
+            id: "hosted" as const,
+            label: "My Events",
+            icon: User,
+            count: hostedEvents.length,
+          },
+        ]
+      : []),
   ];
 
   const renderEventList = (events: Event[], emptyMessage: string) => (
@@ -41,8 +72,8 @@ const UserProfile = ({
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
-                  <img 
-                    src={event.image} 
+                  <img
+                    src={event.image}
                     alt={event.title}
                     className="w-full h-full object-cover"
                   />
@@ -50,10 +81,11 @@ const UserProfile = ({
                 <div className="flex-1">
                   <h3 className="font-semibold">{event.title}</h3>
                   <p className="text-sm text-gray-600">
-                    {new Date(event.date).toLocaleDateString()} • {event.location}
+                    {new Date(event.date).toLocaleDateString()} •{" "}
+                    {event.location}
                   </p>
                   <p className="text-sm text-purple-600">
-                    {event.price === 0 ? 'Free' : `$${event.price}`}
+                    {event.price === 0 ? "Free" : `$${event.price}`}
                   </p>
                 </div>
                 <Button variant="outline" size="sm">
@@ -76,7 +108,9 @@ const UserProfile = ({
     <div className="space-y-6">
       {/* Followed Organizers */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Followed Organizers ({followedOrganizers.length})</h3>
+        <h3 className="text-lg font-semibold mb-4">
+          Followed Organizers ({followedOrganizers.length})
+        </h3>
         {followedOrganizers.length > 0 ? (
           <div className="grid gap-3">
             {followedOrganizers.map((organizer) => (
@@ -107,7 +141,9 @@ const UserProfile = ({
 
       {/* Events from Followed Organizers */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Events from Followed Organizers</h3>
+        <h3 className="text-lg font-semibold mb-4">
+          Events from Followed Organizers
+        </h3>
         {renderEventList(
           followedOrganizerEvents,
           "No events from your followed organizers at the moment."
@@ -130,7 +166,7 @@ const UserProfile = ({
                 <CardTitle>{user.name}</CardTitle>
                 <CardDescription>{user.email}</CardDescription>
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">
-                  {user.role === 'organizer' ? 'Event Organizer' : 'Attendee'}
+                  {user.role === "organizer" ? "Event Organizer" : "Attendee"}
                 </span>
               </div>
             </div>
@@ -156,8 +192,8 @@ const UserProfile = ({
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-purple-600 text-purple-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
+                ? "border-purple-600 text-purple-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
             }`}
           >
             <tab.icon className="h-4 w-4" />
@@ -171,22 +207,26 @@ const UserProfile = ({
 
       {/* Tab Content */}
       <div>
-        {activeTab === 'tickets' && renderEventList(
-          purchasedTickets,
-          "You haven't purchased any tickets yet. Browse events to get started!"
-        )}
-        
-        {activeTab === 'favorites' && renderEventList(
-          favoriteEvents,
-          "You haven't favorited any events yet. Add events to your favorites to see them here!"
-        )}
+        {activeTab === "tickets" &&
+          renderEventList(
+            purchasedTickets,
+            "You haven't purchased any tickets yet. Browse events to get started!"
+          )}
 
-        {activeTab === 'following' && renderFollowingTab()}
-        
-        {activeTab === 'hosted' && user.role === 'organizer' && renderEventList(
-          hostedEvents,
-          "You haven't created any events yet. Start by creating your first event!"
-        )}
+        {activeTab === "favorites" &&
+          renderEventList(
+            favoriteEvents,
+            "You haven't favorited any events yet. Add events to your favorites to see them here!"
+          )}
+
+        {activeTab === "following" && renderFollowingTab()}
+
+        {activeTab === "hosted" &&
+          user.role === "organizer" &&
+          renderEventList(
+            hostedEvents,
+            "You haven't created any events yet. Start by creating your first event!"
+          )}
       </div>
     </div>
   );

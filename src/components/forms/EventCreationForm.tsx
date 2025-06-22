@@ -1,10 +1,15 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Calendar, MapPin, DollarSign, Image, Tag } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 interface EventFormData {
@@ -30,20 +35,29 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<EventFormData>({
-    title: '',
-    description: '',
-    date: '',
-    time: '',
-    location: '',
-    address: '',
+    title: "",
+    description: "",
+    date: "",
+    time: "",
+    location: "",
+    address: "",
     price: 0,
-    category: 'Music',
+    category: "Music",
     maxAttendees: 100,
-    image: '/placeholder.svg',
-    tags: []
+    image: "/placeholder.svg",
+    tags: [],
   });
 
-  const categories = ['Music', 'Technology', 'Food', 'Sports', 'Arts', 'Business', 'Education', 'Health'];
+  const categories = [
+    "Music",
+    "Technology",
+    "Food",
+    "Sports",
+    "Arts",
+    "Business",
+    "Education",
+    "Health",
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,17 +68,19 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
       const newEvent = {
         id: Math.random().toString(36).substr(2, 9),
         ...formData,
-        organizer: user?.name || 'Unknown',
+        organizer: user?.name || "Unknown",
         attendeeCount: 0,
-        tags: formData.tags.filter(tag => tag.trim() !== '')
+        tags: formData.tags.filter((tag) => tag.trim() !== ""),
       };
 
-      console.log('Creating event:', newEvent);
-      
+      console.log("Creating event:", newEvent);
+
       // Store in localStorage for now
-      const existingEvents = JSON.parse(localStorage.getItem('eventory_events') || '[]');
+      const existingEvents = JSON.parse(
+        localStorage.getItem("eventory_events") || "[]"
+      );
       existingEvents.push(newEvent);
-      localStorage.setItem('eventory_events', JSON.stringify(existingEvents));
+      localStorage.setItem("eventory_events", JSON.stringify(existingEvents));
 
       toast({
         title: "Event Created!",
@@ -84,7 +100,7 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
   };
 
   const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const tags = e.target.value.split(',').map(tag => tag.trim());
+    const tags = e.target.value.split(",").map((tag) => tag.trim());
     setFormData({ ...formData, tags });
   };
 
@@ -110,7 +126,9 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
               <Input
                 required
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 placeholder="Enter event title"
               />
             </div>
@@ -122,7 +140,9 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
               <textarea
                 required
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Describe your event"
                 className="w-full h-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
@@ -138,7 +158,9 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                   type="date"
                   required
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, date: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -149,7 +171,9 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                   type="time"
                   required
                   value={formData.time}
-                  onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, time: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -165,7 +189,9 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
               <Input
                 required
                 value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
                 placeholder="e.g., Central Park"
               />
             </div>
@@ -176,7 +202,9 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
               <Input
                 required
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
                 placeholder="123 Street Name, City, State, ZIP"
               />
             </div>
@@ -194,10 +222,17 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                 min="0"
                 step="0.01"
                 value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    price: parseFloat(e.target.value) || 0,
+                  })
+                }
                 placeholder="0.00"
               />
-              <p className="text-xs text-gray-500 mt-1">Set to 0 for free events</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Set to 0 for free events
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -206,11 +241,15 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
               <select
                 required
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
                 ))}
               </select>
             </div>
@@ -222,7 +261,12 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                 type="number"
                 min="1"
                 value={formData.maxAttendees}
-                onChange={(e) => setFormData({ ...formData, maxAttendees: parseInt(e.target.value) || 100 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    maxAttendees: parseInt(e.target.value) || 100,
+                  })
+                }
                 placeholder="100"
               />
             </div>
@@ -235,15 +279,17 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
               Tags
             </label>
             <Input
-              value={formData.tags.join(', ')}
+              value={formData.tags.join(", ")}
               onChange={handleTagsChange}
               placeholder="outdoor, family-friendly, music (separate with commas)"
             />
-            <p className="text-xs text-gray-500 mt-1">Add tags to help people discover your event</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Add tags to help people discover your event
+            </p>
           </div>
 
           <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? 'Creating Event...' : 'Create Event'}
+            {isSubmitting ? "Creating Event..." : "Create Event"}
           </Button>
         </form>
       </CardContent>

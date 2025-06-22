@@ -1,11 +1,16 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
@@ -13,9 +18,9 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState<'attendee' | 'organizer'>('attendee');
+  const [role, setRole] = useState<"attendee" | "organizer">("attendee");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { login, signup } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -35,10 +40,11 @@ const Login = () => {
         await signup(email, password, name, role);
         toast({
           title: "Account created!",
-          description: "Welcome to Eventory! You can now start exploring events.",
+          description:
+            "Welcome to Eventory! You can now start exploring events.",
         });
       }
-      navigate('/');
+      navigate("/");
     } catch (error) {
       toast({
         title: "Authentication failed",
@@ -61,19 +67,21 @@ const Login = () => {
             {isLogin ? "Welcome back" : "Create account"}
           </CardTitle>
           <CardDescription>
-            {isLogin 
-              ? "Sign in to your Eventory account" 
-              : "Join Eventory to discover amazing events"
-            }
+            {isLogin
+              ? "Sign in to your Eventory account"
+              : "Join Eventory to discover amazing events"}
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <>
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Full Name
                   </label>
                   <Input
@@ -85,26 +93,38 @@ const Login = () => {
                     required={!isLogin}
                   />
                 </div>
-                
+
                 <div>
-                  <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="role"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Account Type
                   </label>
                   <select
                     id="role"
                     value={role}
-                    onChange={(e) => setRole(e.target.value as 'attendee' | 'organizer')}
+                    onChange={(e) =>
+                      setRole(e.target.value as "attendee" | "organizer")
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
-                    <option value="attendee">Attendee - Discover and attend events</option>
-                    <option value="organizer">Organizer - Create and manage events</option>
+                    <option value="attendee">
+                      Attendee - Discover and attend events
+                    </option>
+                    <option value="organizer">
+                      Organizer - Create and manage events
+                    </option>
                   </select>
                 </div>
               </>
             )}
-            
+
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Email
               </label>
               <Input
@@ -116,9 +136,12 @@ const Login = () => {
                 required
               />
             </div>
-            
+
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Password
               </label>
               <Input
@@ -130,12 +153,16 @@ const Login = () => {
                 required
               />
             </div>
-            
+
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Please wait...' : (isLogin ? "Sign In" : "Create Account")}
+              {isLoading
+                ? "Please wait..."
+                : isLogin
+                ? "Sign In"
+                : "Create Account"}
             </Button>
           </form>
-          
+
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               {isLogin ? "Don't have an account?" : "Already have an account?"}
@@ -148,7 +175,7 @@ const Login = () => {
               </button>
             </p>
           </div>
-          
+
           <div className="mt-4 text-center">
             <Link to="/" className="text-sm text-gray-600 hover:text-gray-800">
               ← Back to home

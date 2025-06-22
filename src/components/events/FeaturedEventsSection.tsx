@@ -1,7 +1,12 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Calendar, MapPin, Users, ArrowRight } from "lucide-react";
 import { Event } from "@/types/event";
 import { Link } from "react-router-dom";
@@ -12,7 +17,7 @@ interface FeaturedEventsSectionProps {
 
 const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
   const [showAll, setShowAll] = useState(false);
-  
+
   // Mock featured events - in real app this would come from API
   const featuredEvents = events.slice(0, showAll ? events.length : 10);
 
@@ -35,14 +40,17 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
             </Button>
           </Link>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {featuredEvents.map((event) => (
-            <Card key={event.id} className="hover:shadow-lg transition-shadow group">
+            <Card
+              key={event.id}
+              className="hover:shadow-lg transition-shadow group"
+            >
               <div className="relative">
                 <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
-                  <img 
-                    src={event.image} 
+                  <img
+                    src={event.image}
                     alt={event.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -53,7 +61,7 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
                   </span>
                 </div>
               </div>
-              
+
               <Link to={`/events/${event.id}`}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
@@ -72,23 +80,29 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
                   <div className="space-y-2 text-sm text-gray-600 mb-4">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      <span>{new Date(event.date).toLocaleDateString()} at {event.time}</span>
+                      <span>
+                        {new Date(event.date).toLocaleDateString()} at{" "}
+                        {event.time}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
                       <span>{event.location}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    {/* <div className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
                       <span>{event.attendeeCount}/{event.maxAttendees} attending</span>
-                    </div>
+                    </div> */}
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold text-purple-600">
-                      {event.price === 0 ? 'Free' : `$${event.price}`}
+                      {event.price === 0 ? "Free" : `$${event.price}`}
                     </span>
-                    <Button size="sm" className="group-hover:bg-purple-700 transition-colors">
+                    <Button
+                      size="sm"
+                      className="group-hover:bg-purple-700 transition-colors"
+                    >
                       View Details
                       <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
@@ -98,11 +112,11 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
             </Card>
           ))}
         </div>
-        
+
         {!showAll && events.length > 10 && (
           <div className="text-center">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowAll(true)}
               className="px-8"
             >
