@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Calendar, User, Plus } from "lucide-react";
+import { Calendar, User, Plus, Image } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import LocationIndicator from "@/components/location/LocationIndicator";
@@ -28,14 +28,24 @@ const Header = () => {
               Explore Events
             </Link>
             {isAuthenticated && user?.role === 'organizer' && (
-              <Link 
-                to="/dashboard" 
-                className={`hover:text-purple-600 transition-colors ${
-                  location.pathname === '/dashboard' ? 'text-purple-600 font-medium' : 'text-gray-600'
-                }`}
-              >
-                Dashboard
-              </Link>
+              <>
+                <Link 
+                  to="/dashboard" 
+                  className={`hover:text-purple-600 transition-colors ${
+                    location.pathname === '/dashboard' ? 'text-purple-600 font-medium' : 'text-gray-600'
+                  }`}
+                >
+                  Dashboard
+                </Link>
+                <Link 
+                  to="/poster-studio" 
+                  className={`hover:text-purple-600 transition-colors ${
+                    location.pathname === '/poster-studio' ? 'text-purple-600 font-medium' : 'text-gray-600'
+                  }`}
+                >
+                  Poster Studio
+                </Link>
+              </>
             )}
             {isAuthenticated && (
               <Link 
@@ -58,12 +68,20 @@ const Header = () => {
                   Welcome, {user?.name}
                 </span>
                 {user?.role === 'organizer' && (
-                  <Link to="/create-event">
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Event
-                    </Button>
-                  </Link>
+                  <>
+                    <Link to="/create-event">
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Event
+                      </Button>
+                    </Link>
+                    <Link to="/poster-studio">
+                      <Button variant="outline" size="sm">
+                        <Image className="h-4 w-4 mr-2" />
+                        Poster Studio
+                      </Button>
+                    </Link>
+                  </>
                 )}
                 <Link to="/profile">
                   <Button variant="ghost" size="sm">

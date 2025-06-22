@@ -9,6 +9,92 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      generated_posters: {
+        Row: {
+          created_at: string
+          dimensions: Json
+          event_id: string
+          id: string
+          image_data: string | null
+          image_url: string | null
+          prompt: string
+          social_platform: string | null
+          status: string | null
+          template_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dimensions: Json
+          event_id: string
+          id?: string
+          image_data?: string | null
+          image_url?: string | null
+          prompt: string
+          social_platform?: string | null
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dimensions?: Json
+          event_id?: string
+          id?: string
+          image_data?: string | null
+          image_url?: string | null
+          prompt?: string
+          social_platform?: string | null
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_posters_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "poster_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poster_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          design_data: Json
+          dimensions: Json
+          id: string
+          name: string
+          social_platform: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          design_data: Json
+          dimensions: Json
+          id?: string
+          name: string
+          social_platform?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          design_data?: Json
+          dimensions?: Json
+          id?: string
+          name?: string
+          social_platform?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -32,6 +118,59 @@ export type Database = {
           role?: string | null
         }
         Relationships: []
+      }
+      scheduled_posts: {
+        Row: {
+          caption: string
+          created_at: string
+          error_message: string | null
+          event_id: string
+          id: string
+          platform: string
+          post_id: string | null
+          posted_at: string | null
+          poster_id: string | null
+          scheduled_for: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          caption: string
+          created_at?: string
+          error_message?: string | null
+          event_id: string
+          id?: string
+          platform: string
+          post_id?: string | null
+          posted_at?: string | null
+          poster_id?: string | null
+          scheduled_for: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          error_message?: string | null
+          event_id?: string
+          id?: string
+          platform?: string
+          post_id?: string | null
+          posted_at?: string | null
+          poster_id?: string | null
+          scheduled_for?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_posts_poster_id_fkey"
+            columns: ["poster_id"]
+            isOneToOne: false
+            referencedRelation: "generated_posters"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
