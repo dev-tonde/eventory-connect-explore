@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
 import {
   Card,
   CardContent,
@@ -21,6 +22,11 @@ import {
   UserPlus,
   UserCheck,
 } from "lucide-react";
+=======
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, MapPin, Users, Clock, Tag, ArrowLeft, Share2, Heart, UserPlus, UserCheck, CheckCircle } from "lucide-react";
+>>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
 import Header from "@/components/layout/Header";
 import TicketPurchase from "@/components/tickets/TicketPurchase";
 import { Event } from "@/types/event";
@@ -53,6 +59,8 @@ const EventDetail = () => {
   const [event, setEvent] = useState<Event | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isFollowingOrganizer, setIsFollowingOrganizer] = useState(false);
+  const [organizerFollowerCount, setOrganizerFollowerCount] = useState(0);
+  const [isVerifiedOrganizer, setIsVerifiedOrganizer] = useState(false);
 
   useEffect(() => {
     // Load event data
@@ -74,7 +82,7 @@ const EventDetail = () => {
       setIsFavorited(isFav);
     }
 
-    // Check if following organizer
+    // Check if following organizer and load follower count
     if (user && foundEvent) {
       const follows = JSON.parse(
         localStorage.getItem("eventory_follows") || "[]"
@@ -84,6 +92,12 @@ const EventDetail = () => {
           f.userId === user.id && f.organizerName === foundEvent.organizer
       );
       setIsFollowingOrganizer(isFollowing);
+
+      // Load follower count for this organizer
+      const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
+      const count = followerCounts[foundEvent.organizer] || 0;
+      setOrganizerFollowerCount(count);
+      setIsVerifiedOrganizer(count >= 10000);
     }
   }, [id, user]);
 
@@ -145,9 +159,14 @@ const EventDetail = () => {
       return;
     }
 
+<<<<<<< HEAD
     const existingFollows = JSON.parse(
       localStorage.getItem("eventory_follows") || "[]"
     );
+=======
+    const existingFollows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
+    const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
+>>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
 
     if (isFollowingOrganizer) {
       // Unfollow organizer
@@ -155,8 +174,21 @@ const EventDetail = () => {
         (f: any) =>
           !(f.userId === user.id && f.organizerName === event.organizer)
       );
+<<<<<<< HEAD
       localStorage.setItem("eventory_follows", JSON.stringify(updatedFollows));
+=======
+      localStorage.setItem('eventory_follows', JSON.stringify(updatedFollows));
+      
+      // Decrease follower count
+      const newCount = Math.max(0, (followerCounts[event.organizer] || 0) - 1);
+      followerCounts[event.organizer] = newCount;
+      localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
+      
+>>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
       setIsFollowingOrganizer(false);
+      setOrganizerFollowerCount(newCount);
+      setIsVerifiedOrganizer(newCount >= 10000);
+      
       toast({
         title: "Unfollowed organizer",
         description: `You are no longer following ${event.organizer}.`,
@@ -169,12 +201,33 @@ const EventDetail = () => {
         followedAt: new Date().toISOString(),
       };
       existingFollows.push(newFollow);
+<<<<<<< HEAD
       localStorage.setItem("eventory_follows", JSON.stringify(existingFollows));
+=======
+      localStorage.setItem('eventory_follows', JSON.stringify(existingFollows));
+      
+      // Increase follower count
+      const newCount = (followerCounts[event.organizer] || 0) + 1;
+      followerCounts[event.organizer] = newCount;
+      localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
+      
+>>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
       setIsFollowingOrganizer(true);
+      setOrganizerFollowerCount(newCount);
+      setIsVerifiedOrganizer(newCount >= 10000);
+      
       toast({
         title: "Following organizer",
         description: `You are now following ${event.organizer}.`,
       });
+
+      // Check if organizer just became verified
+      if (newCount === 10000) {
+        toast({
+          title: "🎉 Organizer Verified!",
+          description: `${event.organizer} just reached 10,000 followers and is now verified!`,
+        });
+      }
     }
   };
 
@@ -295,8 +348,24 @@ const EventDetail = () => {
                     {event.category}
                   </span>
                 </div>
-                <CardDescription className="text-base">
-                  Organized by {event.organizer}
+                <CardDescription className="text-base flex items-center gap-2">
+                  <Link 
+                    to={`/organizer/${encodeURIComponent(event.organizer)}`}
+                    className="hover:text-purple-600 transition-colors"
+                  >
+                    <span>Organized by {event.organizer}</span>
+                  </Link>
+                  {isVerifiedOrganizer && (
+                    <CheckCircle className="h-4 w-4 text-blue-500" />
+                  )}
+                  <span className="text-sm text-gray-500">
+                    ({organizerFollowerCount.toLocaleString()} followers)
+                  </span>
+                  {isVerifiedOrganizer && (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
+                      Verified
+                    </Badge>
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>

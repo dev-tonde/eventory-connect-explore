@@ -10,6 +10,7 @@ import {
 import { User, Calendar, Heart, Settings, LogOut, Users } from "lucide-react";
 import { useAuth } from "@/contexts/useAuth";
 import { Event } from "@/types/event";
+import { Link } from "react-router-dom";
 
 interface UserProfileProps {
   purchasedTickets?: Event[];
@@ -106,14 +107,32 @@ const UserProfile = ({
 
   const renderFollowingTab = () => (
     <div className="space-y-6">
-      {/* Followed Organizers */}
+      {/* Quick link to detailed view */}
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Manage Your Followed Organizers</h3>
+            <p className="text-gray-600 mb-4">
+              View all events from organizers you follow and manage your following list
+            </p>
+            <Link to="/followed-organizers">
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                <Users className="h-4 w-4 mr-2" />
+                View All Followed Organizers
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Followed Organizers Preview */}
       <div>
         <h3 className="text-lg font-semibold mb-4">
           Followed Organizers ({followedOrganizers.length})
         </h3>
         {followedOrganizers.length > 0 ? (
           <div className="grid gap-3">
-            {followedOrganizers.map((organizer) => (
+            {followedOrganizers.slice(0, 3).map((organizer) => (
               <Card key={organizer}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -123,13 +142,19 @@ const UserProfile = ({
                       </div>
                       <span className="font-medium">{organizer}</span>
                     </div>
-                    <Button variant="outline" size="sm">
-                      Unfollow
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
+            {followedOrganizers.length > 3 && (
+              <div className="text-center py-4">
+                <Link to="/followed-organizers">
+                  <Button variant="outline" size="sm">
+                    View {followedOrganizers.length - 3} More
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
@@ -139,14 +164,27 @@ const UserProfile = ({
         )}
       </div>
 
-      {/* Events from Followed Organizers */}
+      {/* Recent Events from Followed Organizers */}
       <div>
+<<<<<<< HEAD
         <h3 className="text-lg font-semibold mb-4">
           Events from Followed Organizers
         </h3>
+=======
+        <h3 className="text-lg font-semibold mb-4">Recent Events from Followed Organizers</h3>
+>>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
         {renderEventList(
-          followedOrganizerEvents,
-          "No events from your followed organizers at the moment."
+          followedOrganizerEvents.slice(0, 3),
+          "No recent events from your followed organizers."
+        )}
+        {followedOrganizerEvents.length > 3 && (
+          <div className="text-center mt-4">
+            <Link to="/followed-organizers">
+              <Button variant="outline" size="sm">
+                View All Events from Followed Organizers
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
     </div>
