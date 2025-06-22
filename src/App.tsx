@@ -15,7 +15,15 @@ import CreateEvent from "./pages/CreateEvent";
 import PosterStudio from "./pages/PosterStudio";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Create query client with stable reference
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

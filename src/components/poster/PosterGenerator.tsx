@@ -40,13 +40,30 @@ const PosterGenerator = ({ eventId, eventTitle, eventDate, eventLocation }: Post
   }, []);
 
   const fetchTemplates = async () => {
-    const { data } = await supabase
-      .from('poster_templates')
-      .select('*')
-      .order('name');
-    
-    if (data) {
-      setTemplates(data);
+    try {
+      const { data, error } = await supabase
+        .from('poster_templates')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching templates:', error);
+        return;
+      }
+
+      if (data) {
+        // Transform the data to match our interface
+        const transformedTemplates: PosterTemplate[] = data.map(template => ({
+          id: template.id,
+          name: template.name,
+          description: template.description || '',
+          social_platform: template.social_platform || '',
+          dimensions: template.dimensions as { width: number; height: number }
+        }));
+        setTemplates(transformedTemplates);
+      }
+    } catch (error) {
+      console.error('Error in fetchTemplates:', error);
     }
   };
 
