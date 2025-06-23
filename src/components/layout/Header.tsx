@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Calendar, User, Plus, Image } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
@@ -28,39 +29,29 @@ const Header = () => {
             >
               Explore Events
             </Link>
-<<<<<<< HEAD
             {isAuthenticated && user?.role === "organizer" && (
-              <Link
-                to="/dashboard"
-                className={`hover:text-purple-600 transition-colors ${
-                  location.pathname === "/dashboard"
-                    ? "text-purple-600 font-medium"
-                    : "text-gray-600"
-                }`}
-              >
-                Dashboard
-              </Link>
-=======
-            {isAuthenticated && user?.role === 'organizer' && (
               <>
-                <Link 
-                  to="/dashboard" 
+                <Link
+                  to="/dashboard"
                   className={`hover:text-purple-600 transition-colors ${
-                    location.pathname === '/dashboard' ? 'text-purple-600 font-medium' : 'text-gray-600'
+                    location.pathname === "/dashboard"
+                      ? "text-purple-600 font-medium"
+                      : "text-gray-600"
                   }`}
                 >
                   Dashboard
                 </Link>
-                <Link 
-                  to="/poster-studio" 
+                <Link
+                  to="/poster-studio"
                   className={`hover:text-purple-600 transition-colors ${
-                    location.pathname === '/poster-studio' ? 'text-purple-600 font-medium' : 'text-gray-600'
+                    location.pathname === "/poster-studio"
+                      ? "text-purple-600 font-medium"
+                      : "text-gray-600"
                   }`}
                 >
                   Poster Studio
                 </Link>
               </>
->>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
             )}
             {isAuthenticated && (
               <Link
@@ -84,16 +75,7 @@ const Header = () => {
                 <span className="text-sm text-gray-600">
                   Welcome, {user?.name}
                 </span>
-<<<<<<< HEAD
                 {user?.role === "organizer" && (
-                  <Link to="/create-event">
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Event
-                    </Button>
-                  </Link>
-=======
-                {user?.role === 'organizer' && (
                   <>
                     <Link to="/create-event">
                       <Button size="sm">
@@ -108,7 +90,6 @@ const Header = () => {
                       </Button>
                     </Link>
                   </>
->>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
                 )}
                 <Link to="/profile">
                   <Button variant="ghost" size="sm">

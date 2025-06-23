@@ -2,31 +2,9 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Calendar,
-  MapPin,
-  Users,
-  Clock,
-  Tag,
-  ArrowLeft,
-  Share2,
-  Heart,
-  UserPlus,
-  UserCheck,
-} from "lucide-react";
-=======
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, Clock, Tag, ArrowLeft, Share2, Heart, UserPlus, UserCheck, CheckCircle } from "lucide-react";
->>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
 import Header from "@/components/layout/Header";
 import TicketPurchase from "@/components/tickets/TicketPurchase";
 import { Event } from "@/types/event";
@@ -159,14 +137,8 @@ const EventDetail = () => {
       return;
     }
 
-<<<<<<< HEAD
-    const existingFollows = JSON.parse(
-      localStorage.getItem("eventory_follows") || "[]"
-    );
-=======
     const existingFollows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
     const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
->>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
 
     if (isFollowingOrganizer) {
       // Unfollow organizer
@@ -174,9 +146,6 @@ const EventDetail = () => {
         (f: any) =>
           !(f.userId === user.id && f.organizerName === event.organizer)
       );
-<<<<<<< HEAD
-      localStorage.setItem("eventory_follows", JSON.stringify(updatedFollows));
-=======
       localStorage.setItem('eventory_follows', JSON.stringify(updatedFollows));
       
       // Decrease follower count
@@ -184,7 +153,6 @@ const EventDetail = () => {
       followerCounts[event.organizer] = newCount;
       localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
       
->>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
       setIsFollowingOrganizer(false);
       setOrganizerFollowerCount(newCount);
       setIsVerifiedOrganizer(newCount >= 10000);
@@ -201,9 +169,6 @@ const EventDetail = () => {
         followedAt: new Date().toISOString(),
       };
       existingFollows.push(newFollow);
-<<<<<<< HEAD
-      localStorage.setItem("eventory_follows", JSON.stringify(existingFollows));
-=======
       localStorage.setItem('eventory_follows', JSON.stringify(existingFollows));
       
       // Increase follower count
@@ -211,7 +176,6 @@ const EventDetail = () => {
       followerCounts[event.organizer] = newCount;
       localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
       
->>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
       setIsFollowingOrganizer(true);
       setOrganizerFollowerCount(newCount);
       setIsVerifiedOrganizer(newCount >= 10000);
