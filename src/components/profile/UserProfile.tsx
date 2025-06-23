@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -166,13 +167,7 @@ const UserProfile = ({
 
       {/* Recent Events from Followed Organizers */}
       <div>
-<<<<<<< HEAD
-        <h3 className="text-lg font-semibold mb-4">
-          Events from Followed Organizers
-        </h3>
-=======
         <h3 className="text-lg font-semibold mb-4">Recent Events from Followed Organizers</h3>
->>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
         {renderEventList(
           followedOrganizerEvents.slice(0, 3),
           "No recent events from your followed organizers."

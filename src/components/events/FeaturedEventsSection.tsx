@@ -1,19 +1,9 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Calendar, MapPin, Users, ArrowRight } from "lucide-react";
-=======
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, ArrowRight, CheckCircle } from "lucide-react";
->>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
 import { Event } from "@/types/event";
 import { Link } from "react-router-dom";
 
@@ -23,11 +13,6 @@ interface FeaturedEventsSectionProps {
 
 const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
   const [showAll, setShowAll] = useState(false);
-<<<<<<< HEAD
-
-  // Mock featured events - in real app this would come from API
-  const featuredEvents = events.slice(0, showAll ? events.length : 10);
-=======
   
   // Get follower counts and determine verified organizers
   const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
@@ -50,7 +35,6 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
       return b.attendeeCount - a.attendeeCount;
     })
     .slice(0, showAll ? events.length : 10);
->>>>>>> db4f02f8b1d364f6cab2fa231a6e01d0de8471c8
 
   return (
     <section className="py-16">
@@ -128,10 +112,6 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
                       <MapPin className="h-4 w-4" />
                       <span>{event.location}</span>
                     </div>
-                    {/* <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span>{event.attendeeCount}/{event.maxAttendees} attending</span>
-                    </div> */}
                   </div>
 
                   <div className="flex justify-between items-center">
