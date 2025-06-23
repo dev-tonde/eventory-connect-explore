@@ -1,3 +1,4 @@
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -13,6 +14,9 @@ import Profile from "@/pages/Profile";
 import FollowedOrganizers from "@/pages/FollowedOrganizers";
 import OrganizerProfile from "@/pages/OrganizerProfile";
 import PosterStudio from "@/pages/PosterStudio";
+import Communities from "@/pages/Communities";
+import Community from "@/pages/Community";
+import SplitPaymentPage from "@/pages/SplitPaymentPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +39,9 @@ function App() {
               <Route path="/followed-organizers" element={<FollowedOrganizers />} />
               <Route path="/organizer/:organizerName" element={<OrganizerProfile />} />
               <Route path="/poster-studio" element={<PosterStudio />} />
+              <Route path="/communities" element={<Communities />} />
+              <Route path="/community/:communityId" element={<Community />} />
+              <Route path="/split-payment/:splitId" element={<SplitPaymentPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

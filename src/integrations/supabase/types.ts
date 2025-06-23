@@ -9,6 +9,219 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      calendar_sync: {
+        Row: {
+          calendar_event_id: string | null
+          calendar_provider: string | null
+          event_id: string
+          id: string
+          prep_time_minutes: number | null
+          reminder_sent: boolean | null
+          synced_at: string
+          travel_time_minutes: number | null
+          user_id: string
+        }
+        Insert: {
+          calendar_event_id?: string | null
+          calendar_provider?: string | null
+          event_id: string
+          id?: string
+          prep_time_minutes?: number | null
+          reminder_sent?: boolean | null
+          synced_at?: string
+          travel_time_minutes?: number | null
+          user_id: string
+        }
+        Update: {
+          calendar_event_id?: string | null
+          calendar_provider?: string | null
+          event_id?: string
+          id?: string
+          prep_time_minutes?: number | null
+          reminder_sent?: boolean | null
+          synced_at?: string
+          travel_time_minutes?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      communities: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          invite_code: string | null
+          is_public: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          invite_code?: string | null
+          is_public?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          invite_code?: string | null
+          is_public?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      community_members: {
+        Row: {
+          community_id: string
+          id: string
+          joined_at: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_members_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_messages: {
+        Row: {
+          community_id: string
+          created_at: string
+          event_id: string | null
+          id: string
+          image_url: string | null
+          message: string
+          message_type: string | null
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          image_url?: string | null
+          message: string
+          message_type?: string | null
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          image_url?: string | null
+          message?: string
+          message_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_messages_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_polls: {
+        Row: {
+          community_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          event_id: string | null
+          expires_at: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          event_id?: string | null
+          expires_at?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          event_id?: string | null
+          expires_at?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_polls_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_sentiment: {
+        Row: {
+          created_at: string
+          event_id: string
+          feedback: string | null
+          id: string
+          is_anonymous: boolean | null
+          sentiment: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          feedback?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          sentiment?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          feedback?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          sentiment?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       generated_posters: {
         Row: {
           created_at: string
@@ -58,6 +271,74 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "poster_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poll_options: {
+        Row: {
+          id: string
+          option_text: string
+          poll_id: string
+          votes_count: number | null
+        }
+        Insert: {
+          id?: string
+          option_text: string
+          poll_id: string
+          votes_count?: number | null
+        }
+        Update: {
+          id?: string
+          option_text?: string
+          poll_id?: string
+          votes_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "community_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_id?: string
+          poll_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "community_polls"
             referencedColumns: ["id"]
           },
         ]
@@ -177,7 +458,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_invite_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

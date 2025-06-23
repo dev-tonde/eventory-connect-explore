@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Calendar, User, Plus, Image } from "lucide-react";
+import { Calendar, User, Plus, Image, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/useAuth";
 import LocationIndicator from "@/components/location/LocationIndicator";
@@ -28,6 +28,16 @@ const Header = () => {
               }`}
             >
               Explore Events
+            </Link>
+            <Link
+              to="/communities"
+              className={`hover:text-purple-600 transition-colors ${
+                location.pathname.startsWith("/communit")
+                  ? "text-purple-600 font-medium"
+                  : "text-gray-600"
+              }`}
+            >
+              Communities
             </Link>
             {isAuthenticated && user?.role === "organizer" && (
               <>
@@ -75,6 +85,12 @@ const Header = () => {
                 <span className="text-sm text-gray-600">
                   Welcome, {user?.name}
                 </span>
+                <Link to="/communities">
+                  <Button variant="outline" size="sm">
+                    <Users className="h-4 w-4 mr-2" />
+                    Communities
+                  </Button>
+                </Link>
                 {user?.role === "organizer" && (
                   <>
                     <Link to="/create-event">
