@@ -1,8 +1,8 @@
 
 import { Button } from "@/components/ui/button";
-import { Calendar, MessageSquare, User, LogOut, Settings } from "lucide-react";
+import { Calendar, MessageSquare, User, LogOut, Settings, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Header = () => {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -21,7 +22,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <nav className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
@@ -42,14 +43,28 @@ const Header = () => {
                     Communities
                   </Button>
                 </Link>
+                
+                <Link to="/create-event">
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Create Event
+                  </Button>
+                </Link>
+                
                 <Link to="/dashboard">
                   <Button variant="ghost">Dashboard</Button>
                 </Link>
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <User className="h-4 w-4" />
+                    <Button variant="ghost" className="flex items-center gap-2 h-10">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={profile?.avatar_url} />
+                        <AvatarFallback>
+                          {profile?.first_name?.[0]}{profile?.last_name?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden md:inline">{profile?.username}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">

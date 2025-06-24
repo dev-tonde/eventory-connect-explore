@@ -222,6 +222,116 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          address: string | null
+          category: string
+          created_at: string | null
+          current_attendees: number | null
+          date: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          location_coordinates: unknown | null
+          max_attendees: number | null
+          organizer_id: string | null
+          price: number
+          social_links: Json | null
+          tags: string[] | null
+          time: string
+          title: string
+          updated_at: string | null
+          venue: string
+        }
+        Insert: {
+          address?: string | null
+          category: string
+          created_at?: string | null
+          current_attendees?: number | null
+          date: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          location_coordinates?: unknown | null
+          max_attendees?: number | null
+          organizer_id?: string | null
+          price?: number
+          social_links?: Json | null
+          tags?: string[] | null
+          time: string
+          title: string
+          updated_at?: string | null
+          venue: string
+        }
+        Update: {
+          address?: string | null
+          category?: string
+          created_at?: string | null
+          current_attendees?: number | null
+          date?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          location_coordinates?: unknown | null
+          max_attendees?: number | null
+          organizer_id?: string | null
+          price?: number
+          social_links?: Json | null
+          tags?: string[] | null
+          time?: string
+          title?: string
+          updated_at?: string | null
+          venue?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorites: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generated_posters: {
         Row: {
           created_at: string
@@ -376,6 +486,47 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_rules: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          event_id: string | null
+          id: string
+          is_active: boolean | null
+          price_multiplier: number
+          rule_type: string
+          threshold_value: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_multiplier?: number
+          rule_type: string
+          threshold_value?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_multiplier?: number
+          rule_type?: string
+          threshold_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_rules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -453,6 +604,51 @@ export type Database = {
           },
         ]
       }
+      tickets: {
+        Row: {
+          event_id: string | null
+          id: string
+          purchase_date: string | null
+          quantity: number
+          status: string | null
+          total_price: number
+          user_id: string | null
+        }
+        Insert: {
+          event_id?: string | null
+          id?: string
+          purchase_date?: string | null
+          quantity?: number
+          status?: string | null
+          total_price: number
+          user_id?: string | null
+        }
+        Update: {
+          event_id?: string | null
+          id?: string
+          purchase_date?: string | null
+          quantity?: number
+          status?: string | null
+          total_price?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -461,6 +657,14 @@ export type Database = {
       generate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      generate_unique_username: {
+        Args: { first_name: string }
+        Returns: string
+      }
+      get_dynamic_price: {
+        Args: { event_uuid: string }
+        Returns: number
       }
     }
     Enums: {

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,20 +11,27 @@ import {
 } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [role, setRole] = useState<"attendee" | "organizer">("attendee");
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login, signup } = useAuth();
+  const { login, signup, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    navigate("/");
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,24 +39,56 @@ const Login = () => {
 
     try {
       if (isLogin) {
-        await login(email, password);
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully logged in.",
-        });
+        const { error } = await login(email, password);
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            toast({
+              title: "Login failed",
+              description: "Invalid email or password. Please check your credentials.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Login failed", 
+              description: error.message,
+              variant: "destructive",
+            });
+          }
+        } else {
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully logged in.",
+          });
+          navigate("/");
+        }
       } else {
-        await signup(email, password, name, role);
-        toast({
-          title: "Account created!",
-          description:
-            "Welcome to Eventory! You can now start exploring events.",
-        });
+        const { error } = await signup(email, password, firstName, lastName, role);
+        if (error) {
+          if (error.message.includes("User already registered")) {
+            toast({
+              title: "Account exists",
+              description: "An account with this email already exists. Please sign in instead.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Signup failed",
+              description: error.message,
+              variant: "destructive",
+            });
+          }
+        } else {
+          toast({
+            title: "Account created!",
+            description: "Welcome to Eventory! Please check your email to verify your account.",
+          });
+          navigate("/");
+        }
       }
-      navigate("/");
     } catch (error) {
       toast({
         title: "Authentication failed",
-        description: "Please check your credentials and try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -79,17 +119,34 @@ const Login = () => {
               <>
                 <div>
                   <label
-                    htmlFor="name"
+                    htmlFor="firstName"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Full Name
+                    First Name
                   </label>
                   <Input
-                    id="name"
+                    id="firstName"
                     type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Enter your first name"
+                    required={!isLogin}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="lastName"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Last Name
+                  </label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Enter your last name"
                     required={!isLogin}
                   />
                 </div>
