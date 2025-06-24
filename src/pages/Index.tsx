@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import {
   Calendar,
   MapPin,
   Search,
@@ -21,13 +28,19 @@ import {
   TrendingUp,
   ArrowRight,
   Mail,
+  MessageSquare,
+  Zap,
+  Shield,
+  BarChart3,
+  Globe,
+  Palette,
+  CreditCard,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/useAuth";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import EventMap from "@/components/map/EventMap";
 import TestimonialsSection from "@/components/testimonials/TestimonialsSection";
-import FeaturedEventsSection from "@/components/events/FeaturedEventsSection";
 import NewsletterSignup from "@/components/newsletter/NewsletterSignup";
 import { Event } from "@/types/event";
 
@@ -227,48 +240,58 @@ const Index = () => {
     }
   };
 
-  const EventGrid = ({ events: gridEvents }: { events: Event[] }) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {gridEvents.slice(0, 6).map((event) => (
-        <Card key={event.id} className="hover:shadow-lg transition-shadow">
-          <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
-            <img
-              src={event.image}
-              alt={event.title}
-              className="w-full h-full object-cover"
-            />
+  const EventCard = ({ event }: { event: Event }) => (
+    <Card className="hover:shadow-lg transition-shadow">
+      <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
+        <img
+          src={event.image}
+          alt={event.title}
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      <Link to={`/events/${event.id}`}>
+        <CardHeader>
+          <CardTitle className="text-lg">{event.title}</CardTitle>
+          <CardDescription className="line-clamp-2">
+            {event.description}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm text-gray-600 mb-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>{new Date(event.date).toLocaleDateString()}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              <span>{event.location}</span>
+            </div>
           </div>
 
-          <Link to={`/events/${event.id}`}>
-            <CardHeader>
-              <CardTitle className="text-lg">{event.title}</CardTitle>
-              <CardDescription className="line-clamp-2">
-                {event.description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm text-gray-600 mb-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>{new Date(event.date).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  <span>{event.location}</span>
-                </div>
-              </div>
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-bold text-purple-600">
+              {event.price === 0 ? "Free" : `$${event.price}`}
+            </span>
+            <Button size="sm">View Details</Button>
+          </div>
+        </CardContent>
+      </Link>
+    </Card>
+  );
 
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold text-purple-600">
-                  {event.price === 0 ? "Free" : `$${event.price}`}
-                </span>
-                <Button size="sm">View Details</Button>
-              </div>
-            </CardContent>
-          </Link>
-        </Card>
-      ))}
-    </div>
+  const EventCarousel = ({ events: carouselEvents }: { events: Event[] }) => (
+    <Carousel className="w-full">
+      <CarouselContent>
+        {carouselEvents.map((event) => (
+          <CarouselItem key={event.id} className="md:basis-1/2 lg:basis-1/3">
+            <EventCard event={event} />
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      <CarouselPrevious />
+      <CarouselNext />
+    </Carousel>
   );
 
   return (
@@ -291,9 +314,17 @@ const Index = () => {
                 </Link>
               </>
             ) : (
-              <Link to="/dashboard">
-                <Button>Dashboard</Button>
-              </Link>
+              <div className="flex items-center space-x-4">
+                <Link to="/communities">
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Communities
+                  </Button>
+                </Link>
+                <Link to="/dashboard">
+                  <Button>Dashboard</Button>
+                </Link>
+              </div>
             )}
           </div>
         </nav>
@@ -340,8 +371,66 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Events */}
-      <FeaturedEventsSection events={events} />
+      {/* Communities CTA Section */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-12 text-white text-center">
+          <MessageSquare className="h-16 w-16 mx-auto mb-6 opacity-80" />
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Join Event Communities
+          </h2>
+          <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
+            Connect with fellow event-goers, share experiences, and stay updated
+            with WhatsApp-style group chats for every event you attend.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to={user ? "/communities" : "/login"}>
+              <Button
+                size="lg"
+                variant="secondary"
+                className="text-lg px-8 py-3"
+              >
+                <MessageSquare className="h-5 w-5 mr-2" />
+                Explore Communities
+              </Button>
+            </Link>
+            {!user && (
+              <Link to="/login">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-lg px-8 py-3 border-white text-white hover:bg-white hover:text-purple-600"
+                >
+                  Sign Up to Join
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Events Carousel */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-12">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Featured Events
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl">
+                Hand-picked events and events from verified organizers that you won't want to miss
+              </p>
+            </div>
+            <Link to="/events">
+              <Button variant="outline" className="flex items-center gap-2">
+                See All Events
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+
+          <EventCarousel events={events.slice(0, 6)} />
+        </div>
+      </section>
 
       {/* Tabbed Events Section with Map */}
       <section className="container mx-auto px-4 py-16">
@@ -402,7 +491,7 @@ const Index = () => {
                 location
               </p>
             </div>
-            <EventGrid events={getFilteredEvents(nearbyEvents)} />
+            <EventCarousel events={getFilteredEvents(nearbyEvents)} />
           </TabsContent>
 
           <TabsContent value="attended" className="mt-8">
@@ -419,7 +508,7 @@ const Index = () => {
               </p>
             </div>
             {getFilteredEvents(pastAttendedEvents).length > 0 ? (
-              <EventGrid events={getFilteredEvents(pastAttendedEvents)} />
+              <EventCarousel events={getFilteredEvents(pastAttendedEvents)} />
             ) : (
               <div className="text-center py-12">
                 <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -444,7 +533,7 @@ const Index = () => {
               </p>
             </div>
             {getFilteredEvents(favoriteEvents).length > 0 ? (
-              <EventGrid events={getFilteredEvents(favoriteEvents)} />
+              <EventCarousel events={getFilteredEvents(favoriteEvents)} />
             ) : (
               <div className="text-center py-12">
                 <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -462,7 +551,7 @@ const Index = () => {
                 {getFilteredEvents(freeEvents).length} free events available
               </p>
             </div>
-            <EventGrid events={getFilteredEvents(freeEvents)} />
+            <EventCarousel events={getFilteredEvents(freeEvents)} />
           </TabsContent>
 
           <TabsContent value="family" className="mt-8">
@@ -475,7 +564,7 @@ const Index = () => {
                 for families
               </p>
             </div>
-            <EventGrid events={getFilteredEvents(familyFriendlyEvents)} />
+            <EventCarousel events={getFilteredEvents(familyFriendlyEvents)} />
           </TabsContent>
 
           <TabsContent value="all" className="mt-8">
@@ -488,12 +577,12 @@ const Index = () => {
                 by popularity
               </p>
             </div>
-            <EventGrid events={getFilteredEvents(allEventsByPopularity)} />
+            <EventCarousel events={getFilteredEvents(allEventsByPopularity)} />
           </TabsContent>
         </Tabs>
       </section>
 
-      {/* Features Section */}
+      {/* Enhanced Features Section */}
       <section className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
           Why Choose Eventory?
@@ -514,13 +603,13 @@ const Index = () => {
 
           <Card className="text-center hover:shadow-lg transition-shadow">
             <CardHeader>
-              <MapPin className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-              <CardTitle>Location-Aware</CardTitle>
+              <MessageSquare className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+              <CardTitle>Event Communities</CardTitle>
             </CardHeader>
             <CardContent>
               <CardDescription className="text-base">
-                Geo-targeted search and interactive maps help you find events
-                nearby and explore new venues.
+                WhatsApp-style group chats for every event, connecting attendees
+                and fostering lasting relationships.
               </CardDescription>
             </CardContent>
           </Card>
@@ -528,12 +617,90 @@ const Index = () => {
           <Card className="text-center hover:shadow-lg transition-shadow">
             <CardHeader>
               <Calendar className="h-12 w-12 text-green-600 mx-auto mb-4" />
-              <CardTitle>Full Management</CardTitle>
+              <CardTitle>Smart Calendar Sync</CardTitle>
             </CardHeader>
             <CardContent>
               <CardDescription className="text-base">
-                Complete event lifecycle management from creation to post-event
-                engagement with powerful organizer tools.
+                AI-powered calendar integration with travel time, prep time, and
+                intelligent scheduling suggestions.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <Palette className="h-12 w-12 text-pink-600 mx-auto mb-4" />
+              <CardTitle>AI Poster Studio</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base">
+                Generate stunning event posters and social media content with
+                AI-powered design tools and templates.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <BarChart3 className="h-12 w-12 text-orange-600 mx-auto mb-4" />
+              <CardTitle>Live Sentiment Tracking</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base">
+                Real-time mood tracking and anonymous feedback collection to
+                improve future events and attendee satisfaction.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CreditCard className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
+              <CardTitle>Split Payments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base">
+                Flexible group purchasing with smart split payment options for
+                friends and families attending together.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <Zap className="h-12 w-12 text-yellow-600 mx-auto mb-4" />
+              <CardTitle>Dynamic Pricing</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base">
+                AI-driven pricing optimization based on demand, timing, and
+                market conditions to maximize revenue.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <Globe className="h-12 w-12 text-teal-600 mx-auto mb-4" />
+              <CardTitle>Multilingual Support</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base">
+                Automatic translation and multilingual event listings to reach
+                global audiences effortlessly.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <Shield className="h-12 w-12 text-red-600 mx-auto mb-4" />
+              <CardTitle>Secure & Reliable</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base">
+                Enterprise-grade security, reliable payment processing, and
+                comprehensive data protection for peace of mind.
               </CardDescription>
             </CardContent>
           </Card>
@@ -624,10 +791,10 @@ const Index = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">
-                    SnapLoop Integration
+                    Community Features
                   </h3>
                   <p className="text-gray-600">
-                    Let attendees upload and share photos during your event
+                    Build engaged communities around your events with integrated chat
                   </p>
                 </div>
               </div>

@@ -1,16 +1,27 @@
 
 import { Button } from "@/components/ui/button";
-import { Calendar, User, Plus, Image, Users } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Calendar, MessageSquare, User, LogOut, Settings } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/useAuth";
-import LocationIndicator from "@/components/location/LocationIndicator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
-  const location = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
 
   return (
-    <header className="border-b bg-white">
+    <header className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4 py-4">
         <nav className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
@@ -18,101 +29,49 @@ const Header = () => {
             <span className="text-2xl font-bold text-gray-900">Eventory</span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-6">
-            <Link
-              to="/events"
-              className={`hover:text-purple-600 transition-colors ${
-                location.pathname === "/events"
-                  ? "text-purple-600 font-medium"
-                  : "text-gray-600"
-              }`}
-            >
-              Explore Events
-            </Link>
-            <Link
-              to="/communities"
-              className={`hover:text-purple-600 transition-colors ${
-                location.pathname.startsWith("/communit")
-                  ? "text-purple-600 font-medium"
-                  : "text-gray-600"
-              }`}
-            >
-              Communities
-            </Link>
-            {isAuthenticated && user?.role === "organizer" && (
-              <>
-                <Link
-                  to="/dashboard"
-                  className={`hover:text-purple-600 transition-colors ${
-                    location.pathname === "/dashboard"
-                      ? "text-purple-600 font-medium"
-                      : "text-gray-600"
-                  }`}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/poster-studio"
-                  className={`hover:text-purple-600 transition-colors ${
-                    location.pathname === "/poster-studio"
-                      ? "text-purple-600 font-medium"
-                      : "text-gray-600"
-                  }`}
-                >
-                  Poster Studio
-                </Link>
-              </>
-            )}
-            {isAuthenticated && (
-              <Link
-                to="/profile"
-                className={`hover:text-purple-600 transition-colors ${
-                  location.pathname === "/profile"
-                    ? "text-purple-600 font-medium"
-                    : "text-gray-600"
-                }`}
-              >
-                Profile
-              </Link>
-            )}
-          </div>
-
           <div className="flex items-center space-x-4">
-            <LocationIndicator />
+            <Link to="/events">
+              <Button variant="ghost">Events</Button>
+            </Link>
 
-            {isAuthenticated ? (
+            {user ? (
               <>
-                <span className="text-sm text-gray-600">
-                  Welcome, {user?.name}
-                </span>
                 <Link to="/communities">
-                  <Button variant="outline" size="sm">
-                    <Users className="h-4 w-4 mr-2" />
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
                     Communities
                   </Button>
                 </Link>
-                {user?.role === "organizer" && (
-                  <>
-                    <Link to="/create-event">
-                      <Button size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Event
-                      </Button>
-                    </Link>
-                    <Link to="/poster-studio">
-                      <Button variant="outline" size="sm">
-                        <Image className="h-4 w-4 mr-2" />
-                        Poster Studio
-                      </Button>
-                    </Link>
-                  </>
-                )}
-                <Link to="/profile">
-                  <Button variant="ghost" size="sm">
-                    <User className="h-4 w-4 mr-2" />
-                    Profile
-                  </Button>
+                <Link to="/dashboard">
+                  <Button variant="ghost">Dashboard</Button>
                 </Link>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard" className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <>
