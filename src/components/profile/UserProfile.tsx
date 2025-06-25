@@ -28,12 +28,14 @@ const UserProfile = ({
   followedOrganizers = [],
   followedOrganizerEvents = [],
 }: UserProfileProps) => {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<
     "tickets" | "favorites" | "hosted" | "following"
   >("tickets");
 
-  if (!user) return null;
+  if (!user || !profile) return null;
+
+  const fullName = `${profile.first_name} ${profile.last_name}`.trim() || profile.username;
 
   const tabs = [
     {
@@ -54,7 +56,7 @@ const UserProfile = ({
       icon: Users,
       count: followedOrganizers.length,
     },
-    ...(user.role === "organizer"
+    ...(profile.role === "organizer"
       ? [
           {
             id: "hosted" as const,
@@ -196,10 +198,10 @@ const UserProfile = ({
                 <User className="h-8 w-8 text-purple-600" />
               </div>
               <div>
-                <CardTitle>{user.name}</CardTitle>
-                <CardDescription>{user.email}</CardDescription>
+                <CardTitle>{fullName}</CardTitle>
+                <CardDescription>{profile.email}</CardDescription>
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">
-                  {user.role === "organizer" ? "Event Organizer" : "Attendee"}
+                  {profile.role === "organizer" ? "Event Organizer" : "Attendee"}
                 </span>
               </div>
             </div>

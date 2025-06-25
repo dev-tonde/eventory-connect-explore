@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,7 @@ interface EventCreationFormProps {
 }
 
 const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<EventFormData>({
@@ -68,7 +69,7 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
       const newEvent = {
         id: Math.random().toString(36).substr(2, 9),
         ...formData,
-        organizer: user?.name || "Unknown",
+        organizer: profile ? `${profile.first_name} ${profile.last_name}` : "Unknown",
         attendeeCount: 0,
         tags: formData.tags.filter((tag) => tag.trim() !== ""),
       };

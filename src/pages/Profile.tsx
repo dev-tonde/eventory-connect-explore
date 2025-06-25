@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from "react";
@@ -8,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { Event } from "@/types/event";
 
 const Profile = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, profile } = useAuth();
   const navigate = useNavigate();
   const [purchasedTickets, setPurchasedTickets] = useState<Event[]>([]);
   const [favoriteEvents, setFavoriteEvents] = useState<Event[]>([]);
@@ -70,11 +71,12 @@ const Profile = () => {
     setFollowedOrganizerEvents(followedEvents);
 
     // Get hosted events (for organizers)
-    if (user?.role === "organizer") {
-      const hosted = events.filter((e: Event) => e.organizer === user.name);
+    if (profile?.role === "organizer") {
+      const organizerName = `${profile.first_name} ${profile.last_name}`.trim();
+      const hosted = events.filter((e: Event) => e.organizer === organizerName);
       setHostedEvents(hosted);
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, profile, navigate]);
 
   if (!isAuthenticated) {
     return null;

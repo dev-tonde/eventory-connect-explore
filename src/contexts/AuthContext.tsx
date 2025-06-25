@@ -15,6 +15,8 @@ interface Profile {
   role: string;
   bio?: string;
   social_links: any;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AuthContextType {
@@ -62,7 +64,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           avatar_url: data.avatar_url,
           role: data.role || 'attendee',
           bio: data.bio,
-          social_links: data.social_links || {}
+          social_links: data.social_links || {},
+          created_at: data.created_at,
+          updated_at: data.updated_at
         });
       }
     } catch (error) {

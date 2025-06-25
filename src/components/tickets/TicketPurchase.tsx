@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,15 +22,15 @@ interface TicketPurchaseProps {
 }
 
 const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, profile, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentPrice, setCurrentPrice] = useState(event.price);
   const [paymentMethod, setPaymentMethod] = useState<'full' | 'split'>('full');
   const [buyerInfo, setBuyerInfo] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
+    name: profile ? `${profile.first_name} ${profile.last_name}`.trim() : "",
+    email: profile?.email || "",
     phone: "",
   });
 
@@ -232,15 +231,15 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
             <div className="space-y-3">
               <h4 className="font-medium">Buyer Information</h4>
 
-              {isAuthenticated ? (
+              {isAuthenticated && profile ? (
                 <div className="p-4 bg-gray-50 rounded border text-sm text-gray-700 space-y-1">
                   <p className="flex items-center gap-2">
                     <User className="h-4 w-4 text-gray-500" />
-                    {user?.name}
+                    {`${profile.first_name} ${profile.last_name}`.trim() || profile.username}
                   </p>
                   <p className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-gray-500" />
-                    {user?.email}
+                    {profile.email}
                   </p>
                 </div>
               ) : (
