@@ -46,8 +46,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq("id", userId)
         .single();
 
-      if (error) throw error;
-      setProfile(data);
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return;
+      }
+      
+      if (data) {
+        setProfile({
+          id: data.id,
+          username: data.username || '',
+          first_name: data.first_name || '',
+          last_name: data.last_name || '',
+          email: data.email || '',
+          secondary_email: data.secondary_email,
+          avatar_url: data.avatar_url,
+          role: data.role || 'attendee',
+          bio: data.bio,
+          social_links: data.social_links || {}
+        });
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     }

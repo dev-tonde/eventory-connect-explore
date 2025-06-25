@@ -5,10 +5,15 @@ import { ArrowRight, Calendar, Users, Zap, MapPin, Heart, Star } from "lucide-re
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import useEmblaCarousel from 'embla-carousel-react';
+import EventCard from "@/components/events/EventCard";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface Event {
   id: string;
@@ -25,65 +30,26 @@ interface Event {
   organizer_id: string;
 }
 
-const EventCard = ({ event }: { event: Event }) => {
-  const isLowTickets = event.max_attendees - event.current_attendees <= 20;
-  
-  return (
-    <Card className="group hover:shadow-lg transition-shadow duration-300 flex-shrink-0 w-80 mx-2">
-      <div className="relative overflow-hidden rounded-t-lg">
-        <img
-          src={event.image_url || "/placeholder.svg"}
-          alt={event.title}
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        {isLowTickets && (
-          <Badge variant="destructive" className="absolute top-2 right-2">
-            Only {event.max_attendees - event.current_attendees} tickets left!
-          </Badge>
-        )}
-      </div>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <Calendar className="h-4 w-4" />
-          <span>{new Date(event.date).toLocaleDateString()}</span>
-          <span>•</span>
-          <span>{event.time}</span>
-        </div>
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2">{event.title}</h3>
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <MapPin className="h-4 w-4" />
-          <span>{event.venue}</span>
-        </div>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
-        <div className="flex items-center justify-between">
-          <span className="font-bold text-lg">R{event.price}</span>
-          <Link to={`/events/${event.id}`}>
-            <Button size="sm">View Details</Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
 const EventCarousel = ({ title, events }: { title: string; events: Event[] }) => {
-  const [emblaRef] = useEmblaCarousel({ 
-    align: 'start',
-    containScroll: 'trimSnaps',
-    dragFree: true
-  });
+  if (events.length === 0) return null;
 
   return (
     <section className="py-12">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold text-center mb-8">{title}</h2>
-        <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex">
+        <Carousel className="w-full max-w-6xl mx-auto">
+          <CarouselContent className="-ml-1">
             {events.map((event) => (
-              <EventCard key={event.id} event={event} />
+              <CarouselItem key={event.id} className="pl-1 md:basis-1/2 lg:basis-1/3">
+                <div className="p-1">
+                  <EventCard event={event} />
+                </div>
+              </CarouselItem>
             ))}
-          </div>
-        </div>
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
       </div>
     </section>
   );
@@ -143,9 +109,7 @@ const Index = () => {
       </section>
 
       {/* Featured Events Carousel */}
-      {featuredEvents.length > 0 && (
-        <EventCarousel title="Featured Events" events={featuredEvents} />
-      )}
+      <EventCarousel title="Featured Events" events={featuredEvents} />
 
       {/* Features Section */}
       <section className="py-16 bg-gray-50">
@@ -216,9 +180,7 @@ const Index = () => {
       </section>
 
       {/* Nearby Events Carousel */}
-      {nearbyEvents.length > 0 && (
-        <EventCarousel title="Events Near You" events={nearbyEvents} />
-      )}
+      <EventCarousel title="Events Near You" events={nearbyEvents} />
 
       {/* Communities CTA */}
       <section className="py-16 bg-purple-600 text-white">

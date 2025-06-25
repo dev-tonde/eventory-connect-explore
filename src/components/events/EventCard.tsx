@@ -26,7 +26,7 @@ const EventCard = ({ event }: EventCardProps) => {
   const ticketsLeft = event.max_attendees - event.current_attendees;
   
   return (
-    <Card className="group hover:shadow-lg transition-shadow duration-300">
+    <Card className="group hover:shadow-lg transition-shadow duration-300 h-full">
       <div className="relative overflow-hidden rounded-t-lg">
         <img
           src={event.image_url || "/placeholder.svg"}
@@ -42,7 +42,7 @@ const EventCard = ({ event }: EventCardProps) => {
           {event.category}
         </Badge>
       </div>
-      <CardContent className="p-4">
+      <CardContent className="p-4 flex flex-col h-full">
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
           <Calendar className="h-4 w-4" />
           <span>{new Date(event.date).toLocaleDateString()}</span>
@@ -58,8 +58,8 @@ const EventCard = ({ event }: EventCardProps) => {
           <Users className="h-4 w-4" />
           <span>{event.current_attendees} / {event.max_attendees} attending</span>
         </div>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
-        <div className="flex items-center justify-between">
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">{event.description}</p>
+        <div className="flex items-center justify-between mt-auto">
           <span className="font-bold text-lg text-purple-600">R{event.price}</span>
           <Link to={`/events/${event.id}`}>
             <Button size="sm">View Details</Button>
