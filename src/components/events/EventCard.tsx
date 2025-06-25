@@ -60,7 +60,9 @@ const EventCard = ({ event }: EventCardProps) => {
         </div>
         <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">{event.description}</p>
         <div className="flex items-center justify-between mt-auto">
-          <span className="font-bold text-lg text-purple-600">R{event.price}</span>
+          <span className="font-bold text-lg text-purple-600">
+            {event.price === 0 ? "Free" : `$${event.price}`}
+          </span>
           <Link to={`/events/${event.id}`}>
             <Button size="sm">View Details</Button>
           </Link>
