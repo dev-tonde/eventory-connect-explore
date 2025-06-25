@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +14,7 @@ interface Profile {
   role: string;
   bio?: string;
   social_links: any;
+  name?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -65,6 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           role: data.role || 'attendee',
           bio: data.bio,
           social_links: data.social_links || {},
+          name: data.name,
           created_at: data.created_at,
           updated_at: data.updated_at
         });
