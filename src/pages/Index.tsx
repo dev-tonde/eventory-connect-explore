@@ -6,58 +6,15 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import EventCard from "@/components/events/EventCard";
+import FeaturedEventsSection from "@/components/events/FeaturedEventsSection";
+import NearbyEventsSection from "@/components/events/NearbyEventsSection";
+import NewsletterSignup from "@/components/newsletter/NewsletterSignup";
+import TestimonialsSection from "@/components/testimonials/TestimonialsSection";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  venue: string;
-  category: string;
-  image_url: string;
-  price: number;
-  max_attendees: number;
-  current_attendees: number;
-  organizer_id: string;
-}
-
-const EventCarousel = ({ title, events }: { title: string; events: Event[] }) => {
-  if (events.length === 0) return null;
-
-  return (
-    <section className="py-12">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-8">{title}</h2>
-        <Carousel className="w-full max-w-6xl mx-auto">
-          <CarouselContent className="-ml-1">
-            {events.map((event) => (
-              <CarouselItem key={event.id} className="pl-1 md:basis-1/2 lg:basis-1/3">
-                <div className="p-1">
-                  <EventCard event={event} />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
-        </Carousel>
-      </div>
-    </section>
-  );
-};
+import { Event } from "@/types/event";
 
 const Index = () => {
   const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
-  const [nearbyEvents, setNearbyEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -66,11 +23,27 @@ const Index = () => {
         .select("*")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(10);
 
       if (events) {
-        setFeaturedEvents(events.slice(0, 3));
-        setNearbyEvents(events.slice(3, 6));
+        // Convert database events to Event type
+        const convertedEvents: Event[] = events.map(event => ({
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          date: event.date,
+          time: event.time,
+          location: event.venue,
+          address: event.address || event.venue,
+          price: event.price,
+          category: event.category,
+          image: event.image_url || "/placeholder.svg",
+          organizer: "Event Organizer", // Default organizer name
+          attendeeCount: event.current_attendees,
+          maxAttendees: event.max_attendees,
+          tags: event.tags || []
+        }));
+        setFeaturedEvents(convertedEvents);
       }
     };
 
@@ -108,10 +81,33 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Events Carousel */}
-      <EventCarousel title="Featured Events" events={featuredEvents} />
+      {/* 1. Featured Events */}
+      <FeaturedEventsSection events={featuredEvents} />
 
-      {/* Features Section */}
+      {/* 2. Communities CTA */}
+      <section className="py-16 bg-purple-600 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-6">Join Event Communities</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto">
+            Connect with like-minded people, share experiences, and build lasting relationships 
+            through our event-based communities.
+          </p>
+          <Link to="/communities">
+            <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100">
+              Explore Communities
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* 3. Events with Map and Tabs Filter */}
+      <NearbyEventsSection />
+
+      {/* 4. Newsletter Signup CTA */}
+      <NewsletterSignup />
+
+      {/* 5. Why Choose Eventory */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Why Choose Eventory?</h2>
@@ -179,27 +175,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Nearby Events Carousel */}
-      <EventCarousel title="Events Near You" events={nearbyEvents} />
-
-      {/* Communities CTA */}
-      <section className="py-16 bg-purple-600 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6">Join Event Communities</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Connect with like-minded people, share experiences, and build lasting relationships 
-            through our event-based communities.
-          </p>
-          <Link to="/communities">
-            <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100">
-              Explore Communities
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* Final CTA */}
+      {/* 6. Ready to Get Started CTA */}
       <section className="py-16 bg-gray-900 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
