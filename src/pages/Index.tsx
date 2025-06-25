@@ -8,6 +8,7 @@ import Footer from "@/components/layout/Footer";
 import EventCard from "@/components/events/EventCard";
 import FeaturedEventsSection from "@/components/events/FeaturedEventsSection";
 import NearbyEventsSection from "@/components/events/NearbyEventsSection";
+import EventsWithFilters from "@/components/events/EventsWithFilters";
 import NewsletterSignup from "@/components/newsletter/NewsletterSignup";
 import TestimonialsSection from "@/components/testimonials/TestimonialsSection";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,10 +82,13 @@ const Index = () => {
         </div>
       </section>
 
-      {/* 1. Featured Events */}
+      {/* 1. Featured Events Carousel */}
       <FeaturedEventsSection events={featuredEvents} />
 
-      {/* 2. Communities CTA */}
+      {/* 2. Events with Tab Filtering */}
+      <EventsWithFilters />
+
+      {/* 3. Communities CTA */}
       <section className="py-16 bg-purple-600 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-6">Join Event Communities</h2>
@@ -101,13 +105,13 @@ const Index = () => {
         </div>
       </section>
 
-      {/* 3. Events with Map and Tabs Filter */}
+      {/* 4. Events Near You with Map */}
       <NearbyEventsSection />
 
-      {/* 4. Newsletter Signup CTA */}
+      {/* 5. Newsletter Signup CTA */}
       <NewsletterSignup />
 
-      {/* 5. Why Choose Eventory */}
+      {/* 6. Why Choose Eventory */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Why Choose Eventory?</h2>
@@ -175,7 +179,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* 6. Ready to Get Started CTA */}
+      {/* 7. Ready to Get Started CTA */}
       <section className="py-16 bg-gray-900 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
