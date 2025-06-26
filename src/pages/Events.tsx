@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,63 +13,111 @@ import { Search, MapPin, Calendar, Users, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import EventFilters from "@/components/filters/EventFilters";
+import EventMap from "@/components/map/EventMap";
+import LocationSearch from "@/components/location/LocationSearch";
+import LocationPermissionModal from "@/components/location/LocationPermissionModal";
 import { Event, EventFilters as EventFiltersType } from "@/types/event";
 import { useAuth } from "@/contexts/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data for demonstration
+// Enhanced mock data with different organizers and more realistic information
 const mockEvents: Event[] = [
   {
     id: "1",
-    title: "Summer Music Festival",
-    description:
-      "Join us for an amazing day of live music featuring local and international artists.",
+    title: "Summer Music Festival 2024",
+    description: "Join us for an incredible day of live music featuring chart-topping artists, local bands, and emerging talent. Experience multiple stages, gourmet food trucks, craft beer gardens, and interactive art installations in a beautiful outdoor setting.",
     date: "2024-07-15",
     time: "14:00",
-    location: "Central Park",
-    address: "123 Park Avenue, New York, NY",
+    location: "Central Park Amphitheater",
+    address: "123 Park Avenue, New York, NY 10001",
     price: 75,
     category: "Music",
     image: "/placeholder.svg",
-    organizer: "Music Events Co.",
-    attendeeCount: 150,
+    organizer: "Harmony Events Co.",
+    attendeeCount: 342,
     maxAttendees: 500,
-    tags: ["outdoor", "festival", "music"],
+    tags: ["outdoor", "festival", "music", "family-friendly"]
   },
   {
     id: "2",
-    title: "Tech Innovation Workshop",
-    description:
-      "Learn about the latest trends in AI and machine learning from industry experts.",
+    title: "AI & Machine Learning Summit",
+    description: "Dive deep into the future of artificial intelligence with industry pioneers, researchers, and innovators. Network with leading AI professionals, attend hands-on workshops, and discover the latest breakthroughs in machine learning, neural networks, and automation.",
     date: "2024-07-20",
-    time: "10:00",
-    location: "Tech Hub",
-    address: "456 Innovation Street, San Francisco, CA",
-    price: 25,
+    time: "09:00",
+    location: "Innovation Tech Hub",
+    address: "456 Innovation Street, San Francisco, CA 94105",
+    price: 125,
     category: "Technology",
     image: "/placeholder.svg",
-    organizer: "TechLearn",
-    attendeeCount: 45,
-    maxAttendees: 100,
-    tags: ["workshop", "technology", "AI"],
+    organizer: "TechVision Institute",
+    attendeeCount: 89,
+    maxAttendees: 150,
+    tags: ["workshop", "technology", "AI", "networking", "professional"]
   },
   {
     id: "3",
-    title: "Community Food Fair",
-    description:
-      "Taste delicious food from local vendors and support your community.",
-    date: "2024-07-22",
-    time: "11:00",
-    location: "Community Center",
-    address: "789 Main Street, Austin, TX",
-    price: 0,
+    title: "Urban Food & Wine Experience",
+    description: "Savor culinary masterpieces from award-winning chefs paired with premium wines from renowned vineyards around the world. Enjoy live cooking demonstrations, wine tastings, and exclusive access to limited-edition bottles in an elegant rooftop setting.",
+    date: "2024-07-25",
+    time: "18:30",
+    location: "Skyline Rooftop Venue",
+    address: "789 Luxury Lane, Los Angeles, CA 90210",
+    price: 95,
     category: "Food",
     image: "/placeholder.svg",
-    organizer: "Austin Community",
-    attendeeCount: 200,
-    maxAttendees: 300,
-    tags: ["food", "community", "free"],
+    organizer: "Culinary Masters Guild",
+    attendeeCount: 67,
+    maxAttendees: 100,
+    tags: ["food", "wine", "tasting", "luxury", "rooftop"]
   },
+  {
+    id: "4",
+    title: "Startup Pitch Battle 2024",
+    description: "Watch the next generation of entrepreneurs pitch their groundbreaking ideas to top-tier investors and venture capitalists. Network with founders, investors, and industry experts while witnessing the birth of tomorrow's unicorn companies.",
+    date: "2024-08-02",
+    time: "10:00",
+    location: "Entrepreneur Hub",
+    address: "321 Startup Street, Austin, TX 78701",
+    price: 35,
+    category: "Business",
+    image: "/placeholder.svg",
+    organizer: "Venture Connect",
+    attendeeCount: 156,
+    maxAttendees: 200,
+    tags: ["startup", "business", "networking", "competition", "investors"]
+  },
+  {
+    id: "5",
+    title: "Contemporary Art Showcase",
+    description: "Discover cutting-edge contemporary art from emerging and established artists from around the globe. Meet the artists, participate in guided tours, and enjoy an exclusive wine reception while exploring thought-provoking installations and paintings.",
+    date: "2024-08-10",
+    time: "19:00",
+    location: "Modern Art Gallery District",
+    address: "654 Arts District, Chicago, IL 60601",
+    price: 0,
+    category: "Arts",
+    image: "/placeholder.svg",
+    organizer: "Metropolitan Arts Foundation",
+    attendeeCount: 43,
+    maxAttendees: 120,
+    tags: ["art", "gallery", "culture", "free", "wine-reception"]
+  },
+  {
+    id: "6",
+    title: "Wellness & Mindfulness Retreat",
+    description: "Rejuvenate your mind, body, and spirit with expert-led yoga sessions, guided meditation, sound healing workshops, and holistic wellness practices. Includes healthy gourmet meals, spa treatments, and take-home wellness kits.",
+    date: "2024-08-18",
+    time: "08:00",
+    location: "Serenity Wellness Sanctuary",
+    address: "987 Peaceful Path, Sedona, AZ 86336",
+    price: 180,
+    category: "Health",
+    image: "/placeholder.svg",
+    organizer: "Zen Wellness Collective",
+    attendeeCount: 28,
+    maxAttendees: 40,
+    tags: ["yoga", "wellness", "meditation", "retreat", "spa"]
+  }
 ];
 
 const Events = () => {
@@ -78,6 +127,8 @@ const Events = () => {
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [filters, setFilters] = useState<EventFiltersType>({});
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number; city?: string } | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   useEffect(() => {
     // Load events and favorites from localStorage
@@ -102,7 +153,47 @@ const Events = () => {
         .map((f: Favorite) => f.eventId);
       setFavorites(userFavorites);
     }
+
+    // Check for location permission
+    const permissionAsked = localStorage.getItem('location_permission_asked');
+    if (!permissionAsked && !userLocation) {
+      setShowLocationModal(true);
+    }
   }, [user]);
+
+  const handleLocationAllow = () => {
+    setShowLocationModal(false);
+    localStorage.setItem('location_permission_asked', 'true');
+    requestCurrentLocation();
+  };
+
+  const handleLocationDeny = () => {
+    setShowLocationModal(false);
+    localStorage.setItem('location_permission_asked', 'true');
+  };
+
+  const requestCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      console.error('Geolocation is not supported by this browser');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ latitude, longitude, city: 'Current Location' });
+        localStorage.setItem('user_location', JSON.stringify({ latitude, longitude }));
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
+  };
 
   const toggleFavorite = (eventId: string) => {
     if (!user) {
@@ -192,9 +283,23 @@ const Events = () => {
     setFilters({});
   };
 
+  // Get events with mock distance for map display
+  const eventsWithDistance = filteredEvents.map(event => ({
+    ...event,
+    distance: Math.random() * 50 // Random distance up to 50km
+  })).filter(event => event.distance <= 25) // Show events within 25km
+    .sort((a, b) => a.distance - b.distance);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
+
+      <LocationPermissionModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        onAllow={handleLocationAllow}
+        onDeny={handleLocationDeny}
+      />
 
       <div className="container mx-auto px-4 py-8">
         {/* Search */}
@@ -203,7 +308,7 @@ const Events = () => {
             Discover Events
           </h1>
 
-          <div className="relative">
+          <div className="relative mb-6">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search events, locations, or organizers..."
@@ -212,7 +317,35 @@ const Events = () => {
               className="pl-10"
             />
           </div>
+
+          {/* Location Search */}
+          <div className="max-w-md mb-6">
+            <LocationSearch 
+              onLocationChange={setUserLocation}
+              currentLocation={userLocation}
+            />
+          </div>
+          
+          {!userLocation && (
+            <div className="mb-6">
+              <Button
+                onClick={() => setShowLocationModal(true)}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <MapPin className="h-4 w-4 mr-2" />
+                Enable Location Access
+              </Button>
+            </div>
+          )}
         </div>
+
+        {/* Map */}
+        {userLocation && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Events Near You</h2>
+            <EventMap events={eventsWithDistance} userLocation={userLocation} />
+          </div>
+        )}
 
         {/* Filters */}
         <EventFilters
@@ -267,6 +400,7 @@ const Events = () => {
                       {event.category}
                     </span>
                   </div>
+                  <p className="text-sm text-gray-500 mb-2">by {event.organizer}</p>
                   <CardDescription className="line-clamp-2">
                     {event.description}
                   </CardDescription>

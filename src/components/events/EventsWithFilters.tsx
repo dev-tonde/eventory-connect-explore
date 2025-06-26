@@ -54,10 +54,10 @@ const EventsWithFilters = () => {
   };
 
   const filterEventsByCategory = (category: string) => {
-    if (category === "all") return events;
+    if (category === "all") return events.slice(0, 6); // Limit to 6 events
     return events.filter(event => 
       event.category.toLowerCase() === category.toLowerCase()
-    );
+    ).slice(0, 6); // Limit to 6 events
   };
 
   const categories = [
@@ -143,10 +143,18 @@ const EventsWithFilters = () => {
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Discover Events
-          </h2>
+        <div className="text-center mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-3xl font-bold text-gray-900">
+              Discover Events
+            </h2>
+            <Link to="/events">
+              <Button variant="outline" className="flex items-center gap-2">
+                View More Events
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Browse events by category and find your next great experience
           </p>
@@ -185,15 +193,6 @@ const EventsWithFilters = () => {
             </TabsContent>
           ))}
         </Tabs>
-
-        <div className="text-center mt-12">
-          <Link to="/events">
-            <Button size="lg" variant="outline">
-              View All Events
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
       </div>
     </section>
   );
