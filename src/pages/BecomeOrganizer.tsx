@@ -1,71 +1,72 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Calendar, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserPlus, Star, Calendar, Users } from "lucide-react";
+import Header from "@/components/layout/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import Header from "@/components/layout/Header";
 
 const BecomeOrganizer = () => {
-  const [organizationName, setOrganizationName] = useState("");
-  const [description, setDescription] = useState("");
-  const [website, setWebsite] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { user, updateProfile } = useAuth();
-  const navigate = useNavigate();
+  const { user, profile, updateProfile, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    organization_name: "",
+    bio: "",
+    experience: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/auth");
+      return;
+    }
+
+    if (profile?.role === "organizer") {
+      navigate("/dashboard");
+      return;
+    }
+  }, [isAuthenticated, profile, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
       const { error } = await updateProfile({
         role: "organizer",
-        bio: description,
-        social_links: {
-          website: website
-        }
+        bio: formData.bio,
       });
 
       if (error) {
         toast({
           title: "Error",
-          description: "Failed to update your account to organizer",
+          description: "Failed to update your role. Please try again.",
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Success!",
-          description: "Your account has been upgraded to organizer. You can now create events!",
+          title: "Welcome to Eventory Organizers!",
+          description: "You can now create and manage events.",
         });
         navigate("/dashboard");
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (!user) {
-    navigate("/login");
+  if (!isAuthenticated || profile?.role === "organizer") {
     return null;
   }
 
@@ -74,79 +75,114 @@ const BecomeOrganizer = () => {
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          <Link to="/dashboard" className="flex items-center gap-2 text-purple-600 hover:text-purple-800 mb-6">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Link>
+          <div className="text-center mb-8">
+            <UserPlus className="h-16 w-16 text-purple-600 mx-auto mb-4" />
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Become an Event Organizer
+            </h1>
+            <p className="text-gray-600">
+              Join thousands of organizers creating amazing experiences
+            </p>
+          </div>
 
+          {/* Benefits Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Calendar className="h-8 w-8 text-purple-600 mx-auto mb-3" />
+                <h3 className="font-semibold mb-2">Create Events</h3>
+                <p className="text-sm text-gray-600">
+                  Set up and manage your events with our easy-to-use tools
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Users className="h-8 w-8 text-blue-600 mx-auto mb-3" />
+                <h3 className="font-semibold mb-2">Build Community</h3>
+                <p className="text-sm text-gray-600">
+                  Connect with attendees and build a loyal following
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Star className="h-8 w-8 text-green-600 mx-auto mb-3" />
+                <h3 className="font-semibold mb-2">Grow Your Brand</h3>
+                <p className="text-sm text-gray-600">
+                  Establish yourself as a trusted event organizer
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Application Form */}
           <Card>
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                <Calendar className="h-10 w-10 text-purple-600" />
-              </div>
-              <CardTitle className="text-2xl">Become an Event Organizer</CardTitle>
-              <CardDescription>
-                Upgrade your account to start creating and managing events
-              </CardDescription>
+            <CardHeader>
+              <CardTitle>Tell Us About Yourself</CardTitle>
             </CardHeader>
-
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label htmlFor="organizationName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Organization Name
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Organization/Company Name (Optional)
                   </label>
                   <Input
-                    id="organizationName"
-                    type="text"
-                    value={organizationName}
-                    onChange={(e) => setOrganizationName(e.target.value)}
-                    placeholder="Your organization or personal brand name"
-                    required
+                    value={formData.organization_name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, organization_name: e.target.value })
+                    }
+                    placeholder="Your organization or company name"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    About You *
                   </label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Tell us about your organization and what types of events you plan to create"
-                    rows={4}
+                  <textarea
                     required
+                    value={formData.bio}
+                    onChange={(e) =>
+                      setFormData({ ...formData, bio: e.target.value })
+                    }
+                    placeholder="Tell us about yourself and why you want to organize events..."
+                    className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
-                    Website (Optional)
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Experience (Optional)
                   </label>
-                  <Input
-                    id="website"
-                    type="url"
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
-                    placeholder="https://yourwebsite.com"
+                  <textarea
+                    value={formData.experience}
+                    onChange={(e) =>
+                      setFormData({ ...formData, experience: e.target.value })
+                    }
+                    placeholder="Describe any previous event organizing experience..."
+                    className="w-full h-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Upgrading Account..." : "Become an Organizer"}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">What happens next?</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Your organizer status will be activated immediately</li>
+                    <li>• You'll get access to the organizer dashboard</li>
+                    <li>• You can start creating events right away</li>
+                  </ul>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isSubmitting ? "Processing..." : "Become an Organizer"}
                 </Button>
               </form>
-
-              <div className="mt-6 p-4 bg-purple-50 rounded-lg">
-                <h3 className="font-semibold text-purple-900 mb-2">What you'll get:</h3>
-                <ul className="text-sm text-purple-800 space-y-1">
-                  <li>• Create and manage unlimited events</li>
-                  <li>• Access to event analytics and insights</li>
-                  <li>• Promote your events to our community</li>
-                  <li>• Collect payments and manage ticket sales</li>
-                </ul>
-              </div>
             </CardContent>
           </Card>
         </div>

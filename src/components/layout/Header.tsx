@@ -12,10 +12,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Bell, Calendar, Menu, Plus, User, LogOut, Settings, Users, MapPin, Palette, Heart, UserPlus, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/hooks/useNotifications";
 import LocationIndicator from "@/components/location/LocationIndicator";
 
 const Header = () => {
   const { user, profile, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -70,12 +72,14 @@ const Header = () => {
               <div className="flex items-center space-x-3">
                 <Button size="sm" variant="ghost" className="relative">
                   <Bell className="h-4 w-4" />
-                  <Badge 
-                    variant="destructive" 
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs p-0"
-                  >
-                    3
-                  </Badge>
+                  {unreadCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs p-0"
+                    >
+                      {unreadCount}
+                    </Badge>
+                  )}
                 </Button>
 
                 {profile?.role === "organizer" && (
@@ -150,12 +154,12 @@ const Header = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link to="/login">
+                <Link to="/auth">
                   <Button variant="ghost" size="sm">
                     Login
                   </Button>
                 </Link>
-                <Link to="/login">
+                <Link to="/auth">
                   <Button size="sm">
                     Sign Up
                   </Button>
