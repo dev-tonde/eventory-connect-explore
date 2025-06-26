@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Event } from "@/types/event";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import OrganizerCard from "@/components/organizers/OrganizerCard";
 import EmptyFollowedOrganizers from "@/components/organizers/EmptyFollowedOrganizers";
@@ -13,43 +14,83 @@ interface OrganizerProfile {
   name: string;
   followerCount: number;
   isVerified: boolean;
-  events: Event[];
+  events: any[];
 }
 
 const FollowedOrganizers = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [followedOrganizers, setFollowedOrganizers] = useState<OrganizerProfile[]>([]);
 
-  useEffect(() => {
-    if (!user) return;
-    loadFollowedOrganizers();
-  }, [user]);
+  const { data: followedOrganizers = [], isLoading } = useQuery({
+    queryKey: ["followed-organizers", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
 
-  const loadFollowedOrganizers = () => {
-    const follows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
-    const events = JSON.parse(localStorage.getItem('eventory_events') || '[]');
-    const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
-    
-    const userFollows = follows.filter((f: any) => f.userId === user?.id);
-    const organizerNames = userFollows.map((f: any) => f.organizerName);
+      // For now, we'll use localStorage for follows until we create a follows table
+      const follows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
+      const userFollows = follows.filter((f: any) => f.userId === user.id);
+      
+      if (userFollows.length === 0) return [];
 
-    // Create organizer profiles with their events
-    const organizerProfiles: OrganizerProfile[] = organizerNames.map(name => {
-      const organizerEvents = events.filter((e: Event) => e.organizer === name);
-      const followerCount = followerCounts[name] || 0;
-      const isVerified = followerCount >= 10000;
+      // Get events from Supabase for followed organizers
+      const { data: events, error } = await supabase
+        .from("events")
+        .select(`
+          *,
+          profiles!events_organizer_id_fkey (
+            first_name,
+            last_name
+          )
+        `)
+        .eq("is_active", true)
+        .order("date", { ascending: true });
 
-      return {
-        name,
-        followerCount,
-        isVerified,
-        events: organizerEvents.sort((a: Event, b: Event) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      };
-    });
+      if (error) {
+        console.error("Error loading events:", error);
+        return [];
+      }
 
-    setFollowedOrganizers(organizerProfiles);
-  };
+      // Group events by organizer
+      const organizerMap = new Map<string, any[]>();
+      const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
+
+      userFollows.forEach((follow: any) => {
+        const organizerEvents = events.filter((event: any) => {
+          const organizerName = event.profiles 
+            ? `${event.profiles.first_name} ${event.profiles.last_name}`.trim()
+            : 'Unknown Organizer';
+          return organizerName === follow.organizerName;
+        });
+
+        const followerCount = followerCounts[follow.organizerName] || 0;
+        
+        organizerMap.set(follow.organizerName, {
+          name: follow.organizerName,
+          followerCount,
+          isVerified: followerCount >= 10000,
+          events: organizerEvents.map((event: any) => ({
+            id: event.id,
+            title: event.title,
+            date: event.date,
+            time: event.time,
+            location: event.venue,
+            price: Number(event.price),
+            image: event.image_url || "/placeholder.svg",
+            organizer: follow.organizerName,
+            attendeeCount: event.current_attendees || 0,
+            maxAttendees: event.max_attendees || 100,
+            tags: event.tags || [],
+            description: event.description || "",
+            address: event.address || "",
+            category: event.category
+          }))
+        });
+      });
+
+      return Array.from(organizerMap.values());
+    },
+    enabled: !!user,
+  });
 
   const unfollowOrganizer = (organizerName: string) => {
     const follows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
@@ -64,7 +105,8 @@ const FollowedOrganizers = () => {
       localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
     }
 
-    loadFollowedOrganizers();
+    // Refresh the query
+    window.location.reload();
     
     toast({
       title: "Unfollowed organizer",
@@ -83,6 +125,17 @@ const FollowedOrganizers = () => {
               <Button>Login</Button>
             </Link>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Loading your followed organizers...</div>
         </div>
       </div>
     );
