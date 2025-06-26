@@ -2,13 +2,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { User, Calendar, MapPin, Users, CheckCircle, UserMinus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Event } from "@/types/event";
 import { useToast } from "@/hooks/use-toast";
+import OrganizerCard from "@/components/organizers/OrganizerCard";
+import EmptyFollowedOrganizers from "@/components/organizers/EmptyFollowedOrganizers";
 
 interface OrganizerProfile {
   name: string;
@@ -24,7 +23,6 @@ const FollowedOrganizers = () => {
 
   useEffect(() => {
     if (!user) return;
-
     loadFollowedOrganizers();
   }, [user]);
 
@@ -101,110 +99,15 @@ const FollowedOrganizers = () => {
         </div>
 
         {followedOrganizers.length === 0 ? (
-          <div className="text-center py-12">
-            <Users className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">No followed organizers yet</h2>
-            <p className="text-gray-500 mb-4">Start following organizers to see their events here</p>
-            <Link to="/events">
-              <Button>Browse Events</Button>
-            </Link>
-          </div>
+          <EmptyFollowedOrganizers />
         ) : (
           <div className="space-y-8">
             {followedOrganizers.map((organizer) => (
-              <Card key={organizer.name} className="overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                        <User className="h-8 w-8 text-purple-600" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-xl">{organizer.name}</CardTitle>
-                          {organizer.isVerified && (
-                            <CheckCircle className="h-5 w-5 text-blue-500" />
-                          )}
-                        </div>
-                        <CardDescription className="flex items-center gap-4 mt-1">
-                          <span>{organizer.followerCount.toLocaleString()} followers</span>
-                          {organizer.isVerified && (
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                              Verified
-                            </Badge>
-                          )}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => unfollowOrganizer(organizer.name)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <UserMinus className="h-4 w-4 mr-2" />
-                      Unfollow
-                    </Button>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">
-                    Upcoming Events ({organizer.events.length})
-                  </h3>
-                  
-                  {organizer.events.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                      <p>No upcoming events from this organizer</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {organizer.events.slice(0, 6).map((event) => (
-                        <Link key={event.id} to={`/events/${event.id}`}>
-                          <Card className="hover:shadow-md transition-shadow">
-                            <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
-                              <img 
-                                src={event.image} 
-                                alt={event.title}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <CardContent className="p-4">
-                              <h4 className="font-semibold text-sm mb-2 line-clamp-2">{event.title}</h4>
-                              <div className="space-y-1 text-xs text-gray-600">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  <span>{new Date(event.date).toLocaleDateString()}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3" />
-                                  <span>{event.location}</span>
-                                </div>
-                              </div>
-                              <div className="mt-2">
-                                <span className="text-sm font-bold text-purple-600">
-                                  {event.price === 0 ? 'Free' : `$${event.price}`}
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {organizer.events.length > 6 && (
-                    <div className="text-center mt-4">
-                      <Link to={`/events?organizer=${encodeURIComponent(organizer.name)}`}>
-                        <Button variant="outline" size="sm">
-                          View All {organizer.events.length} Events
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <OrganizerCard
+                key={organizer.name}
+                organizer={organizer}
+                onUnfollow={unfollowOrganizer}
+              />
             ))}
           </div>
         )}
