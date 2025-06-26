@@ -1,26 +1,27 @@
+
 import Header from "@/components/layout/Header";
 import EventCreationForm from "@/components/forms/EventCreationForm";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 const CreateEvent = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, profile, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
-    } else if (user?.role !== "organizer") {
-      navigate("/dashboard");
+    } else if (profile?.role !== "organizer") {
+      navigate("/become-organizer");
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, profile, navigate]);
 
   const handleEventCreated = () => {
     navigate("/dashboard");
   };
 
-  if (!isAuthenticated || user?.role !== "organizer") {
+  if (!isAuthenticated || profile?.role !== "organizer") {
     return null;
   }
 

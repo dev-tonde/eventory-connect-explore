@@ -21,6 +21,20 @@ const Header = () => {
     navigate("/");
   };
 
+  const handleCreateEventClick = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (profile?.role !== "organizer") {
+      navigate("/become-organizer");
+      return;
+    }
+
+    navigate("/create-event");
+  };
+
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
@@ -44,12 +58,14 @@ const Header = () => {
                   </Button>
                 </Link>
                 
-                <Link to="/create-event">
-                  <Button variant="ghost" className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Create Event
-                  </Button>
-                </Link>
+                <Button 
+                  variant="ghost" 
+                  className="flex items-center gap-2"
+                  onClick={handleCreateEventClick}
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Event
+                </Button>
                 
                 <Link to="/dashboard">
                   <Button variant="ghost">Dashboard</Button>
@@ -80,6 +96,14 @@ const Header = () => {
                         Settings
                       </Link>
                     </DropdownMenuItem>
+                    {profile?.role !== "organizer" && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/become-organizer" className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          Become Organizer
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
                       <LogOut className="h-4 w-4" />

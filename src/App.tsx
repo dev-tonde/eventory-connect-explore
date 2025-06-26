@@ -9,6 +9,7 @@ import Login from "@/pages/Login";
 import Events from "@/pages/Events";
 import EventDetail from "@/pages/EventDetail";
 import CreateEvent from "@/pages/CreateEvent";
+import BecomeOrganizer from "@/pages/BecomeOrganizer";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import FollowedOrganizers from "@/pages/FollowedOrganizers";
@@ -34,6 +35,7 @@ function App() {
               <Route path="/events" element={<Events />} />
               <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/create-event" element={<CreateEvent />} />
+              <Route path="/become-organizer" element={<BecomeOrganizer />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/followed-organizers" element={<FollowedOrganizers />} />

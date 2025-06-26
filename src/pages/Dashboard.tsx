@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import {
 import { Plus, Calendar, Users, DollarSign, TrendingUp } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Event } from "@/types/event";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Mock data for organizer's events
 const mockOrganizerEvents: Event[] = [
@@ -50,7 +51,7 @@ const mockOrganizerEvents: Event[] = [
 ];
 
 const Dashboard = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, profile, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [events] = useState<Event[]>(mockOrganizerEvents);
 
@@ -60,14 +61,18 @@ const Dashboard = () => {
       return;
     }
 
-    if (user?.role !== "organizer") {
-      navigate("/");
+    if (profile?.role !== "organizer") {
+      navigate("/become-organizer");
       return;
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, profile, navigate]);
+
+  const handleCreateEvent = () => {
+    navigate("/create-event");
+  };
 
   // Don't render anything if user is not authenticated or not an organizer
-  if (!isAuthenticated || user?.role !== "organizer") {
+  if (!isAuthenticated || profile?.role !== "organizer") {
     return null;
   }
 
@@ -94,7 +99,7 @@ const Dashboard = () => {
               Manage your events and track performance
             </p>
           </div>
-          <Button className="flex items-center gap-2">
+          <Button onClick={handleCreateEvent} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Create New Event
           </Button>
@@ -222,7 +227,7 @@ const Dashboard = () => {
                   <p className="text-gray-600 mb-4">
                     Create your first event to get started
                   </p>
-                  <Button>
+                  <Button onClick={handleCreateEvent}>
                     <Plus className="h-4 w-4 mr-2" />
                     Create Event
                   </Button>
