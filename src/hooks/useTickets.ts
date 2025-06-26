@@ -72,8 +72,23 @@ export const useTickets = () => {
           .eq("id", eventId);
       }
 
-      // Email notifications will be handled separately once types are updated
-      console.log("Ticket purchased successfully. Email notification will be sent separately.");
+      // Queue email notification using the new email_notifications table
+      await supabase
+        .from("email_notifications")
+        .insert({
+          user_id: user.id,
+          event_id: eventId,
+          email_type: 'ticket_purchase',
+          recipient_email: user.email || '',
+          subject: 'Ticket Purchase Confirmation',
+          content: `Your ticket has been confirmed for ${quantity} attendee(s). Total: $${totalPrice.toFixed(2)}`,
+          template_data: { 
+            eventId, 
+            quantity, 
+            totalPrice,
+            ticketId: data.id
+          }
+        });
 
       return data;
     },

@@ -192,6 +192,62 @@ export type Database = {
           },
         ]
       }
+      email_notifications: {
+        Row: {
+          content: string
+          created_at: string | null
+          email_type: string
+          error_message: string | null
+          event_id: string | null
+          id: string
+          recipient_email: string
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          template_data: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          email_type: string
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          recipient_email: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          template_data?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          email_type?: string
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          recipient_email?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          template_data?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       error_logs: {
         Row: {
           created_at: string | null
@@ -540,6 +596,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      location_cache: {
+        Row: {
+          address: string
+          cached_at: string | null
+          city: string | null
+          country: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+        }
+        Insert: {
+          address: string
+          cached_at?: string | null
+          city?: string | null
+          country?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+        }
+        Update: {
+          address?: string
+          cached_at?: string | null
+          city?: string | null
+          country?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+        }
+        Relationships: []
       }
       platform_analytics: {
         Row: {
@@ -909,6 +995,88 @@ export type Database = {
           },
         ]
       }
+      split_payment_participants: {
+        Row: {
+          amount: number
+          created_at: string | null
+          email: string
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          split_payment_id: string
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          email: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          split_payment_id: string
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          email?: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          split_payment_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "split_payment_participants_split_payment_id_fkey"
+            columns: ["split_payment_id"]
+            isOneToOne: false
+            referencedRelation: "split_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      split_payments: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          expires_at: string | null
+          id: string
+          organizer_id: string
+          quantity: number
+          status: string | null
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          expires_at?: string | null
+          id?: string
+          organizer_id: string
+          quantity?: number
+          status?: string | null
+          total_amount: number
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          expires_at?: string | null
+          id?: string
+          organizer_id?: string
+          quantity?: number
+          status?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "split_payments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tickets: {
         Row: {
           event_id: string | null
@@ -1050,6 +1218,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cache_location: {
+        Args: {
+          _address: string
+          _latitude: number
+          _longitude: number
+          _city?: string
+          _country?: string
+        }
+        Returns: undefined
+      }
       check_rate_limit: {
         Args: {
           identifier_val: string
@@ -1059,6 +1237,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      create_split_payment: {
+        Args: {
+          _event_id: string
+          _total_amount: number
+          _quantity: number
+          _participant_emails: string[]
+        }
+        Returns: string
+      }
       generate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1067,6 +1254,15 @@ export type Database = {
         Args: { first_name: string }
         Returns: string
       }
+      get_cached_location: {
+        Args: { _address: string }
+        Returns: {
+          latitude: number
+          longitude: number
+          city: string
+          country: string
+        }[]
+      }
       get_dynamic_price: {
         Args: { event_uuid: string }
         Returns: number
@@ -1074,6 +1270,14 @@ export type Database = {
       get_event_rating: {
         Args: { event_uuid: string }
         Returns: number
+      }
+      process_split_payment_contribution: {
+        Args: {
+          _split_id: string
+          _participant_email: string
+          _payment_method?: string
+        }
+        Returns: boolean
       }
       track_event_view: {
         Args: { event_uuid: string; session_id?: string }
