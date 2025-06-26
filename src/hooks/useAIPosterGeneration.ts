@@ -49,7 +49,12 @@ export const useAIPosterGeneration = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as GeneratedPoster[];
+      
+      // Transform the data to match our GeneratedPoster interface
+      return data.map(poster => ({
+        ...poster,
+        dimensions: poster.dimensions as { width: number; height: number }
+      })) as GeneratedPoster[];
     },
     enabled: !!user,
   });

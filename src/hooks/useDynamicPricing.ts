@@ -91,13 +91,21 @@ export const useDynamicPricing = (eventId: string, basePrice: number) => {
 
   // Create or update pricing rules
   const updatePricingRuleMutation = useMutation({
-    mutationFn: async (rule: Partial<PricingRule>) => {
+    mutationFn: async (rule: Omit<PricingRule, 'id'> & { id?: string }) => {
+      // Ensure rule_type is always provided
+      const ruleData = {
+        event_id: eventId,
+        rule_type: rule.rule_type,
+        threshold_value: rule.threshold_value,
+        price_multiplier: rule.price_multiplier,
+        description: rule.description,
+        is_active: rule.is_active,
+        ...(rule.id && { id: rule.id })
+      };
+
       const { data, error } = await supabase
         .from("pricing_rules")
-        .upsert({
-          event_id: eventId,
-          ...rule
-        })
+        .upsert(ruleData)
         .select()
         .single();
 
