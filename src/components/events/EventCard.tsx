@@ -1,9 +1,8 @@
 
-import { Calendar, MapPin, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Calendar, MapPin, Users, DollarSign } from "lucide-react";
 
 interface EventCardProps {
   event: {
@@ -22,53 +21,57 @@ interface EventCardProps {
 }
 
 const EventCard = ({ event }: EventCardProps) => {
-  const isLowTickets = event.max_attendees - event.current_attendees <= 20;
-  const ticketsLeft = event.max_attendees - event.current_attendees;
-  
   return (
-    <Card className="group hover:shadow-lg transition-shadow duration-300 h-full">
-      <div className="relative overflow-hidden rounded-t-lg">
-        <img
-          src={event.image_url || "/placeholder.svg"}
-          alt={event.title}
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        {isLowTickets && (
-          <Badge variant="destructive" className="absolute top-2 right-2">
-            Only {ticketsLeft} left!
-          </Badge>
-        )}
-        <Badge className="absolute top-2 left-2 bg-purple-600">
-          {event.category}
-        </Badge>
-      </div>
-      <CardContent className="p-4 flex flex-col h-full">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <Calendar className="h-4 w-4" />
-          <span>{new Date(event.date).toLocaleDateString()}</span>
-          <span>•</span>
-          <span>{event.time}</span>
+    <Link to={`/events/${event.id}`} className="block group">
+      <Card className="h-full hover:shadow-lg transition-shadow duration-200 group-hover:scale-[1.02] transition-transform">
+        <div className="aspect-video bg-gray-100 rounded-t-lg overflow-hidden">
+          <img
+            src={event.image_url}
+            alt={event.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+          />
         </div>
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2">{event.title}</h3>
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <MapPin className="h-4 w-4" />
-          <span className="line-clamp-1">{event.venue}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-          <Users className="h-4 w-4" />
-          <span>{event.current_attendees} / {event.max_attendees} attending</span>
-        </div>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">{event.description}</p>
-        <div className="flex items-center justify-between mt-auto">
-          <span className="font-bold text-lg text-purple-600">
-            {event.price === 0 ? "Free" : `$${event.price}`}
-          </span>
-          <Link to={`/events/${event.id}`}>
-            <Button size="sm">View Details</Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-start">
+            <CardTitle className="text-lg line-clamp-2 group-hover:text-purple-600 transition-colors">
+              {event.title}
+            </CardTitle>
+            <Badge variant="secondary" className="ml-2 flex-shrink-0">
+              {event.category}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-gray-600 text-sm line-clamp-2">
+            {event.description}
+          </p>
+          
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Calendar className="h-4 w-4" />
+              <span>{new Date(event.date).toLocaleDateString()} at {event.time}</span>
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <MapPin className="h-4 w-4" />
+              <span className="line-clamp-1">{event.venue}</span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Users className="h-4 w-4" />
+                <span>{event.current_attendees}/{event.max_attendees}</span>
+              </div>
+              
+              <div className="flex items-center gap-1 text-lg font-semibold text-purple-600">
+                <DollarSign className="h-4 w-4" />
+                <span>{event.price}</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 };
 

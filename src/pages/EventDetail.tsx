@@ -1,185 +1,68 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Clock, Tag, ArrowLeft, Share2, Heart, UserPlus, UserCheck, CheckCircle } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, Tag, ArrowLeft, Share2, Heart } from "lucide-react";
 import Header from "@/components/layout/Header";
-import TicketPurchase from "@/components/tickets/TicketPurchase";
-import EventReviews from "@/components/reviews/EventReviews";
-import RealTimeChat from "@/components/chat/RealTimeChat";
-import { Event } from "@/types/event";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-
-// Enhanced mock data with different organizers
-const mockEvents: Event[] = [
-  {
-    id: "1",
-    title: "Summer Music Festival 2024",
-    description: "Join us for an incredible day of live music featuring chart-topping artists, local bands, and emerging talent. Experience multiple stages, gourmet food trucks, craft beer gardens, and interactive art installations in a beautiful outdoor setting.",
-    date: "2024-07-15",
-    time: "14:00",
-    location: "Central Park Amphitheater",
-    address: "123 Park Avenue, New York, NY 10001",
-    price: 75,
-    category: "Music",
-    image: "/placeholder.svg",
-    organizer: "Harmony Events Co.",
-    attendeeCount: 342,
-    maxAttendees: 500,
-    tags: ["outdoor", "festival", "music", "family-friendly"]
-  },
-  {
-    id: "2",
-    title: "AI & Machine Learning Summit",
-    description: "Dive deep into the future of artificial intelligence with industry pioneers, researchers, and innovators. Network with leading AI professionals, attend hands-on workshops, and discover the latest breakthroughs in machine learning, neural networks, and automation.",
-    date: "2024-07-20",
-    time: "09:00",
-    location: "Innovation Tech Hub",
-    address: "456 Innovation Street, San Francisco, CA 94105",
-    price: 125,
-    category: "Technology",
-    image: "/placeholder.svg",
-    organizer: "TechVision Institute",
-    attendeeCount: 89,
-    maxAttendees: 150,
-    tags: ["workshop", "technology", "AI", "networking", "professional"]
-  },
-  {
-    id: "3",
-    title: "Urban Food & Wine Experience",
-    description: "Savor culinary masterpieces from award-winning chefs paired with premium wines from renowned vineyards around the world. Enjoy live cooking demonstrations, wine tastings, and exclusive access to limited-edition bottles in an elegant rooftop setting.",
-    date: "2024-07-25",
-    time: "18:30",
-    location: "Skyline Rooftop Venue",
-    address: "789 Luxury Lane, Los Angeles, CA 90210",
-    price: 95,
-    category: "Food",
-    image: "/placeholder.svg",
-    organizer: "Culinary Masters Guild",
-    attendeeCount: 67,
-    maxAttendees: 100,
-    tags: ["food", "wine", "tasting", "luxury", "rooftop"]
-  },
-  {
-    id: "4",
-    title: "Startup Pitch Battle 2024",
-    description: "Watch the next generation of entrepreneurs pitch their groundbreaking ideas to top-tier investors and venture capitalists. Network with founders, investors, and industry experts while witnessing the birth of tomorrow's unicorn companies.",
-    date: "2024-08-02",
-    time: "10:00",
-    location: "Entrepreneur Hub",
-    address: "321 Startup Street, Austin, TX 78701",
-    price: 35,
-    category: "Business",
-    image: "/placeholder.svg",
-    organizer: "Venture Connect",
-    attendeeCount: 156,
-    maxAttendees: 200,
-    tags: ["startup", "business", "networking", "competition", "investors"]
-  },
-  {
-    id: "5",
-    title: "Contemporary Art Showcase",
-    description: "Discover cutting-edge contemporary art from emerging and established artists from around the globe. Meet the artists, participate in guided tours, and enjoy an exclusive wine reception while exploring thought-provoking installations and paintings.",
-    date: "2024-08-10",
-    time: "19:00",
-    location: "Modern Art Gallery District",
-    address: "654 Arts District, Chicago, IL 60601",
-    price: 0,
-    category: "Arts",
-    image: "/placeholder.svg",
-    organizer: "Metropolitan Arts Foundation",
-    attendeeCount: 43,
-    maxAttendees: 120,
-    tags: ["art", "gallery", "culture", "free", "wine-reception"]
-  },
-  {
-    id: "6",
-    title: "Wellness & Mindfulness Retreat",
-    description: "Rejuvenate your mind, body, and spirit with expert-led yoga sessions, guided meditation, sound healing workshops, and holistic wellness practices. Includes healthy gourmet meals, spa treatments, and take-home wellness kits.",
-    date: "2024-08-18",
-    time: "08:00",
-    location: "Serenity Wellness Sanctuary",
-    address: "987 Peaceful Path, Sedona, AZ 86336",
-    price: 180,
-    category: "Health",
-    image: "/placeholder.svg",
-    organizer: "Zen Wellness Collective",
-    attendeeCount: 28,
-    maxAttendees: 40,
-    tags: ["yoga", "wellness", "meditation", "retreat", "spa"]
-  }
-];
 
 const EventDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [event, setEvent] = useState<Event | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
-  const [isFollowingOrganizer, setIsFollowingOrganizer] = useState(false);
-  const [organizerFollowerCount, setOrganizerFollowerCount] = useState(0);
-  const [isVerifiedOrganizer, setIsVerifiedOrganizer] = useState(false);
+
+  const { data: event, isLoading } = useQuery({
+    queryKey: ["event", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select(`
+          *,
+          profiles!events_organizer_id_fkey (
+            first_name,
+            last_name
+          )
+        `)
+        .eq("id", id)
+        .eq("is_active", true)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const { data: isFavorite } = useQuery({
+    queryKey: ["favorite", id, user?.id],
+    queryFn: async () => {
+      if (!user || !id) return false;
+      
+      const { data } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("event_id", id)
+        .single();
+
+      return !!data;
+    },
+    enabled: !!user && !!id,
+  });
 
   useEffect(() => {
-    // Load event data
-    const storedEvents = JSON.parse(
-      localStorage.getItem("eventory_events") || "[]"
-    );
-    const allEvents = [...mockEvents, ...storedEvents];
-    const foundEvent = allEvents.find((e) => e.id === id);
-    setEvent(foundEvent || null);
-
-    // Check if favorited
-    if (user && foundEvent) {
-      const favorites = JSON.parse(
-        localStorage.getItem("eventory_favorites") || "[]"
-      );
-      const isFav = favorites.some(
-        (f: any) => f.userId === user.id && f.eventId === foundEvent.id
-      );
-      setIsFavorited(isFav);
+    if (isFavorite !== undefined) {
+      setIsFavorited(isFavorite);
     }
+  }, [isFavorite]);
 
-    // Check if following organizer and load follower count
-    if (user && foundEvent) {
-      const follows = JSON.parse(
-        localStorage.getItem("eventory_follows") || "[]"
-      );
-      const isFollowing = follows.some(
-        (f: any) =>
-          f.userId === user.id && f.organizerName === foundEvent.organizer
-      );
-      setIsFollowingOrganizer(isFollowing);
-
-      // Load follower count for this organizer
-      const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
-      const count = followerCounts[foundEvent.organizer] || Math.floor(Math.random() * 15000) + 1000;
-      
-      // Store the generated count if it doesn't exist
-      if (!followerCounts[foundEvent.organizer]) {
-        followerCounts[foundEvent.organizer] = count;
-        localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
-      }
-      
-      setOrganizerFollowerCount(count);
-      setIsVerifiedOrganizer(count >= 10000);
-    }
-  }, [id, user]);
-
-  useEffect(() => {
-    if (event) {
-      supabase.rpc('track_event_view', { 
-        event_uuid: event.id,
-        session_id: sessionStorage.getItem('session_id') || undefined
-      });
-    }
-  }, [event]);
-
-  const toggleFavorite = () => {
+  const toggleFavorite = async () => {
     if (!user || !event) {
       toast({
         title: "Please log in",
@@ -189,102 +72,39 @@ const EventDetail = () => {
       return;
     }
 
-    const existingFavorites = JSON.parse(
-      localStorage.getItem("eventory_favorites") || "[]"
-    );
-
-    if (isFavorited) {
-      const updatedFavorites = existingFavorites.filter(
-        (f: any) => !(f.userId === user.id && f.eventId === event.id)
-      );
-      localStorage.setItem(
-        "eventory_favorites",
-        JSON.stringify(updatedFavorites)
-      );
-      setIsFavorited(false);
-      toast({
-        title: "Removed from favorites",
-        description: "Event removed from your favorites.",
-      });
-    } else {
-      const newFavorite = {
-        userId: user.id,
-        eventId: event.id,
-        addedAt: new Date().toISOString(),
-      };
-      existingFavorites.push(newFavorite);
-      localStorage.setItem(
-        "eventory_favorites",
-        JSON.stringify(existingFavorites)
-      );
-      setIsFavorited(true);
-      toast({
-        title: "Added to favorites",
-        description: "Event added to your favorites.",
-      });
-    }
-  };
-
-  const toggleFollowOrganizer = () => {
-    if (!user || !event) {
-      toast({
-        title: "Please log in",
-        description: "You need to be logged in to follow organizers.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const existingFollows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
-    const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
-
-    if (isFollowingOrganizer) {
-      const updatedFollows = existingFollows.filter(
-        (f: any) =>
-          !(f.userId === user.id && f.organizerName === event.organizer)
-      );
-      localStorage.setItem('eventory_follows', JSON.stringify(updatedFollows));
-      
-      const newCount = Math.max(0, (followerCounts[event.organizer] || 0) - 1);
-      followerCounts[event.organizer] = newCount;
-      localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
-      
-      setIsFollowingOrganizer(false);
-      setOrganizerFollowerCount(newCount);
-      setIsVerifiedOrganizer(newCount >= 10000);
-      
-      toast({
-        title: "Unfollowed organizer",
-        description: `You are no longer following ${event.organizer}.`,
-      });
-    } else {
-      const newFollow = {
-        userId: user.id,
-        organizerName: event.organizer,
-        followedAt: new Date().toISOString(),
-      };
-      existingFollows.push(newFollow);
-      localStorage.setItem('eventory_follows', JSON.stringify(existingFollows));
-      
-      const newCount = (followerCounts[event.organizer] || 0) + 1;
-      followerCounts[event.organizer] = newCount;
-      localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
-      
-      setIsFollowingOrganizer(true);
-      setOrganizerFollowerCount(newCount);
-      setIsVerifiedOrganizer(newCount >= 10000);
-      
-      toast({
-        title: "Following organizer",
-        description: `You are now following ${event.organizer}.`,
-      });
-
-      if (newCount === 10000) {
+    try {
+      if (isFavorited) {
+        await supabase
+          .from("favorites")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("event_id", event.id);
+        
+        setIsFavorited(false);
         toast({
-          title: "🎉 Organizer Verified!",
-          description: `${event.organizer} just reached 10,000 followers and is now verified!`,
+          title: "Removed from favorites",
+          description: "Event removed from your favorites.",
+        });
+      } else {
+        await supabase
+          .from("favorites")
+          .insert({
+            user_id: user.id,
+            event_id: event.id,
+          });
+        
+        setIsFavorited(true);
+        toast({
+          title: "Added to favorites",
+          description: "Event added to your favorites.",
         });
       }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update favorites. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -304,17 +124,67 @@ const EventDetail = () => {
     }
   };
 
-  const handlePurchaseComplete = () => {
-    if (event) {
-      const storedEvents = JSON.parse(
-        localStorage.getItem("eventory_events") || "[]"
-      );
-      const updatedEvent = storedEvents.find((e: Event) => e.id === event.id);
-      if (updatedEvent) {
-        setEvent(updatedEvent);
-      }
+  const purchaseTicket = async () => {
+    if (!user) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to purchase tickets.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("tickets")
+        .insert({
+          user_id: user.id,
+          event_id: event.id,
+          quantity: 1,
+          total_price: event.price,
+        });
+
+      if (error) throw error;
+
+      // Update current attendees
+      await supabase
+        .from("events")
+        .update({ 
+          current_attendees: (event.current_attendees || 0) + 1 
+        })
+        .eq("id", event.id);
+
+      toast({
+        title: "Ticket Purchased",
+        description: "Your ticket has been purchased successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Purchase Failed",
+        description: "Failed to purchase ticket. Please try again.",
+        variant: "destructive",
+      });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="aspect-video bg-gray-200 rounded-lg"></div>
+            <div className="space-y-4">
+              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-20 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!event) {
     return (
@@ -334,6 +204,10 @@ const EventDetail = () => {
     );
   }
 
+  const organizerName = event.profiles 
+    ? `${event.profiles.first_name} ${event.profiles.last_name}`.trim()
+    : 'Unknown Organizer';
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -349,24 +223,6 @@ const EventDetail = () => {
           </Link>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleFollowOrganizer}
-              className="flex items-center gap-2"
-            >
-              {isFollowingOrganizer ? (
-                <>
-                  <UserCheck className="h-4 w-4" />
-                  Following
-                </>
-              ) : (
-                <>
-                  <UserPlus className="h-4 w-4" />
-                  Follow
-                </>
-              )}
-            </Button>
             <Button variant="outline" size="sm" onClick={toggleFavorite}>
               <Heart
                 className={`h-4 w-4 mr-2 ${
@@ -386,7 +242,7 @@ const EventDetail = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
               <img
-                src={event.image}
+                src={event.image_url || "/placeholder.svg"}
                 alt={event.title}
                 className="w-full h-full object-cover"
               />
@@ -396,29 +252,13 @@ const EventDetail = () => {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-2xl">{event.title}</CardTitle>
-                  <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                  <Badge variant="secondary">
                     {event.category}
-                  </span>
+                  </Badge>
                 </div>
-                <CardDescription className="text-base flex items-center gap-2">
-                  <Link 
-                    to={`/organizer/${encodeURIComponent(event.organizer)}`}
-                    className="hover:text-purple-600 transition-colors font-medium"
-                  >
-                    Organized by {event.organizer}
-                  </Link>
-                  {isVerifiedOrganizer && (
-                    <CheckCircle className="h-4 w-4 text-blue-500" />
-                  )}
-                  <span className="text-sm text-gray-500">
-                    ({organizerFollowerCount.toLocaleString()} followers)
-                  </span>
-                  {isVerifiedOrganizer && (
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
-                      Verified
-                    </Badge>
-                  )}
-                </CardDescription>
+                <p className="text-gray-600">
+                  Organized by {organizerName}
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -443,7 +283,7 @@ const EventDetail = () => {
                   <div className="flex items-center gap-3">
                     <MapPin className="h-5 w-5 text-purple-600" />
                     <div>
-                      <div className="font-medium">{event.location}</div>
+                      <div className="font-medium">{event.venue}</div>
                       <div className="text-sm text-gray-600">
                         {event.address}
                       </div>
@@ -454,7 +294,7 @@ const EventDetail = () => {
                     <Users className="h-5 w-5 text-purple-600" />
                     <div>
                       <div className="font-medium">
-                        {event.attendeeCount}/{event.maxAttendees}
+                        {event.current_attendees || 0}/{event.max_attendees}
                       </div>
                       <div className="text-sm text-gray-600">Attendees</div>
                     </div>
@@ -470,36 +310,67 @@ const EventDetail = () => {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {event.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm"
-                    >
-                      <Tag className="h-3 w-3" />
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+                {event.tags && event.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {event.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm"
+                      >
+                        <Tag className="h-3 w-3" />
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
-
-            {/* Add Reviews Section */}
-            <EventReviews eventId={event.id} />
-
-            {/* Add Chat Section for Community Events */}
-            <RealTimeChat 
-              communityId="default-community" 
-              eventId={event.id} 
-            />
           </div>
 
           <div className="lg:col-span-1">
             <div className="sticky top-4">
-              <TicketPurchase
-                event={event}
-                onPurchaseComplete={handlePurchaseComplete}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Get Your Tickets</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-purple-600">
+                      ${event.price}
+                    </div>
+                    <div className="text-sm text-gray-600">per ticket</div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Available:</span>
+                      <span>{(event.max_attendees || 0) - (event.current_attendees || 0)} tickets</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-purple-600 h-2 rounded-full" 
+                        style={{ 
+                          width: `${((event.current_attendees || 0) / (event.max_attendees || 1)) * 100}%` 
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <Button 
+                    className="w-full" 
+                    onClick={purchaseTicket}
+                    disabled={!user || (event.current_attendees || 0) >= (event.max_attendees || 0)}
+                  >
+                    {!user ? "Login to Purchase" : 
+                     (event.current_attendees || 0) >= (event.max_attendees || 0) ? "Sold Out" : 
+                     "Purchase Ticket"}
+                  </Button>
+                  
+                  <p className="text-xs text-gray-500 text-center">
+                    Note: This is a demo. No actual payment will be processed.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
