@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -51,7 +50,7 @@ const FollowedOrganizers = () => {
       }
 
       // Group events by organizer
-      const organizerMap = new Map<string, any[]>();
+      const organizerMap = new Map<string, OrganizerProfile>();
       const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
 
       userFollows.forEach((follow: any) => {
@@ -155,7 +154,7 @@ const FollowedOrganizers = () => {
           <EmptyFollowedOrganizers />
         ) : (
           <div className="space-y-8">
-            {followedOrganizers.map((organizer) => (
+            {followedOrganizers.map((organizer: OrganizerProfile) => (
               <OrganizerCard
                 key={organizer.name}
                 organizer={organizer}

@@ -56,11 +56,15 @@ export const useTickets = () => {
 
       if (error) throw error;
 
-      // Update event attendance count
-      await supabase.rpc('increment_event_attendance', {
-        event_uuid: eventId,
-        increment_by: quantity
-      });
+      // Update event attendance count directly
+      const { error: updateError } = await supabase
+        .from("events")
+        .update({ 
+          current_attendees: supabase.sql`current_attendees + ${quantity}`
+        })
+        .eq("id", eventId);
+
+      if (updateError) throw updateError;
 
       return data;
     },
