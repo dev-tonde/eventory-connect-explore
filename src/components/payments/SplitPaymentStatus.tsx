@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, Check, Clock, AlertCircle, CreditCard } from "lucide-react";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface SplitPaymentStatusProps {

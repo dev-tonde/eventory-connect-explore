@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/layout/Header";
 import PosterGenerator from "@/components/poster/PosterGenerator";
 import SocialScheduler from "@/components/poster/SocialScheduler";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 

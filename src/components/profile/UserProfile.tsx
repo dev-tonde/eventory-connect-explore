@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { User, Calendar, Heart, Settings, LogOut, Users } from "lucide-react";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Event } from "@/types/event";
 import { Link } from "react-router-dom";
 

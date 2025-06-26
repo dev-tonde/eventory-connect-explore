@@ -1,10 +1,9 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from "react";
 import Header from "@/components/layout/Header";
 import UserProfile from "@/components/profile/UserProfile";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Event } from "@/types/event";
 

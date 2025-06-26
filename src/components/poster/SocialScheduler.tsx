@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Clock, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SocialSchedulerProps {
   posterId?: string;
