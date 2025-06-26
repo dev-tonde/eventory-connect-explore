@@ -12,7 +12,6 @@ import LocationPermissionModal from "@/components/location/LocationPermissionMod
 const NearbyEventsSection = () => {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number; city?: string } | null>(null);
   const [nearbyEvents, setNearbyEvents] = useState<Event[]>([]);
-  const [showMap, setShowMap] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationPermissionAsked, setLocationPermissionAsked] = useState(false);
 
@@ -69,44 +68,108 @@ const NearbyEventsSection = () => {
   const loadNearbyEvents = () => {
     if (!userLocation) return;
 
-    // Get events from localStorage
-    const storedEvents = JSON.parse(localStorage.getItem('eventory_events') || '[]');
+    // Enhanced mock events with more realistic data and different organizers
     const mockEvents: Event[] = [
       {
         id: "1",
-        title: "Summer Music Festival",
-        description: "Join us for an amazing day of live music featuring local and international artists.",
+        title: "Summer Music Festival 2024",
+        description: "Join us for an incredible day of live music featuring chart-topping artists, local bands, and emerging talent. Experience multiple stages, gourmet food trucks, craft beer gardens, and interactive art installations in a beautiful outdoor setting.",
         date: "2024-07-15",
         time: "14:00",
-        location: "Central Park",
-        address: "123 Park Avenue, New York, NY",
+        location: "Central Park Amphitheater",
+        address: "123 Park Avenue, New York, NY 10001",
         price: 75,
         category: "Music",
         image: "/placeholder.svg",
-        organizer: "Music Events Co.",
-        attendeeCount: 150,
+        organizer: "Harmony Events Co.",
+        attendeeCount: 342,
         maxAttendees: 500,
-        tags: ["outdoor", "festival", "music"]
+        tags: ["outdoor", "festival", "music", "family-friendly"]
       },
       {
         id: "2", 
-        title: "Tech Innovation Workshop",
-        description: "Learn about the latest trends in AI and machine learning from industry experts.",
+        title: "AI & Machine Learning Summit",
+        description: "Dive deep into the future of artificial intelligence with industry pioneers, researchers, and innovators. Network with leading AI professionals, attend hands-on workshops, and discover the latest breakthroughs in machine learning, neural networks, and automation.",
         date: "2024-07-20",
-        time: "10:00",
-        location: "Tech Hub",
-        address: "456 Innovation Street, San Francisco, CA",
-        price: 25,
+        time: "09:00",
+        location: "Innovation Tech Hub",
+        address: "456 Innovation Street, San Francisco, CA 94105",
+        price: 125,
         category: "Technology",
         image: "/placeholder.svg",
-        organizer: "TechLearn",
-        attendeeCount: 45,
+        organizer: "TechVision Institute",
+        attendeeCount: 89,
+        maxAttendees: 150,
+        tags: ["workshop", "technology", "AI", "networking", "professional"]
+      },
+      {
+        id: "3",
+        title: "Urban Food & Wine Experience",
+        description: "Savor culinary masterpieces from award-winning chefs paired with premium wines from renowned vineyards around the world. Enjoy live cooking demonstrations, wine tastings, and exclusive access to limited-edition bottles in an elegant rooftop setting.",
+        date: "2024-07-25",
+        time: "18:30",
+        location: "Skyline Rooftop Venue",
+        address: "789 Luxury Lane, Los Angeles, CA 90210",
+        price: 95,
+        category: "Food",
+        image: "/placeholder.svg",
+        organizer: "Culinary Masters Guild",
+        attendeeCount: 67,
         maxAttendees: 100,
-        tags: ["workshop", "technology", "AI"]
+        tags: ["food", "wine", "tasting", "luxury", "rooftop"]
+      },
+      {
+        id: "4",
+        title: "Startup Pitch Battle 2024",
+        description: "Watch the next generation of entrepreneurs pitch their groundbreaking ideas to top-tier investors and venture capitalists. Network with founders, investors, and industry experts while witnessing the birth of tomorrow's unicorn companies.",
+        date: "2024-08-02",
+        time: "10:00",
+        location: "Entrepreneur Hub",
+        address: "321 Startup Street, Austin, TX 78701",
+        price: 35,
+        category: "Business",
+        image: "/placeholder.svg",
+        organizer: "Venture Connect",
+        attendeeCount: 156,
+        maxAttendees: 200,
+        tags: ["startup", "business", "networking", "competition", "investors"]
+      },
+      {
+        id: "5",
+        title: "Contemporary Art Showcase",
+        description: "Discover cutting-edge contemporary art from emerging and established artists from around the globe. Meet the artists, participate in guided tours, and enjoy an exclusive wine reception while exploring thought-provoking installations and paintings.",
+        date: "2024-08-10",
+        time: "19:00",
+        location: "Modern Art Gallery District",
+        address: "654 Arts District, Chicago, IL 60601",
+        price: 0,
+        category: "Arts",
+        image: "/placeholder.svg",
+        organizer: "Metropolitan Arts Foundation",
+        attendeeCount: 43,
+        maxAttendees: 120,
+        tags: ["art", "gallery", "culture", "free", "wine-reception"]
+      },
+      {
+        id: "6",
+        title: "Wellness & Mindfulness Retreat",
+        description: "Rejuvenate your mind, body, and spirit with expert-led yoga sessions, guided meditation, sound healing workshops, and holistic wellness practices. Includes healthy gourmet meals, spa treatments, and take-home wellness kits.",
+        date: "2024-08-18",
+        time: "08:00",
+        location: "Serenity Wellness Sanctuary",
+        address: "987 Peaceful Path, Sedona, AZ 86336",
+        price: 180,
+        category: "Health",
+        image: "/placeholder.svg",
+        organizer: "Zen Wellness Collective",
+        attendeeCount: 28,
+        maxAttendees: 40,
+        tags: ["yoga", "wellness", "meditation", "retreat", "spa"]
       }
     ];
 
-    // Combine stored events with mock events and simulate distance-based filtering
+    // Get events from localStorage and combine with mock events
+    const storedEvents = JSON.parse(localStorage.getItem('eventory_events') || '[]');
     const allEvents = [...mockEvents, ...storedEvents];
     
     // Mock distance calculation - in real app would use geospatial queries
@@ -156,22 +219,10 @@ const NearbyEventsSection = () => {
                 </Button>
               </div>
             )}
-            
-            {userLocation && (
-              <div className="text-center mb-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowMap(!showMap)}
-                  className="mr-4"
-                >
-                  <MapPin className="h-4 w-4 mr-2" />
-                  {showMap ? 'Hide Map' : 'Show Map'}
-                </Button>
-              </div>
-            )}
           </div>
 
-          {showMap && userLocation && (
+          {/* Map is always displayed when location is available */}
+          {userLocation && (
             <div className="mb-8">
               <EventMap events={nearbyEvents} userLocation={userLocation} />
             </div>
@@ -190,6 +241,7 @@ const NearbyEventsSection = () => {
                   </div>
                   <CardHeader>
                     <CardTitle className="text-lg">{event.title}</CardTitle>
+                    <p className="text-sm text-gray-500 mb-2">by {event.organizer}</p>
                     <div className="space-y-2 text-sm text-gray-600">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
@@ -211,6 +263,7 @@ const NearbyEventsSection = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{event.description}</p>
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold text-purple-600">
                         {event.price === 0 ? 'Free' : `$${event.price}`}
