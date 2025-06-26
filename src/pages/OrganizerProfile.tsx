@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, Calendar, MapPin, CheckCircle, UserPlus, UserCheck, Grid3X3 } from "lucide-react";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Event } from "@/types/event";
 import { useToast } from "@/hooks/use-toast";
 

@@ -17,7 +17,7 @@ import EventMap from "@/components/map/EventMap";
 import LocationSearch from "@/components/location/LocationSearch";
 import LocationPermissionModal from "@/components/location/LocationPermissionModal";
 import { Event, EventFilters as EventFiltersType } from "@/types/event";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 // Enhanced mock data with different organizers and more realistic information

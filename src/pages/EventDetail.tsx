@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -8,7 +9,7 @@ import { Calendar, MapPin, Users, Clock, Tag, ArrowLeft, Share2, Heart, UserPlus
 import Header from "@/components/layout/Header";
 import TicketPurchase from "@/components/tickets/TicketPurchase";
 import { Event } from "@/types/event";
-import { useAuth } from "@/contexts/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 // Enhanced mock data with different organizers
