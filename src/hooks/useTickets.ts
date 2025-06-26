@@ -56,24 +56,24 @@ export const useTickets = () => {
 
       if (error) throw error;
 
-      // Get current event data first
-      const { data: eventData, error: fetchError } = await supabase
-        .from("events")
-        .select("current_attendees")
-        .eq("id", eventId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Update event attendance count
-      const { error: updateError } = await supabase
-        .from("events")
-        .update({ 
-          current_attendees: (eventData.current_attendees || 0) + quantity
-        })
-        .eq("id", eventId);
+      // Use the new database function to increment attendance atomically
+      const { error: updateError } = await supabase.rpc('increment_event_attendance', {
+        event_uuid: eventId,
+        quantity_val: quantity
+      });
 
       if (updateError) throw updateError;
+
+      // Queue email notification for ticket purchase
+      await supabase.rpc('queue_email_notification', {
+        user_uuid: user.id,
+        event_uuid: eventId,
+        email_type_val: 'ticket_purchase',
+        recipient_email_val: user.email,
+        subject_val: 'Ticket Purchase Confirmation',
+        content_val: `Your ticket has been confirmed for ${quantity} attendee(s).`,
+        template_data_val: { eventId, quantity, totalPrice }
+      });
 
       return data;
     },

@@ -13,7 +13,13 @@ export const useEvents = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
-        .select("*")
+        .select(`
+          *,
+          profiles!events_organizer_id_fkey (
+            first_name,
+            last_name
+          )
+        `)
         .eq("is_active", true)
         .order("date", { ascending: true });
 
@@ -30,7 +36,9 @@ export const useEvents = () => {
         price: Number(event.price),
         category: event.category,
         image: event.image_url || "/placeholder.svg",
-        organizer: "Organizer", // We'll need to join with profiles later
+        organizer: event.profiles 
+          ? `${event.profiles.first_name} ${event.profiles.last_name}`.trim()
+          : 'Unknown Organizer',
         attendeeCount: event.current_attendees || 0,
         maxAttendees: event.max_attendees || 100,
         tags: event.tags || []
@@ -38,22 +46,48 @@ export const useEvents = () => {
     },
   });
 
+  const uploadEventImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = `${(await supabase.auth.getUser()).data.user?.id}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('event-images')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('event-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
   const createEventMutation = useMutation({
-    mutationFn: async (eventData: Partial<Event>) => {
+    mutationFn: async (eventData: Partial<Event> & { imageFile?: File }) => {
+      const { imageFile, ...restEventData } = eventData;
+      let imageUrl = eventData.image;
+
+      // Upload image if provided
+      if (imageFile) {
+        imageUrl = await uploadEventImage(imageFile);
+      }
+
       const { data, error } = await supabase
         .from("events")
         .insert([{
-          title: eventData.title,
-          description: eventData.description,
-          date: eventData.date,
-          time: eventData.time,
-          venue: eventData.location,
-          address: eventData.address,
-          price: eventData.price,
-          category: eventData.category,
-          image_url: eventData.image,
-          max_attendees: eventData.maxAttendees,
-          tags: eventData.tags,
+          title: restEventData.title,
+          description: restEventData.description,
+          date: restEventData.date,
+          time: restEventData.time,
+          venue: restEventData.location,
+          address: restEventData.address,
+          price: restEventData.price,
+          category: restEventData.category,
+          image_url: imageUrl,
+          max_attendees: restEventData.maxAttendees,
+          tags: restEventData.tags,
           organizer_id: (await supabase.auth.getUser()).data.user?.id
         }])
         .select()
@@ -70,6 +104,7 @@ export const useEvents = () => {
       });
     },
     onError: (error) => {
+      console.error("Event creation error:", error);
       toast({
         title: "Error",
         description: "Failed to create event. Please try again.",
@@ -83,5 +118,6 @@ export const useEvents = () => {
     isLoading,
     createEvent: createEventMutation.mutate,
     isCreating: createEventMutation.isPending,
+    uploadEventImage,
   };
 };

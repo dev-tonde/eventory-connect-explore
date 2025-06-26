@@ -9,9 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Calendar, MapPin, DollarSign, Image, Tag } from "lucide-react";
+import { Calendar, MapPin, DollarSign, Image as ImageIcon, Tag, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useEvents } from "@/hooks/useEvents";
 
 interface EventFormData {
   title: string;
@@ -25,6 +25,7 @@ interface EventFormData {
   maxAttendees: number;
   image: string;
   tags: string[];
+  imageFile?: File;
 }
 
 interface EventCreationFormProps {
@@ -33,8 +34,7 @@ interface EventCreationFormProps {
 
 const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
   const { profile } = useAuth();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createEvent, isCreating } = useEvents();
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
     description: "",
@@ -48,6 +48,7 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
     image: "/placeholder.svg",
     tags: [],
   });
+  const [imagePreview, setImagePreview] = useState<string>("/placeholder.svg");
 
   const categories = [
     "Music",
@@ -62,41 +63,26 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    
+    createEvent({
+      ...formData,
+      tags: formData.tags.filter((tag) => tag.trim() !== ""),
+    });
 
-    try {
-      // Mock event creation - replace with Supabase later
-      const newEvent = {
-        id: Math.random().toString(36).substr(2, 9),
-        ...formData,
-        organizer: profile ? `${profile.first_name} ${profile.last_name}` : "Unknown",
-        attendeeCount: 0,
-        tags: formData.tags.filter((tag) => tag.trim() !== ""),
+    onSuccess?.();
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData({ ...formData, imageFile: file });
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
       };
-
-      console.log("Creating event:", newEvent);
-
-      // Store in localStorage for now
-      const existingEvents = JSON.parse(
-        localStorage.getItem("eventory_events") || "[]"
-      );
-      existingEvents.push(newEvent);
-      localStorage.setItem("eventory_events", JSON.stringify(existingEvents));
-
-      toast({
-        title: "Event Created!",
-        description: "Your event has been successfully created and published.",
-      });
-
-      onSuccess?.();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create event. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -118,6 +104,36 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Image Upload */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <ImageIcon className="inline h-4 w-4 mr-1" />
+                Event Image
+              </label>
+              <div className="flex items-center gap-4">
+                <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+                  <img
+                    src={imagePreview}
+                    alt="Event preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="mb-2"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Upload a poster or image for your event
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Basic Information */}
           <div className="space-y-4">
             <div>
@@ -289,8 +305,8 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
             </p>
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? "Creating Event..." : "Create Event"}
+          <Button type="submit" disabled={isCreating} className="w-full">
+            {isCreating ? "Creating Event..." : "Create Event"}
           </Button>
         </form>
       </CardContent>
