@@ -56,24 +56,34 @@ export const useTickets = () => {
 
       if (error) throw error;
 
-      // Use the new database function to increment attendance atomically
-      const { error: updateError } = await supabase.rpc('increment_event_attendance', {
-        event_uuid: eventId,
-        quantity_val: quantity
-      });
+      // Update attendance count manually since TypeScript types don't include our new function
+      const { data: currentEvent } = await supabase
+        .from("events")
+        .select("current_attendees")
+        .eq("id", eventId)
+        .single();
 
-      if (updateError) throw updateError;
+      if (currentEvent) {
+        await supabase
+          .from("events")
+          .update({ 
+            current_attendees: (currentEvent.current_attendees || 0) + quantity 
+          })
+          .eq("id", eventId);
+      }
 
-      // Queue email notification for ticket purchase
-      await supabase.rpc('queue_email_notification', {
-        user_uuid: user.id,
-        event_uuid: eventId,
-        email_type_val: 'ticket_purchase',
-        recipient_email_val: user.email,
-        subject_val: 'Ticket Purchase Confirmation',
-        content_val: `Your ticket has been confirmed for ${quantity} attendee(s).`,
-        template_data_val: { eventId, quantity, totalPrice }
-      });
+      // Queue email notification manually
+      await supabase
+        .from("email_notifications")
+        .insert({
+          user_id: user.id,
+          event_id: eventId,
+          email_type: 'ticket_purchase',
+          recipient_email: user.email || '',
+          subject: 'Ticket Purchase Confirmation',
+          content: `Your ticket has been confirmed for ${quantity} attendee(s).`,
+          template_data: { eventId, quantity, totalPrice }
+        });
 
       return data;
     },
