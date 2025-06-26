@@ -56,11 +56,20 @@ export const useTickets = () => {
 
       if (error) throw error;
 
-      // Update event attendance count directly
+      // Get current event data first
+      const { data: eventData, error: fetchError } = await supabase
+        .from("events")
+        .select("current_attendees")
+        .eq("id", eventId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update event attendance count
       const { error: updateError } = await supabase
         .from("events")
         .update({ 
-          current_attendees: supabase.sql`current_attendees + ${quantity}`
+          current_attendees: (eventData.current_attendees || 0) + quantity
         })
         .eq("id", eventId);
 
