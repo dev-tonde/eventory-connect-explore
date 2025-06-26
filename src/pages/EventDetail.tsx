@@ -11,24 +11,105 @@ import { Event } from "@/types/event";
 import { useAuth } from "@/contexts/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data - in real app this would come from API
-const mockEvent: Event = {
-  id: "1",
-  title: "Summer Music Festival",
-  description:
-    "Join us for an amazing day of live music featuring local and international artists. This festival brings together the best of contemporary music with food trucks, art installations, and a vibrant community atmosphere. Whether you're a music lover or just looking for a great day out, this event promises unforgettable memories.",
-  date: "2024-07-15",
-  time: "14:00",
-  location: "Central Park",
-  address: "123 Park Avenue, New York, NY 10001",
-  price: 75,
-  category: "Music",
-  image: "/placeholder.svg",
-  organizer: "Music Events Co.",
-  attendeeCount: 150,
-  maxAttendees: 500,
-  tags: ["outdoor", "festival", "music", "family-friendly"],
-};
+// Enhanced mock data with different organizers
+const mockEvents: Event[] = [
+  {
+    id: "1",
+    title: "Summer Music Festival 2024",
+    description: "Join us for an incredible day of live music featuring chart-topping artists, local bands, and emerging talent. Experience multiple stages, gourmet food trucks, craft beer gardens, and interactive art installations in a beautiful outdoor setting.",
+    date: "2024-07-15",
+    time: "14:00",
+    location: "Central Park Amphitheater",
+    address: "123 Park Avenue, New York, NY 10001",
+    price: 75,
+    category: "Music",
+    image: "/placeholder.svg",
+    organizer: "Harmony Events Co.",
+    attendeeCount: 342,
+    maxAttendees: 500,
+    tags: ["outdoor", "festival", "music", "family-friendly"]
+  },
+  {
+    id: "2",
+    title: "AI & Machine Learning Summit",
+    description: "Dive deep into the future of artificial intelligence with industry pioneers, researchers, and innovators. Network with leading AI professionals, attend hands-on workshops, and discover the latest breakthroughs in machine learning, neural networks, and automation.",
+    date: "2024-07-20",
+    time: "09:00",
+    location: "Innovation Tech Hub",
+    address: "456 Innovation Street, San Francisco, CA 94105",
+    price: 125,
+    category: "Technology",
+    image: "/placeholder.svg",
+    organizer: "TechVision Institute",
+    attendeeCount: 89,
+    maxAttendees: 150,
+    tags: ["workshop", "technology", "AI", "networking", "professional"]
+  },
+  {
+    id: "3",
+    title: "Urban Food & Wine Experience",
+    description: "Savor culinary masterpieces from award-winning chefs paired with premium wines from renowned vineyards around the world. Enjoy live cooking demonstrations, wine tastings, and exclusive access to limited-edition bottles in an elegant rooftop setting.",
+    date: "2024-07-25",
+    time: "18:30",
+    location: "Skyline Rooftop Venue",
+    address: "789 Luxury Lane, Los Angeles, CA 90210",
+    price: 95,
+    category: "Food",
+    image: "/placeholder.svg",
+    organizer: "Culinary Masters Guild",
+    attendeeCount: 67,
+    maxAttendees: 100,
+    tags: ["food", "wine", "tasting", "luxury", "rooftop"]
+  },
+  {
+    id: "4",
+    title: "Startup Pitch Battle 2024",
+    description: "Watch the next generation of entrepreneurs pitch their groundbreaking ideas to top-tier investors and venture capitalists. Network with founders, investors, and industry experts while witnessing the birth of tomorrow's unicorn companies.",
+    date: "2024-08-02",
+    time: "10:00",
+    location: "Entrepreneur Hub",
+    address: "321 Startup Street, Austin, TX 78701",
+    price: 35,
+    category: "Business",
+    image: "/placeholder.svg",
+    organizer: "Venture Connect",
+    attendeeCount: 156,
+    maxAttendees: 200,
+    tags: ["startup", "business", "networking", "competition", "investors"]
+  },
+  {
+    id: "5",
+    title: "Contemporary Art Showcase",
+    description: "Discover cutting-edge contemporary art from emerging and established artists from around the globe. Meet the artists, participate in guided tours, and enjoy an exclusive wine reception while exploring thought-provoking installations and paintings.",
+    date: "2024-08-10",
+    time: "19:00",
+    location: "Modern Art Gallery District",
+    address: "654 Arts District, Chicago, IL 60601",
+    price: 0,
+    category: "Arts",
+    image: "/placeholder.svg",
+    organizer: "Metropolitan Arts Foundation",
+    attendeeCount: 43,
+    maxAttendees: 120,
+    tags: ["art", "gallery", "culture", "free", "wine-reception"]
+  },
+  {
+    id: "6",
+    title: "Wellness & Mindfulness Retreat",
+    description: "Rejuvenate your mind, body, and spirit with expert-led yoga sessions, guided meditation, sound healing workshops, and holistic wellness practices. Includes healthy gourmet meals, spa treatments, and take-home wellness kits.",
+    date: "2024-08-18",
+    time: "08:00",
+    location: "Serenity Wellness Sanctuary",
+    address: "987 Peaceful Path, Sedona, AZ 86336",
+    price: 180,
+    category: "Health",
+    image: "/placeholder.svg",
+    organizer: "Zen Wellness Collective",
+    attendeeCount: 28,
+    maxAttendees: 40,
+    tags: ["yoga", "wellness", "meditation", "retreat", "spa"]
+  }
+];
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -45,7 +126,7 @@ const EventDetail = () => {
     const storedEvents = JSON.parse(
       localStorage.getItem("eventory_events") || "[]"
     );
-    const allEvents = [mockEvent, ...storedEvents];
+    const allEvents = [...mockEvents, ...storedEvents];
     const foundEvent = allEvents.find((e) => e.id === id);
     setEvent(foundEvent || null);
 
@@ -73,7 +154,14 @@ const EventDetail = () => {
 
       // Load follower count for this organizer
       const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
-      const count = followerCounts[foundEvent.organizer] || 0;
+      const count = followerCounts[foundEvent.organizer] || Math.floor(Math.random() * 15000) + 1000;
+      
+      // Store the generated count if it doesn't exist
+      if (!followerCounts[foundEvent.organizer]) {
+        followerCounts[foundEvent.organizer] = count;
+        localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
+      }
+      
       setOrganizerFollowerCount(count);
       setIsVerifiedOrganizer(count >= 10000);
     }
@@ -94,7 +182,6 @@ const EventDetail = () => {
     );
 
     if (isFavorited) {
-      // Remove from favorites
       const updatedFavorites = existingFavorites.filter(
         (f: any) => !(f.userId === user.id && f.eventId === event.id)
       );
@@ -108,7 +195,6 @@ const EventDetail = () => {
         description: "Event removed from your favorites.",
       });
     } else {
-      // Add to favorites
       const newFavorite = {
         userId: user.id,
         eventId: event.id,
@@ -141,14 +227,12 @@ const EventDetail = () => {
     const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
 
     if (isFollowingOrganizer) {
-      // Unfollow organizer
       const updatedFollows = existingFollows.filter(
         (f: any) =>
           !(f.userId === user.id && f.organizerName === event.organizer)
       );
       localStorage.setItem('eventory_follows', JSON.stringify(updatedFollows));
       
-      // Decrease follower count
       const newCount = Math.max(0, (followerCounts[event.organizer] || 0) - 1);
       followerCounts[event.organizer] = newCount;
       localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
@@ -162,7 +246,6 @@ const EventDetail = () => {
         description: `You are no longer following ${event.organizer}.`,
       });
     } else {
-      // Follow organizer
       const newFollow = {
         userId: user.id,
         organizerName: event.organizer,
@@ -171,7 +254,6 @@ const EventDetail = () => {
       existingFollows.push(newFollow);
       localStorage.setItem('eventory_follows', JSON.stringify(existingFollows));
       
-      // Increase follower count
       const newCount = (followerCounts[event.organizer] || 0) + 1;
       followerCounts[event.organizer] = newCount;
       localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
@@ -185,7 +267,6 @@ const EventDetail = () => {
         description: `You are now following ${event.organizer}.`,
       });
 
-      // Check if organizer just became verified
       if (newCount === 10000) {
         toast({
           title: "🎉 Organizer Verified!",
@@ -212,7 +293,6 @@ const EventDetail = () => {
   };
 
   const handlePurchaseComplete = () => {
-    // Refresh event data to show updated attendance
     if (event) {
       const storedEvents = JSON.parse(
         localStorage.getItem("eventory_events") || "[]"
@@ -257,25 +337,24 @@ const EventDetail = () => {
           </Link>
 
           <div className="flex items-center gap-2">
-            {user && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleFollowOrganizer}
-              >
-                {isFollowingOrganizer ? (
-                  <>
-                    <UserCheck className="h-4 w-4 mr-2" />
-                    Following {event.organizer}
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Follow {event.organizer}
-                  </>
-                )}
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleFollowOrganizer}
+              className="flex items-center gap-2"
+            >
+              {isFollowingOrganizer ? (
+                <>
+                  <UserCheck className="h-4 w-4" />
+                  Following
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4" />
+                  Follow
+                </>
+              )}
+            </Button>
             <Button variant="outline" size="sm" onClick={toggleFavorite}>
               <Heart
                 className={`h-4 w-4 mr-2 ${
@@ -292,9 +371,7 @@ const EventDetail = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Event Image */}
             <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
               <img
                 src={event.image}
@@ -303,7 +380,6 @@ const EventDetail = () => {
               />
             </div>
 
-            {/* Event Info */}
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -315,9 +391,9 @@ const EventDetail = () => {
                 <CardDescription className="text-base flex items-center gap-2">
                   <Link 
                     to={`/organizer/${encodeURIComponent(event.organizer)}`}
-                    className="hover:text-purple-600 transition-colors"
+                    className="hover:text-purple-600 transition-colors font-medium"
                   >
-                    <span>Organized by {event.organizer}</span>
+                    Organized by {event.organizer}
                   </Link>
                   {isVerifiedOrganizer && (
                     <CheckCircle className="h-4 w-4 text-blue-500" />
@@ -397,7 +473,6 @@ const EventDetail = () => {
             </Card>
           </div>
 
-          {/* Booking Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-4">
               <TicketPurchase
