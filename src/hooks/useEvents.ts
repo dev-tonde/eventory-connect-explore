@@ -55,7 +55,10 @@ export const useEvents = () => {
       .from('event-images')
       .upload(filePath, file);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw uploadError;
+    }
 
     const { data } = supabase.storage
       .from('event-images')
@@ -71,8 +74,17 @@ export const useEvents = () => {
 
       // Upload image if provided
       if (imageFile) {
-        imageUrl = await uploadEventImage(imageFile);
+        try {
+          imageUrl = await uploadEventImage(imageFile);
+        } catch (error) {
+          console.error('Image upload failed:', error);
+          // Continue without image if upload fails
+          imageUrl = "/placeholder.svg";
+        }
       }
+
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error("User not authenticated");
 
       const { data, error } = await supabase
         .from("events")
@@ -88,7 +100,7 @@ export const useEvents = () => {
           image_url: imageUrl,
           max_attendees: restEventData.maxAttendees,
           tags: restEventData.tags,
-          organizer_id: (await supabase.auth.getUser()).data.user?.id
+          organizer_id: user.user.id
         }])
         .select()
         .single();

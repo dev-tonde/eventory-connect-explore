@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, CreditCard, User, Mail, Phone, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTickets } from "@/hooks/useTickets";
 import { Event } from "@/types/event";
 import DynamicPricing from "@/components/pricing/DynamicPricing";
 import SplitPayment from "@/components/payments/SplitPayment";
@@ -24,8 +26,8 @@ interface TicketPurchaseProps {
 const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
   const { user, profile, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { purchaseTicket, isPurchasing } = useTickets();
   const [quantity, setQuantity] = useState(1);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [currentPrice, setCurrentPrice] = useState(event.price);
   const [paymentMethod, setPaymentMethod] = useState<'full' | 'split'>('full');
   const [buyerInfo, setBuyerInfo] = useState({
@@ -70,65 +72,15 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
       return;
     }
 
-    setIsProcessing(true);
-
     try {
-      // Mock payment processing
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Mock ticket purchase
-      const purchase = {
-        id: Math.random().toString(36).substr(2, 9),
+      await purchaseTicket({
         eventId: event.id,
-        userId: user?.id,
         quantity,
         totalPrice,
-        buyerInfo,
-        purchaseDate: new Date().toISOString(),
-        ticketNumbers: Array.from(
-          { length: quantity },
-          (_, i) =>
-            `TKT-${event.id.toUpperCase()}-${(event.attendeeCount + i + 1)
-              .toString()
-              .padStart(4, "0")}`
-        ),
-      };
-
-      // Store purchase
-      const existingPurchases = JSON.parse(
-        localStorage.getItem("eventory_purchases") || "[]"
-      );
-      existingPurchases.push(purchase);
-      localStorage.setItem(
-        "eventory_purchases",
-        JSON.stringify(existingPurchases)
-      );
-
-      // Update event attendance
-      const events = JSON.parse(
-        localStorage.getItem("eventory_events") || "[]"
-      );
-      const eventIndex = events.findIndex((e: Event) => e.id === event.id);
-      if (eventIndex !== -1) {
-        events[eventIndex].attendeeCount += quantity;
-        localStorage.setItem("eventory_events", JSON.stringify(events));
-      }
-
-      toast({
-        title: "Purchase Successful!",
-        description: `You've successfully purchased ${quantity} ticket(s) for ${event.title}.`,
       });
-
       onPurchaseComplete?.();
     } catch (error) {
-      toast({
-        title: "Purchase Failed",
-        description:
-          "There was an error processing your purchase. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
+      console.error("Purchase error:", error);
     }
   };
 
@@ -308,12 +260,12 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
                 size="lg"
                 onClick={handlePurchase}
                 disabled={
-                  isProcessing ||
+                  isPurchasing ||
                   (!isAuthenticated &&
                     (!buyerInfo.name || !buyerInfo.email || !buyerInfo.phone))
                 }
               >
-                {isProcessing
+                {isPurchasing
                   ? "Processing..."
                   : currentPrice === 0
                   ? "Register for Free"

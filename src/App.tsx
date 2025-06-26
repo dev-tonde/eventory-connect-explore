@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import ErrorBoundary from "@/components/error/ErrorBoundary";
 
 import Index from "@/pages/Index";
-import Login from "@/pages/Login";
+import Auth from "@/pages/Auth";
 import Events from "@/pages/Events";
 import EventDetail from "@/pages/EventDetail";
 import CreateEvent from "@/pages/CreateEvent";
@@ -47,7 +47,8 @@ function App() {
               <Toaster />
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/login" element={<Auth />} />
                 <Route path="/events" element={<Events />} />
                 <Route path="/events/:id" element={<EventDetail />} />
                 <Route path="/create-event" element={<CreateEvent />} />

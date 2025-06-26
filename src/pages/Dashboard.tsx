@@ -11,53 +11,38 @@ import {
 } from "@/components/ui/card";
 import { Plus, Calendar, Users, DollarSign, TrendingUp } from "lucide-react";
 import Header from "@/components/layout/Header";
-import { Event } from "@/types/event";
 import { useAuth } from "@/contexts/AuthContext";
-
-// Mock data for organizer's events
-const mockOrganizerEvents: Event[] = [
-  {
-    id: "org-1",
-    title: "Summer Music Festival",
-    description: "Amazing day of live music",
-    date: "2024-07-15",
-    time: "14:00",
-    location: "Central Park",
-    address: "123 Park Avenue, New York, NY",
-    price: 75,
-    category: "Music",
-    image: "/placeholder.svg",
-    organizer: "Music Events Co.",
-    attendeeCount: 150,
-    maxAttendees: 500,
-    tags: ["outdoor", "festival", "music"],
-  },
-  {
-    id: "org-2",
-    title: "Art Gallery Opening",
-    description: "Exclusive art exhibition opening",
-    date: "2024-07-25",
-    time: "18:00",
-    location: "Downtown Gallery",
-    address: "456 Art Street, New York, NY",
-    price: 30,
-    category: "Arts",
-    image: "/placeholder.svg",
-    organizer: "Music Events Co.",
-    attendeeCount: 45,
-    maxAttendees: 100,
-    tags: ["art", "gallery", "exhibition"],
-  },
-];
+import { useEvents } from "@/hooks/useEvents";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const { user, profile, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [events] = useState<Event[]>(mockOrganizerEvents);
+  const { events: allEvents } = useEvents();
+
+  // Get organizer's events
+  const { data: organizerEvents = [] } = useQuery({
+    queryKey: ["organizer-events", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("organizer_id", user.id)
+        .eq("is_active", true)
+        .order("date", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && profile?.role === "organizer",
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate("/login");
+      navigate("/auth");
       return;
     }
 
@@ -76,12 +61,12 @@ const Dashboard = () => {
     return null;
   }
 
-  const totalRevenue = events.reduce(
-    (sum, event) => sum + event.price * event.attendeeCount,
+  const totalRevenue = organizerEvents.reduce(
+    (sum, event) => sum + (Number(event.price) * (event.current_attendees || 0)),
     0
   );
-  const totalAttendees = events.reduce(
-    (sum, event) => sum + event.attendeeCount,
+  const totalAttendees = organizerEvents.reduce(
+    (sum, event) => sum + (event.current_attendees || 0),
     0
   );
 
@@ -115,7 +100,7 @@ const Dashboard = () => {
               <Calendar className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{events.length}</div>
+              <div className="text-2xl font-bold">{organizerEvents.length}</div>
               <p className="text-xs text-muted-foreground">Active events</p>
             </CardContent>
           </Card>
@@ -155,8 +140,8 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {events.length > 0
-                  ? Math.round(totalAttendees / events.length)
+                {organizerEvents.length > 0
+                  ? Math.round(totalAttendees / organizerEvents.length)
                   : 0}
               </div>
               <p className="text-xs text-muted-foreground">Per event</p>
@@ -174,7 +159,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {events.map((event) => (
+              {organizerEvents.map((event) => (
                 <div
                   key={event.id}
                   className="flex items-center justify-between p-4 border rounded-lg"
@@ -182,7 +167,7 @@ const Dashboard = () => {
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
                       <img
-                        src={event.image}
+                        src={event.image_url || "/placeholder.svg"}
                         alt={event.title}
                         className="w-full h-full object-cover"
                       />
@@ -191,16 +176,16 @@ const Dashboard = () => {
                       <h3 className="font-semibold">{event.title}</h3>
                       <p className="text-sm text-gray-600">
                         {new Date(event.date).toLocaleDateString()} •{" "}
-                        {event.location}
+                        {event.venue}
                       </p>
                       <div className="flex items-center gap-4 mt-1 text-sm">
                         <span className="text-green-600">
-                          {event.attendeeCount}/{event.maxAttendees} tickets
+                          {event.current_attendees || 0}/{event.max_attendees || 100} tickets
                           sold
                         </span>
                         <span className="text-purple-600">
                           $
-                          {(event.price * event.attendeeCount).toLocaleString()}{" "}
+                          {(Number(event.price) * (event.current_attendees || 0)).toLocaleString()}{" "}
                           revenue
                         </span>
                       </div>
@@ -211,14 +196,18 @@ const Dashboard = () => {
                     <Button variant="outline" size="sm">
                       Edit
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate(`/events/${event.id}`)}
+                    >
                       View
                     </Button>
                   </div>
                 </div>
               ))}
 
-              {events.length === 0 && (
+              {organizerEvents.length === 0 && (
                 <div className="text-center py-8">
                   <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
