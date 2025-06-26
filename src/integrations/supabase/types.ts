@@ -192,6 +192,162 @@ export type Database = {
           },
         ]
       }
+      error_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string
+          error_type: string
+          id: string
+          stack_trace: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message: string
+          error_type: string
+          id?: string
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string
+          error_type?: string
+          id?: string
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      event_analytics: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          ip_address: unknown | null
+          metric_type: string
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metric_type: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metric_type?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_analytics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_approvals: {
+        Row: {
+          admin_id: string | null
+          admin_notes: string | null
+          created_at: string | null
+          event_id: string | null
+          id: string
+          reviewed_at: string | null
+          status: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          admin_notes?: string | null
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          reviewed_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          admin_notes?: string | null
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          reviewed_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_approvals_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_reviews: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          is_verified_attendee: boolean | null
+          rating: number
+          review_text: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_verified_attendee?: boolean | null
+          rating: number
+          review_text?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_verified_attendee?: boolean | null
+          rating?: number
+          review_text?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_reviews_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_sentiment: {
         Row: {
           created_at: string
@@ -385,6 +541,33 @@ export type Database = {
           },
         ]
       }
+      platform_analytics: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          metadata: Json | null
+          metric_name: string
+          metric_value: number
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          metadata?: Json | null
+          metric_name: string
+          metric_value: number
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          metadata?: Json | null
+          metric_name?: string
+          metric_value?: number
+        }
+        Relationships: []
+      }
       poll_options: {
         Row: {
           id: string
@@ -575,6 +758,104 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string | null
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id?: string | null
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          action: string
+          count: number | null
+          created_at: string | null
+          id: string
+          identifier: string
+          window_start: string | null
+        }
+        Insert: {
+          action: string
+          count?: number | null
+          created_at?: string | null
+          id?: string
+          identifier: string
+          window_start?: string | null
+        }
+        Update: {
+          action?: string
+          count?: number | null
+          created_at?: string | null
+          id?: string
+          identifier?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
+      refund_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          id: string
+          processed_at: string | null
+          reason: string
+          refund_amount: number
+          status: string | null
+          ticket_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          reason: string
+          refund_amount: number
+          status?: string | null
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          reason?: string
+          refund_amount?: number
+          status?: string | null
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_requests_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scheduled_posts: {
         Row: {
           caption: string
@@ -673,11 +954,111 @@ export type Database = {
           },
         ]
       }
+      user_notifications: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          description: string
+          event_id: string | null
+          id: string
+          report_type: string
+          reported_user_id: string | null
+          reporter_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          description: string
+          event_id?: string | null
+          id?: string
+          report_type: string
+          reported_user_id?: string | null
+          reporter_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          description?: string
+          event_id?: string | null
+          id?: string
+          report_type?: string
+          reported_user_id?: string | null
+          reporter_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reports_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          identifier_val: string
+          action_val: string
+          max_requests: number
+          window_minutes?: number
+        }
+        Returns: boolean
+      }
       generate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -689,6 +1070,14 @@ export type Database = {
       get_dynamic_price: {
         Args: { event_uuid: string }
         Returns: number
+      }
+      get_event_rating: {
+        Args: { event_uuid: string }
+        Returns: number
+      }
+      track_event_view: {
+        Args: { event_uuid: string; session_id?: string }
+        Returns: undefined
       }
     }
     Enums: {

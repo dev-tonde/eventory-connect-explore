@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -8,9 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, Clock, Tag, ArrowLeft, Share2, Heart, UserPlus, UserCheck, CheckCircle } from "lucide-react";
 import Header from "@/components/layout/Header";
 import TicketPurchase from "@/components/tickets/TicketPurchase";
+import EventReviews from "@/components/reviews/EventReviews";
+import RealTimeChat from "@/components/chat/RealTimeChat";
 import { Event } from "@/types/event";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 // Enhanced mock data with different organizers
 const mockEvents: Event[] = [
@@ -167,6 +169,15 @@ const EventDetail = () => {
       setIsVerifiedOrganizer(count >= 10000);
     }
   }, [id, user]);
+
+  useEffect(() => {
+    if (event) {
+      supabase.rpc('track_event_view', { 
+        event_uuid: event.id,
+        session_id: sessionStorage.getItem('session_id') || undefined
+      });
+    }
+  }, [event]);
 
   const toggleFavorite = () => {
     if (!user || !event) {
@@ -472,6 +483,15 @@ const EventDetail = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Add Reviews Section */}
+            <EventReviews eventId={event.id} />
+
+            {/* Add Chat Section for Community Events */}
+            <RealTimeChat 
+              communityId="default-community" 
+              eventId={event.id} 
+            />
           </div>
 
           <div className="lg:col-span-1">

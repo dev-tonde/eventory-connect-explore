@@ -1,8 +1,7 @@
 
-import { Button } from "@/components/ui/button";
-import { Calendar, MessageSquare, User, LogOut, Settings, Plus } from "lucide-react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,120 +9,201 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Bell, Calendar, Menu, Plus, User, LogOut, Settings, Users, MapPin, Palette, Heart, UserPlus, Shield } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import LocationIndicator from "@/components/location/LocationIndicator";
 
 const Header = () => {
   const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate("/");
   };
 
-  const handleCreateEventClick = () => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
+  const navigationItems = [
+    { href: "/events", label: "Events", icon: Calendar },
+    { href: "/communities", label: "Communities", icon: Users },
+    { href: "/poster-studio", label: "Poster Studio", icon: Palette },
+  ];
 
-    if (profile?.role !== "organizer") {
-      navigate("/become-organizer");
-      return;
-    }
-
-    navigate("/create-event");
-  };
+  if (user) {
+    navigationItems.push(
+      { href: "/followed-organizers", label: "Following", icon: Heart },
+      { href: "/dashboard", label: "Dashboard", icon: User }
+    );
+  }
 
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
-        <nav className="flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <Calendar className="h-8 w-8 text-purple-600" />
-            <span className="text-2xl font-bold text-gray-900">Eventory</span>
-          </Link>
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="text-2xl font-bold text-purple-600">
+              Eventory
+            </Link>
+            
+            <nav className="hidden md:flex space-x-6">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className="flex items-center space-x-1 text-gray-600 hover:text-purple-600 transition-colors"
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
 
           <div className="flex items-center space-x-4">
-            <Link to="/events">
-              <Button variant="ghost">Events</Button>
-            </Link>
-
+            <LocationIndicator />
+            
             {user ? (
-              <>
-                <Link to="/communities">
-                  <Button variant="ghost" className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Communities
-                  </Button>
-                </Link>
-                
-                <Button 
-                  variant="ghost" 
-                  className="flex items-center gap-2"
-                  onClick={handleCreateEventClick}
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Event
+              <div className="flex items-center space-x-3">
+                <Button size="sm" variant="ghost" className="relative">
+                  <Bell className="h-4 w-4" />
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs p-0"
+                  >
+                    3
+                  </Badge>
                 </Button>
-                
-                <Link to="/dashboard">
-                  <Button variant="ghost">Dashboard</Button>
-                </Link>
-                
+
+                {profile?.role === "organizer" && (
+                  <Link to="/create-event">
+                    <Button size="sm" className="hidden sm:flex items-center space-x-1">
+                      <Plus className="h-4 w-4" />
+                      <span>Create Event</span>
+                    </Button>
+                  </Link>
+                )}
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 h-10">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={profile?.avatar_url} />
-                        <AvatarFallback>
-                          {profile?.first_name?.[0]}{profile?.last_name?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="hidden md:inline">{profile?.username}</span>
+                    <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <User className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <span className="hidden sm:block">
+                        {profile?.first_name || user.email}
+                      </span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-2 py-1.5 text-sm">
+                      <div className="font-medium">{profile?.first_name} {profile?.last_name}</div>
+                      <div className="text-xs text-gray-500">{user.email}</div>
+                      {profile?.role && (
+                        <Badge variant="secondary" className="mt-1 text-xs">
+                          {profile.role}
+                        </Badge>
+                      )}
+                    </div>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link to="/profile" className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
+                      <Link to="/profile" className="flex items-center">
+                        <User className="mr-2 h-4 w-4" />
                         Profile
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/dashboard" className="flex items-center gap-2">
-                        <Settings className="h-4 w-4" />
-                        Settings
+                      <Link to="/dashboard" className="flex items-center">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Dashboard
                       </Link>
                     </DropdownMenuItem>
-                    {profile?.role !== "organizer" && (
+                    {profile?.role === "attendee" && (
                       <DropdownMenuItem asChild>
-                        <Link to="/become-organizer" className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
+                        <Link to="/become-organizer" className="flex items-center">
+                          <UserPlus className="mr-2 h-4 w-4" />
                           Become Organizer
                         </Link>
                       </DropdownMenuItem>
                     )}
+                    {profile?.role === "admin" && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin" className="flex items-center text-red-600">
+                            <Shield className="mr-2 h-4 w-4" />
+                            Admin Panel
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
-                      <LogOut className="h-4 w-4" />
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
                       Logout
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </>
+              </div>
             ) : (
-              <>
+              <div className="flex items-center space-x-2">
                 <Link to="/login">
-                  <Button variant="ghost">Sign In</Button>
+                  <Button variant="ghost" size="sm">
+                    Login
+                  </Button>
                 </Link>
                 <Link to="/login">
-                  <Button>Get Started</Button>
+                  <Button size="sm">
+                    Sign Up
+                  </Button>
                 </Link>
-              </>
+              </div>
             )}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
           </div>
-        </nav>
+        </div>
+
+        {isMobileMenuOpen && (
+          <div className="md:hidden py-4 border-t">
+            <nav className="space-y-2">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className="flex items-center space-x-2 py-2 text-gray-600 hover:text-purple-600"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+              {profile?.role === "organizer" && (
+                <Link
+                  to="/create-event"
+                  className="flex items-center space-x-2 py-2 text-purple-600 font-medium"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Create Event</span>
+                </Link>
+              )}
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );
