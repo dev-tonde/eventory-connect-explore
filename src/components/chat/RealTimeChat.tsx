@@ -15,10 +15,10 @@ interface Message {
   message: string;
   created_at: string;
   user_id: string;
-  profiles: {
-    first_name: string;
-    last_name: string;
-  };
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
 }
 
 interface RealTimeChatProps {
@@ -64,7 +64,22 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
         .order('created_at', { ascending: true })
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading messages:', error);
+        // Fallback to loading messages without profile join
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('community_messages')
+          .select('*')
+          .eq('community_id', communityId)
+          .eq('event_id', eventId || null)
+          .order('created_at', { ascending: true })
+          .limit(50);
+
+        if (fallbackError) throw fallbackError;
+        setMessages(fallbackData?.map(msg => ({ ...msg, profiles: null })) || []);
+        return;
+      }
+
       setMessages(data || []);
     } catch (error) {
       console.error('Error loading messages:', error);
@@ -100,6 +115,9 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
 
           if (data) {
             setMessages(prev => [...prev, data]);
+          } else {
+            // Fallback without profile join
+            setMessages(prev => [...prev, { ...payload.new as any, profiles: null }]);
           }
         }
       )
@@ -213,7 +231,10 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
                       <div className="flex items-center gap-2 mb-1">
                         <User className="h-3 w-3" />
                         <span className="text-xs font-medium">
-                          {message.profiles?.first_name} {message.profiles?.last_name}
+                          {message.profiles?.first_name && message.profiles?.last_name 
+                            ? `${message.profiles.first_name} ${message.profiles.last_name}`
+                            : 'Anonymous User'
+                          }
                         </span>
                       </div>
                     )}

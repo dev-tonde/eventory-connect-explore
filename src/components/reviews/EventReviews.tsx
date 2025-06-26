@@ -12,14 +12,23 @@ import { supabase } from "@/integrations/supabase/client";
 interface Review {
   id: string;
   rating: number;
-  review_text: string;
+  review_text: string | null;
   is_verified_attendee: boolean;
   created_at: string;
   user_id: string;
-  profiles: {
-    first_name: string;
-    last_name: string;
-  };
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
+}
+
+interface UserReview {
+  id: string;
+  rating: number;
+  review_text: string | null;
+  is_verified_attendee: boolean;
+  created_at: string;
+  user_id: string;
 }
 
 interface EventReviewsProps {
@@ -30,7 +39,7 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [userReview, setUserReview] = useState<Review | null>(null);
+  const [userReview, setUserReview] = useState<UserReview | null>(null);
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,54 +54,80 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
   }, [eventId, user]);
 
   const loadReviews = async () => {
-    const { data, error } = await supabase
-      .from('event_reviews')
-      .select(`
-        *,
-        profiles:user_id (first_name, last_name)
-      `)
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('event_reviews')
+        .select(`
+          *,
+          profiles:user_id (first_name, last_name)
+        `)
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: false });
 
-    if (error) {
+      if (error) {
+        console.error('Error loading reviews:', error);
+        // Fallback to loading reviews without profile join
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('event_reviews')
+          .select('*')
+          .eq('event_id', eventId)
+          .order('created_at', { ascending: false });
+
+        if (fallbackError) throw fallbackError;
+        setReviews(fallbackData?.map(review => ({ ...review, profiles: null })) || []);
+        return;
+      }
+
+      setReviews(data || []);
+    } catch (error) {
       console.error('Error loading reviews:', error);
-      return;
+      toast({
+        title: "Error",
+        description: "Failed to load reviews.",
+        variant: "destructive",
+      });
     }
-
-    setReviews(data || []);
   };
 
   const loadAverageRating = async () => {
-    const { data, error } = await supabase
-      .rpc('get_event_rating', { event_uuid: eventId });
+    try {
+      const { data, error } = await supabase
+        .rpc('get_event_rating', { event_uuid: eventId });
 
-    if (error) {
+      if (error) {
+        console.error('Error loading average rating:', error);
+        return;
+      }
+
+      setAverageRating(data || 0);
+    } catch (error) {
       console.error('Error loading average rating:', error);
-      return;
     }
-
-    setAverageRating(data || 0);
   };
 
   const loadUserReview = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('event_reviews')
-      .select('*')
-      .eq('event_id', eventId)
-      .eq('user_id', user.id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('event_reviews')
+        .select('*')
+        .eq('event_id', eventId)
+        .eq('user_id', user.id)
+        .single();
 
-    if (error && error.code !== 'PGRST116') {
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading user review:', error);
+        return;
+      }
+
+      if (data) {
+        setUserReview(data);
+        setRating(data.rating);
+        setReviewText(data.review_text || '');
+      }
+    } catch (error) {
       console.error('Error loading user review:', error);
-      return;
-    }
-
-    if (data) {
-      setUserReview(data);
-      setRating(data.rating);
-      setReviewText(data.review_text || '');
     }
   };
 
@@ -233,7 +268,10 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">
-                            {review.profiles?.first_name} {review.profiles?.last_name}
+                            {review.profiles?.first_name && review.profiles?.last_name
+                              ? `${review.profiles.first_name} ${review.profiles.last_name}`
+                              : 'Anonymous User'
+                            }
                           </span>
                           {review.is_verified_attendee && (
                             <Badge variant="secondary" className="text-xs">
