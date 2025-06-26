@@ -35,6 +35,21 @@ const EventSearch = () => {
     setPriceRange({ min: 0, max: 1000 });
   };
 
+  // Transform Event type to match EventCard expected props
+  const transformEventForCard = (event: any) => ({
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    date: event.date,
+    time: event.time,
+    venue: event.location, // Transform location to venue
+    category: event.category,
+    image_url: event.image, // Transform image to image_url
+    price: event.price,
+    max_attendees: event.maxAttendees, // Transform maxAttendees to max_attendees
+    current_attendees: event.attendeeCount, // Transform attendeeCount to current_attendees
+  });
+
   return (
     <div className="space-y-6">
       {/* Search Bar */}
@@ -164,7 +179,7 @@ const EventSearch = () => {
         ) : events.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event) => (
-              <EventCard key={event.id} event={event} />
+              <EventCard key={event.id} event={transformEventForCard(event)} />
             ))}
           </div>
         ) : (
