@@ -16,10 +16,6 @@ interface Review {
   is_verified_attendee: boolean;
   created_at: string;
   user_id: string;
-  profiles?: {
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
 }
 
 interface UserReview {
@@ -57,27 +53,11 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
     try {
       const { data, error } = await supabase
         .from('event_reviews')
-        .select(`
-          *,
-          profiles:user_id (first_name, last_name)
-        `)
+        .select('*')
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error loading reviews:', error);
-        // Fallback to loading reviews without profile join
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('event_reviews')
-          .select('*')
-          .eq('event_id', eventId)
-          .order('created_at', { ascending: false });
-
-        if (fallbackError) throw fallbackError;
-        setReviews(fallbackData?.map(review => ({ ...review, profiles: null })) || []);
-        return;
-      }
-
+      if (error) throw error;
       setReviews(data || []);
     } catch (error) {
       console.error('Error loading reviews:', error);
@@ -267,12 +247,7 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {review.profiles?.first_name && review.profiles?.last_name
-                              ? `${review.profiles.first_name} ${review.profiles.last_name}`
-                              : 'Anonymous User'
-                            }
-                          </span>
+                          <span className="font-medium">Anonymous User</span>
                           {review.is_verified_attendee && (
                             <Badge variant="secondary" className="text-xs">
                               <CheckCircle className="h-3 w-3 mr-1" />
