@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,8 @@ import {
   Settings,
   AlertCircle,
   Target,
-  Sparkles
+  Sparkles,
+  History
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEvents } from "@/hooks/useEvents";
@@ -57,6 +57,10 @@ const EnhancedOrganizerDashboard = () => {
     },
     enabled: !!user && profile?.role === "organizer",
   });
+
+  // Separate upcoming and past events
+  const upcomingEvents = organizerEvents.filter(event => new Date(event.date) >= new Date());
+  const pastEvents = organizerEvents.filter(event => new Date(event.date) < new Date());
 
   // AI-powered event recommendations
   const { data: aiRecommendations } = useQuery({
@@ -129,18 +133,6 @@ const EnhancedOrganizerDashboard = () => {
     enabled: !!user && organizerEvents.length > 0,
   });
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/auth");
-      return;
-    }
-
-    if (profile?.role !== "organizer") {
-      navigate("/become-organizer");
-      return;
-    }
-  }, [isAuthenticated, profile, navigate]);
-
   const handleCreateEvent = () => {
     navigate("/create-event");
   };
@@ -150,9 +142,89 @@ const EnhancedOrganizerDashboard = () => {
     // Update event price in database
   };
 
-  if (!isAuthenticated || profile?.role !== "organizer") {
-    return null;
-  }
+  const EventCard = ({ event, isPast = false }: { event: any, isPast?: boolean }) => {
+    const soldPercentage = ((event.current_attendees || 0) / (event.max_attendees || 100)) * 100;
+    
+    return (
+      <Card key={event.id} className="hover:shadow-md transition-shadow">
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
+                <img
+                  src={event.image_url || "/placeholder.svg"}
+                  alt={event.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="font-semibold text-lg">{event.title}</h3>
+                  {isPast ? (
+                    <Badge variant="outline">Completed</Badge>
+                  ) : (
+                    <Badge variant="secondary">Upcoming</Badge>
+                  )}
+                </div>
+                
+                <p className="text-sm text-gray-600 mb-3">
+                  {new Date(event.date).toLocaleDateString()} • {event.venue}
+                </p>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Tickets Sold</span>
+                    <span className="font-medium">
+                      {event.current_attendees || 0}/{event.max_attendees || 100}
+                    </span>
+                  </div>
+                  <Progress value={soldPercentage} className="h-2" />
+                </div>
+                
+                <div className="flex items-center gap-6 mt-4 text-sm">
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4 text-green-600" />
+                    <span className="font-medium">
+                      ${(Number(event.price) * (event.current_attendees || 0)).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4 text-blue-600" />
+                    <span>{event.current_attendees || 0} attendees</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {!isPast && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setSelectedEventId(event.id)}
+                  >
+                    Manage Pricing
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Edit Event
+                  </Button>
+                </>
+              )}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate(`/events/${event.id}`)}
+              >
+                View Details
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-8">
@@ -232,8 +304,9 @@ const EnhancedOrganizerDashboard = () => {
 
       {/* Main Dashboard Tabs */}
       <Tabs defaultValue="events" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="events">Events</TabsTrigger>
+          <TabsTrigger value="past-events">Past Events</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
           <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
@@ -242,7 +315,7 @@ const EnhancedOrganizerDashboard = () => {
 
         <TabsContent value="events" className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Your Events</h2>
+            <h2 className="text-2xl font-bold">Upcoming Events</h2>
             <Button onClick={handleCreateEvent} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               Create New Event
@@ -250,91 +323,16 @@ const EnhancedOrganizerDashboard = () => {
           </div>
 
           <div className="space-y-4">
-            {organizerEvents.map((event) => {
-              const soldPercentage = ((event.current_attendees || 0) / (event.max_attendees || 100)) * 100;
-              const isUpcoming = new Date(event.date) > new Date();
-              
-              return (
-                <Card key={event.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
-                          <img
-                            src={event.image_url || "/placeholder.svg"}
-                            alt={event.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-lg">{event.title}</h3>
-                            {isUpcoming && (
-                              <Badge variant="secondary">Upcoming</Badge>
-                            )}
-                          </div>
-                          
-                          <p className="text-sm text-gray-600 mb-3">
-                            {new Date(event.date).toLocaleDateString()} • {event.venue}
-                          </p>
-                          
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                              <span>Tickets Sold</span>
-                              <span className="font-medium">
-                                {event.current_attendees || 0}/{event.max_attendees || 100}
-                              </span>
-                            </div>
-                            <Progress value={soldPercentage} className="h-2" />
-                          </div>
-                          
-                          <div className="flex items-center gap-6 mt-4 text-sm">
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4 text-green-600" />
-                              <span className="font-medium">
-                                ${(Number(event.price) * (event.current_attendees || 0)).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Users className="h-4 w-4 text-blue-600" />
-                              <span>{event.current_attendees || 0} attendees</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+            {upcomingEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
 
-                      <div className="flex flex-col gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setSelectedEventId(event.id)}
-                        >
-                          Manage Pricing
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          Edit Event
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => navigate(`/events/${event.id}`)}
-                        >
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-
-            {organizerEvents.length === 0 && (
+            {upcomingEvents.length === 0 && (
               <Card className="text-center py-12">
                 <CardContent>
                   <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No events yet
+                    No upcoming events
                   </h3>
                   <p className="text-gray-600 mb-4">
                     Create your first event to get started with advanced features
@@ -349,6 +347,37 @@ const EnhancedOrganizerDashboard = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="past-events" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Past Events</h2>
+            <Badge variant="outline" className="flex items-center gap-1">
+              <History className="h-3 w-3" />
+              {pastEvents.length} completed
+            </Badge>
+          </div>
+
+          <div className="space-y-4">
+            {pastEvents.map((event) => (
+              <EventCard key={event.id} event={event} isPast={true} />
+            ))}
+
+            {pastEvents.length === 0 && (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No past events
+                  </h3>
+                  <p className="text-gray-600">
+                    Your completed events will appear here
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
+        
         <TabsContent value="analytics">
           <OrganizerAnalytics />
         </TabsContent>

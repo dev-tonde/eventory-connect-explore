@@ -14,8 +14,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import Dashboard from './pages/Dashboard';
 import BecomeOrganizer from './pages/BecomeOrganizer';
 import AdminPanel from './pages/AdminPanel';
-import EnhancedOrganizerDashboard from './components/organizer/EnhancedOrganizerDashboard';
 import PosterStudio from './pages/PosterStudio';
+import FollowedOrganizers from './pages/FollowedOrganizers';
 import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const queryClient = new QueryClient();
@@ -33,8 +33,10 @@ function App() {
               <Route path="/create-event" element={<><Header /><CreateEvent /><Footer /></>} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<><Header /><Profile /><Footer /></>} />
-              <Route path="/organizer-dashboard" element={<><Header /><EnhancedOrganizerDashboard /><Footer /></>} />
+              <Route path="/dashboard" element={<><Header /><Dashboard /><Footer /></>} />
+              <Route path="/organizer-dashboard" element={<><Header /><Dashboard /><Footer /></>} />
               <Route path="/become-organizer" element={<><Header /><BecomeOrganizer /><Footer /></>} />
+              <Route path="/followed-organizers" element={<><Header /><FollowedOrganizers /><Footer /></>} />
               <Route path="/admin-panel" element={<AdminPanel />} />
               <Route path="/poster-studio" element={<><Header /><PosterStudio /><Footer /></>} />
             </Routes>

@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { User, LogOut, Settings, UserPlus, Shield } from "lucide-react";
+import { User, LogOut, Settings, UserPlus, Heart, BarChart3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface UserMenuProps {
@@ -44,37 +44,39 @@ const UserMenu = ({ onLogout }: UserMenuProps) => {
           )}
         </div>
         <DropdownMenuSeparator />
+        
         <DropdownMenuItem asChild>
           <Link to="/profile" className="flex items-center">
             <User className="mr-2 h-4 w-4" />
             Profile
           </Link>
         </DropdownMenuItem>
+
         <DropdownMenuItem asChild>
-          <Link to="/dashboard" className="flex items-center">
-            <Settings className="mr-2 h-4 w-4" />
-            Dashboard
+          <Link to="/followed-organizers" className="flex items-center">
+            <Heart className="mr-2 h-4 w-4" />
+            Following
           </Link>
         </DropdownMenuItem>
+
+        {profile?.role === "organizer" && (
+          <DropdownMenuItem asChild>
+            <Link to="/dashboard" className="flex items-center">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Dashboard
+            </Link>
+          </DropdownMenuItem>
+        )}
+
         {profile?.role === "attendee" && (
           <DropdownMenuItem asChild>
             <Link to="/become-organizer" className="flex items-center">
               <UserPlus className="mr-2 h-4 w-4" />
-              Become Organizer
+              Create Organizer Account
             </Link>
           </DropdownMenuItem>
         )}
-        {profile?.role === "admin" && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/admin" className="flex items-center text-red-600">
-                <Shield className="mr-2 h-4 w-4" />
-                Admin Panel
-              </Link>
-            </DropdownMenuItem>
-          </>
-        )}
+
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onLogout} className="text-red-600">
           <LogOut className="mr-2 h-4 w-4" />
