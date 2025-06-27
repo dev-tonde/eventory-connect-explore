@@ -1,6 +1,6 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -116,7 +116,6 @@ const FollowedOrganizers = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Please log in to view your followed organizers</h1>
@@ -132,7 +131,6 @@ const FollowedOrganizers = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Loading your followed organizers...</div>
         </div>
@@ -142,8 +140,6 @@ const FollowedOrganizers = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Followed Organizers</h1>

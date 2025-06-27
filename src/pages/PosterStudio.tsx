@@ -1,6 +1,6 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Header from "@/components/layout/Header";
 import PosterGenerator from "@/components/poster/PosterGenerator";
 import SocialScheduler from "@/components/poster/SocialScheduler";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,8 +26,6 @@ const PosterStudio = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Poster Studio</h1>

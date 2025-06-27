@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import Header from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -116,8 +115,6 @@ const OrganizerProfile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Profile Header */}
         <div className="bg-white rounded-lg shadow-sm p-8 mb-6">

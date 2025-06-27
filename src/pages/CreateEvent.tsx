@@ -1,5 +1,4 @@
 
-import Header from "@/components/layout/Header";
 import SecureEventCreationForm from "@/components/forms/SecureEventCreationForm";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +28,6 @@ const CreateEvent = () => {
   return (
     <CSRFProvider>
       <div className="min-h-screen bg-gray-50">
-        <Header />
         <div className="container mx-auto px-4 py-8">
           <SecureEventCreationForm onSuccess={handleEventCreated} />
         </div>

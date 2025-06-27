@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import Header from "@/components/layout/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CommunityChat from "@/components/community/CommunityChat";
 import CommunityImages from "@/components/community/CommunityImages";
@@ -13,7 +12,6 @@ const Community = () => {
   if (!communityId) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900">Community not found</h1>
@@ -25,7 +23,6 @@ const Community = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <CommunityHeader communityId={communityId} />
         
