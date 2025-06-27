@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Bell, Ticket, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import Header from "@/components/layout/Header";
 import NotificationPanel from "@/components/notifications/NotificationPanel";
 import UsernameInput from "@/components/profile/UsernameInput";
 import { useAuth } from "@/contexts/AuthContext";
@@ -85,7 +84,6 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Profile</h1>

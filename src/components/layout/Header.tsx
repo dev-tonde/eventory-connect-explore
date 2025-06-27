@@ -2,7 +2,8 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Plus } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Bell, Plus, User, LogOut, Settings, UserPlus, Heart, BarChart3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import LocationIndicator from "@/components/location/LocationIndicator";
@@ -47,6 +48,77 @@ const Header = () => {
                     </Badge>
                   )}
                 </Button>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button size="sm" variant="ghost" className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <User className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <span className="hidden lg:block">
+                        {profile?.first_name || user.email}
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-56">
+                    <div className="px-2 py-1.5 text-sm border-b">
+                      <div className="font-medium">{profile?.first_name} {profile?.last_name}</div>
+                      <div className="text-xs text-gray-500">{user.email}</div>
+                      {profile?.role && (
+                        <Badge variant="secondary" className="mt-1 text-xs">
+                          {profile.role}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="py-2">
+                      <Link 
+                        to="/profile" 
+                        className="flex items-center px-2 py-1.5 text-sm hover:bg-gray-100 rounded-md"
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        Profile
+                      </Link>
+
+                      <Link 
+                        to="/followed-organizers" 
+                        className="flex items-center px-2 py-1.5 text-sm hover:bg-gray-100 rounded-md"
+                      >
+                        <Heart className="mr-2 h-4 w-4" />
+                        Following
+                      </Link>
+
+                      {profile?.role === "organizer" && (
+                        <Link 
+                          to="/dashboard" 
+                          className="flex items-center px-2 py-1.5 text-sm hover:bg-gray-100 rounded-md"
+                        >
+                          <BarChart3 className="mr-2 h-4 w-4" />
+                          Dashboard
+                        </Link>
+                      )}
+
+                      {profile?.role === "attendee" && (
+                        <Link 
+                          to="/become-organizer" 
+                          className="flex items-center px-2 py-1.5 text-sm hover:bg-gray-100 rounded-md"
+                        >
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Create Organizer Account
+                        </Link>
+                      )}
+
+                      <div className="border-t my-2"></div>
+                      <button 
+                        onClick={handleLogout}
+                        className="flex items-center px-2 py-1.5 text-sm hover:bg-gray-100 rounded-md text-red-600 w-full text-left"
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
 
                 {profile?.role === "organizer" && (
                   <Link to="/create-event" className="hidden sm:block">
