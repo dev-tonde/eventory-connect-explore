@@ -37,8 +37,6 @@ interface PricingRule {
   price_multiplier: number;
   description: string;
   is_active: boolean;
-  min_price?: number;
-  max_price?: number;
 }
 
 const EnhancedDynamicPricing = ({
@@ -83,9 +81,7 @@ const EnhancedDynamicPricing = ({
         threshold_value: newRule.threshold_value,
         price_multiplier: newRule.price_multiplier,
         description: newRule.description || '',
-        is_active: newRule.is_active || true,
-        min_price: minPrice,
-        max_price: maxPrice
+        is_active: newRule.is_active || true
       });
       
       setNewRule({
