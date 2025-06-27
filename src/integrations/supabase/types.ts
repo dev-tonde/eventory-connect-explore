@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          resource_id: string | null
+          resource_type: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_sync: {
         Row: {
           calendar_event_id: string | null
@@ -544,6 +588,80 @@ export type Database = {
           },
         ]
       }
+      file_uploads: {
+        Row: {
+          created_at: string | null
+          file_size: number
+          id: string
+          mime_type: string
+          original_filename: string
+          scan_result: Json | null
+          scan_status: string | null
+          stored_filename: string
+          upload_path: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_size: number
+          id?: string
+          mime_type: string
+          original_filename: string
+          scan_result?: Json | null
+          scan_status?: string | null
+          stored_filename: string
+          upload_path: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_size?: number
+          id?: string
+          mime_type?: string
+          original_filename?: string
+          scan_result?: Json | null
+          scan_status?: string | null
+          stored_filename?: string
+          upload_path?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_uploads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_rate_limits: {
+        Row: {
+          created_at: string | null
+          form_type: string
+          id: string
+          identifier: string
+          submission_count: number | null
+          window_start: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          form_type: string
+          id?: string
+          identifier: string
+          submission_count?: number | null
+          window_start?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          form_type?: string
+          id?: string
+          identifier?: string
+          submission_count?: number | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       generated_posters: {
         Row: {
           created_at: string
@@ -762,7 +880,10 @@ export type Database = {
           event_id: string | null
           id: string
           is_active: boolean | null
+          max_price: number | null
+          min_price: number | null
           price_multiplier: number
+          priority: number | null
           rule_type: string
           threshold_value: number | null
         }
@@ -772,7 +893,10 @@ export type Database = {
           event_id?: string | null
           id?: string
           is_active?: boolean | null
+          max_price?: number | null
+          min_price?: number | null
           price_multiplier?: number
+          priority?: number | null
           rule_type: string
           threshold_value?: number | null
         }
@@ -782,7 +906,10 @@ export type Database = {
           event_id?: string | null
           id?: string
           is_active?: boolean | null
+          max_price?: number | null
+          min_price?: number | null
           price_multiplier?: number
+          priority?: number | null
           rule_type?: string
           threshold_value?: number | null
         }
@@ -1122,6 +1249,44 @@ export type Database = {
           },
         ]
       }
+      user_2fa: {
+        Row: {
+          backup_codes: string[] | null
+          created_at: string | null
+          enabled_at: string | null
+          id: string
+          is_enabled: boolean | null
+          secret: string
+          user_id: string | null
+        }
+        Insert: {
+          backup_codes?: string[] | null
+          created_at?: string | null
+          enabled_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          secret: string
+          user_id?: string | null
+        }
+        Update: {
+          backup_codes?: string[] | null
+          created_at?: string | null
+          enabled_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          secret?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_2fa_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_notifications: {
         Row: {
           created_at: string | null
@@ -1213,6 +1378,50 @@ export type Database = {
           },
         ]
       }
+      user_sessions: {
+        Row: {
+          created_at: string | null
+          device_info: Json | null
+          expires_at: string
+          id: string
+          ip_address: unknown | null
+          is_active: boolean | null
+          last_activity: string | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_info?: Json | null
+          expires_at: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          last_activity?: string | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_info?: Json | null
+          expires_at?: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          last_activity?: string | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1227,6 +1436,15 @@ export type Database = {
           _country?: string
         }
         Returns: undefined
+      }
+      check_form_rate_limit: {
+        Args: {
+          identifier_val: string
+          form_type_val: string
+          max_submissions?: number
+          window_minutes?: number
+        }
+        Returns: boolean
       }
       check_rate_limit: {
         Args: {
@@ -1267,9 +1485,22 @@ export type Database = {
         Args: { event_uuid: string }
         Returns: number
       }
+      get_dynamic_price_with_constraints: {
+        Args: { event_uuid: string }
+        Returns: number
+      }
       get_event_rating: {
         Args: { event_uuid: string }
         Returns: number
+      }
+      log_admin_action: {
+        Args: {
+          action_val: string
+          resource_type_val: string
+          resource_id_val?: string
+          details_val?: Json
+        }
+        Returns: string
       }
       process_split_payment_contribution: {
         Args: {

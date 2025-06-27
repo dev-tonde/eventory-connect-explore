@@ -1,9 +1,10 @@
 
 import Header from "@/components/layout/Header";
-import EventCreationForm from "@/components/forms/EventCreationForm";
+import SecureEventCreationForm from "@/components/forms/SecureEventCreationForm";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { CSRFProvider } from "@/components/security/CSRFProtection";
 
 const CreateEvent = () => {
   const { user, profile, isAuthenticated } = useAuth();
@@ -26,12 +27,14 @@ const CreateEvent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="container mx-auto px-4 py-8">
-        <EventCreationForm onSuccess={handleEventCreated} />
+    <CSRFProvider>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <SecureEventCreationForm onSuccess={handleEventCreated} />
+        </div>
       </div>
-    </div>
+    </CSRFProvider>
   );
 };
 
