@@ -1,13 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Ticket, Calendar } from "lucide-react";
+import { User, Bell, Ticket } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/Header";
 import NotificationPanel from "@/components/notifications/NotificationPanel";
+import UsernameInput from "@/components/profile/UsernameInput";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTickets } from "@/hooks/useTickets";
 
@@ -15,9 +17,12 @@ const Profile = () => {
   const { user, profile, updateProfile, isAuthenticated } = useAuth();
   const { tickets } = useTickets();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
+    username: "",
     bio: "",
   });
 
@@ -31,6 +36,7 @@ const Profile = () => {
       setFormData({
         first_name: profile.first_name || "",
         last_name: profile.last_name || "",
+        username: profile.username || "",
         bio: profile.bio || "",
       });
     }
@@ -38,7 +44,38 @@ const Profile = () => {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateProfile(formData);
+    setIsLoading(true);
+    
+    try {
+      const { error } = await updateProfile(formData);
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to update profile. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Profile updated successfully!",
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUsernameChange = (username: string) => {
+    setFormData({ ...formData, username });
   };
 
   if (!isAuthenticated) {
@@ -109,21 +146,28 @@ const Profile = () => {
                       <Input value={user?.email || ""} disabled />
                     </div>
 
+                    <UsernameInput
+                      initialUsername={profile?.username || ""}
+                      onUsernameChange={handleUsernameChange}
+                    />
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Bio
                       </label>
-                      <textarea
+                      <Textarea
                         value={formData.bio}
                         onChange={(e) =>
                           setFormData({ ...formData, bio: e.target.value })
                         }
                         placeholder="Tell us about yourself"
-                        className="w-full h-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="min-h-[100px]"
                       />
                     </div>
 
-                    <Button type="submit">Update Profile</Button>
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? "Updating..." : "Update Profile"}
+                    </Button>
                   </form>
                 </CardContent>
               </Card>
