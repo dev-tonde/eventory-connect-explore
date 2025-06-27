@@ -23,6 +23,8 @@ const Header = () => {
     navigate("/");
   };
 
+  const displayName = profile?.username || profile?.first_name || user?.email?.split('@')[0] || 'User';
+
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="container mx-auto px-4">
@@ -56,13 +58,13 @@ const Header = () => {
                         <User className="h-4 w-4 text-purple-600" />
                       </div>
                       <span className="hidden lg:block">
-                        {profile?.first_name || user.email}
+                        @{displayName}
                       </span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-56">
                     <div className="px-2 py-1.5 text-sm border-b">
-                      <div className="font-medium">{profile?.first_name} {profile?.last_name}</div>
+                      <div className="font-medium">@{displayName}</div>
                       <div className="text-xs text-gray-500">{user.email}</div>
                       {profile?.role && (
                         <Badge variant="secondary" className="mt-1 text-xs">

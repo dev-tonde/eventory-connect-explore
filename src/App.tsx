@@ -24,6 +24,7 @@ import OrganizerProfile from './pages/OrganizerProfile';
 import SplitPaymentPage from './pages/SplitPaymentPage';
 import NotFound from './pages/NotFound';
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import PWAInstaller from './components/pwa/PWAInstaller';
 
 const queryClient = new QueryClient();
 
@@ -39,8 +40,8 @@ function App() {
               <Route path="/events" element={<><Header /><Events /><Footer /></>} />
               <Route path="/events/:eventId" element={<><Header /><EventDetail /><Footer /></>} />
               <Route path="/create-event" element={<><Header /><CreateEvent /><Footer /></>} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/login" element={<Login />} />
+              <Route path="/auth" element={<><Header /><Auth /><Footer /></>} />
+              <Route path="/login" element={<><Header /><Login /><Footer /></>} />
               <Route path="/profile" element={<><Header /><Profile /><Footer /></>} />
               <Route path="/dashboard" element={<><Header /><Dashboard /><Footer /></>} />
               <Route path="/become-organizer" element={<><Header /><BecomeOrganizer /><Footer /></>} />
@@ -49,10 +50,11 @@ function App() {
               <Route path="/community/:communityId" element={<><Header /><Community /><Footer /></>} />
               <Route path="/organizer/:organizerName" element={<><Header /><OrganizerProfile /><Footer /></>} />
               <Route path="/split-payment/:splitId" element={<><Header /><SplitPaymentPage /><Footer /></>} />
-              <Route path="/admin-panel" element={<AdminPanel />} />
+              <Route path="/admin-panel" element={<><Header /><AdminPanel /><Footer /></>} />
               <Route path="/poster-studio" element={<><Header /><PosterStudio /><Footer /></>} />
               <Route path="*" element={<><Header /><NotFound /><Footer /></>} />
             </Routes>
+            <PWAInstaller />
           </AuthProvider>
         </LanguageProvider>
       </BrowserRouter>

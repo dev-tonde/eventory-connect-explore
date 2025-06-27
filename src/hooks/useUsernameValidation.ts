@@ -28,8 +28,14 @@ export const useUsernameValidation = (initialUsername: string = "") => {
         return;
       }
 
-      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-        setError("Username can only contain letters, numbers, and underscores");
+      if (username.length > 15) {
+        setError("Username must be no more than 15 characters long");
+        setIsAvailable(false);
+        return;
+      }
+
+      if (!/^[a-z0-9_.-]+$/.test(username)) {
+        setError("Username can only contain lowercase letters, numbers, underscores, dots, and hyphens");
         setIsAvailable(false);
         return;
       }
