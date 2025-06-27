@@ -12,7 +12,15 @@ import {
   MessageCircle 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Event } from "@/types/event";
+
+interface Event {
+  id: string;
+  title: string;
+  description?: string;
+  date: string;
+  venue: string;
+  tags?: string[];
+}
 
 interface SocialSharingProps {
   event: Event;

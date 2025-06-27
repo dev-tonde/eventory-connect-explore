@@ -71,7 +71,7 @@ export const useOfflineTickets = () => {
 
       if (error) throw error;
 
-      const offlineTickets: OfflineTicket[] = tickets?.map(ticket => ({
+      const offlineTickets: OfflineTicket[] = tickets?.map((ticket: any) => ({
         id: ticket.id,
         eventId: ticket.event_id,
         ticketNumber: ticket.ticket_number || '',

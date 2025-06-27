@@ -6,23 +6,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DatePickerWithRange } from "@/components/ui/date-picker";
-import { DollarSign, Download, Search, Filter } from "lucide-react";
+import { DollarSign, Download, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DateRange } from "react-day-picker";
 
 interface PaymentRecord {
   id: string;
-  payment_reference: string;
+  payment_reference: string | null;
   total_price: number;
-  payment_status: string;
-  payment_method: string;
+  payment_status: string | null;
+  payment_method: string | null;
   created_at: string;
-  event: {
+  events?: {
     title: string;
-  };
-  user: {
+  } | null;
+  profiles?: {
     email: string;
-  };
+  } | null;
 }
 
 const PaymentReconciliation = () => {
@@ -50,7 +50,6 @@ const PaymentReconciliation = () => {
           events:event_id (title),
           profiles:user_id (email)
         `)
-        .not('payment_reference', 'is', null)
         .order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
@@ -70,6 +69,7 @@ const PaymentReconciliation = () => {
       setPayments(data || []);
     } catch (error) {
       console.error('Error loading payments:', error);
+      setPayments([]);
     } finally {
       setLoading(false);
     }
@@ -80,12 +80,12 @@ const PaymentReconciliation = () => {
       ['Date', 'Reference', 'Event', 'User Email', 'Amount', 'Status', 'Method'].join(','),
       ...payments.map(payment => [
         new Date(payment.created_at).toLocaleDateString(),
-        payment.payment_reference,
-        payment.event?.title || 'N/A',
-        payment.user?.email || 'N/A',
+        payment.payment_reference || 'N/A',
+        payment.events?.title || 'N/A',
+        payment.profiles?.email || 'N/A',
         `R${payment.total_price.toFixed(2)}`,
-        payment.payment_status,
-        payment.payment_method
+        payment.payment_status || 'N/A',
+        payment.payment_method || 'N/A'
       ].join(','))
     ].join('\n');
 
@@ -98,9 +98,9 @@ const PaymentReconciliation = () => {
   };
 
   const filteredPayments = payments.filter(payment =>
-    payment.payment_reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    payment.event?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    payment.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    (payment.payment_reference?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (payment.events?.title?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (payment.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const totalRevenue = filteredPayments.reduce((sum, payment) => 
@@ -176,6 +176,11 @@ const PaymentReconciliation = () => {
               <option value="pending">Pending</option>
               <option value="failed">Failed</option>
             </select>
+
+            <DatePickerWithRange
+              date={dateRange}
+              onDateChange={setDateRange}
+            />
           </div>
         </CardContent>
       </Card>
@@ -202,20 +207,20 @@ const PaymentReconciliation = () => {
                     {new Date(payment.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="font-mono text-sm">
-                    {payment.payment_reference}
+                    {payment.payment_reference || 'N/A'}
                   </TableCell>
-                  <TableCell>{payment.event?.title || 'N/A'}</TableCell>
-                  <TableCell>{payment.user?.email || 'N/A'}</TableCell>
+                  <TableCell>{payment.events?.title || 'N/A'}</TableCell>
+                  <TableCell>{payment.profiles?.email || 'N/A'}</TableCell>
                   <TableCell>R{payment.total_price.toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge variant={
                       payment.payment_status === 'completed' ? 'default' :
                       payment.payment_status === 'pending' ? 'secondary' : 'destructive'
                     }>
-                      {payment.payment_status}
+                      {payment.payment_status || 'unknown'}
                     </Badge>
                   </TableCell>
-                  <TableCell>{payment.payment_method}</TableCell>
+                  <TableCell>{payment.payment_method || 'N/A'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
