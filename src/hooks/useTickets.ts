@@ -96,7 +96,8 @@ export const useTickets = () => {
             quantity, 
             totalPrice: 0,
             ticketId: data.id,
-            ticketNumber: data.ticket_number
+            // Access ticket_number safely if it exists
+            ticketNumber: (data as any).ticket_number || null
           }
         });
 
