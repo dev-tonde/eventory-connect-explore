@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "@/components/layout/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import EnhancedOrganizerDashboard from "@/components/organizer/EnhancedOrganizerDashboard";
 import { CSRFProvider } from "@/components/security/CSRFProtection";
@@ -15,7 +14,6 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Add a small delay to ensure auth context is fully loaded
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
@@ -29,7 +27,6 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, isLoading, navigate]);
 
-  // Show loading state while auth is being checked
   if (isLoading) {
     return (
       <CSRFProvider>
@@ -43,12 +40,10 @@ const Dashboard = () => {
     );
   }
 
-  // If not authenticated, don't render anything (redirect will happen)
   if (!isAuthenticated) {
     return null;
   }
 
-  // If user is not an organizer, show upgrade prompt
   if (profile?.role !== "organizer") {
     return (
       <CSRFProvider>
@@ -76,7 +71,6 @@ const Dashboard = () => {
     );
   }
 
-  // Render organizer dashboard
   return (
     <CSRFProvider>
       <div className="min-h-screen bg-gray-50">

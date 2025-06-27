@@ -34,7 +34,6 @@ function App() {
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<><Header /><Profile /><Footer /></>} />
               <Route path="/dashboard" element={<><Header /><Dashboard /><Footer /></>} />
-              <Route path="/organizer-dashboard" element={<><Header /><Dashboard /><Footer /></>} />
               <Route path="/become-organizer" element={<><Header /><BecomeOrganizer /><Footer /></>} />
               <Route path="/followed-organizers" element={<><Header /><FollowedOrganizers /><Footer /></>} />
               <Route path="/admin-panel" element={<AdminPanel />} />

@@ -1,37 +1,25 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Plus,
-  Calendar,
-  Users,
-  DollarSign,
-  TrendingUp,
-  Wand2,
-  BarChart3,
-  MessageSquare,
-  Settings,
-  AlertCircle,
-  Target,
-  Sparkles,
-  History
-} from "lucide-react";
+import { Plus, Calendar, Sparkles, History, Target } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEvents } from "@/hooks/useEvents";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import OrganizerAnalytics from "@/components/analytics/OrganizerAnalytics";
 import EnhancedDynamicPricing from "./EnhancedDynamicPricing";
+import DashboardStats from "./dashboard/DashboardStats";
+import EventCard from "./dashboard/EventCard";
+import AIInsightsTab from "./dashboard/AIInsightsTab";
+import DashboardTools from "./dashboard/DashboardTools";
 
 const EnhancedOrganizerDashboard = () => {
-  const { user, profile, isAuthenticated } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const { events: allEvents } = useEvents();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   // Get organizer's events with enhanced data
@@ -66,7 +54,6 @@ const EnhancedOrganizerDashboard = () => {
   const { data: aiRecommendations } = useQuery({
     queryKey: ["ai-recommendations", user?.id],
     queryFn: async () => {
-      // Mock AI recommendations (in production, this would call an AI service)
       return [
         {
           type: "pricing",
@@ -139,91 +126,6 @@ const EnhancedOrganizerDashboard = () => {
 
   const handlePriceUpdate = (eventId: string, newPrice: number) => {
     console.log(`Price updated for event ${eventId}: $${newPrice}`);
-    // Update event price in database
-  };
-
-  const EventCard = ({ event, isPast = false }: { event: any, isPast?: boolean }) => {
-    const soldPercentage = ((event.current_attendees || 0) / (event.max_attendees || 100)) * 100;
-    
-    return (
-      <Card key={event.id} className="hover:shadow-md transition-shadow">
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
-                <img
-                  src={event.image_url || "/placeholder.svg"}
-                  alt={event.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="font-semibold text-lg">{event.title}</h3>
-                  {isPast ? (
-                    <Badge variant="outline">Completed</Badge>
-                  ) : (
-                    <Badge variant="secondary">Upcoming</Badge>
-                  )}
-                </div>
-                
-                <p className="text-sm text-gray-600 mb-3">
-                  {new Date(event.date).toLocaleDateString()} • {event.venue}
-                </p>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Tickets Sold</span>
-                    <span className="font-medium">
-                      {event.current_attendees || 0}/{event.max_attendees || 100}
-                    </span>
-                  </div>
-                  <Progress value={soldPercentage} className="h-2" />
-                </div>
-                
-                <div className="flex items-center gap-6 mt-4 text-sm">
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4 text-green-600" />
-                    <span className="font-medium">
-                      ${(Number(event.price) * (event.current_attendees || 0)).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4 text-blue-600" />
-                    <span>{event.current_attendees || 0} attendees</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              {!isPast && (
-                <>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setSelectedEventId(event.id)}
-                  >
-                    Manage Pricing
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Edit Event
-                  </Button>
-                </>
-              )}
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate(`/events/${event.id}`)}
-              >
-                View Details
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
   };
 
   return (
@@ -244,63 +146,7 @@ const EnhancedOrganizerDashboard = () => {
       )}
 
       {/* Enhanced Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Events</CardTitle>
-            <Calendar className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{organizerEvents.length}</div>
-            <p className="text-xs text-muted-foreground">
-              +{organizerEvents.filter(e => new Date(e.created_at).getMonth() === new Date().getMonth()).length} this month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Attendees</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{performanceMetrics?.totalAttendees || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {performanceMetrics?.conversionRate.toFixed(1)}% conversion rate
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${performanceMetrics?.totalRevenue.toLocaleString() || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              ${((performanceMetrics?.totalRevenue || 0) / (organizerEvents.length || 1)).toFixed(0)} avg per event
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Rating</CardTitle>
-            <TrendingUp className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {performanceMetrics?.averageRating.toFixed(1) || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Out of 5.0 stars
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardStats organizerEvents={organizerEvents} performanceMetrics={performanceMetrics} />
 
       {/* Main Dashboard Tabs */}
       <Tabs defaultValue="events" className="space-y-6">
@@ -324,7 +170,11 @@ const EnhancedOrganizerDashboard = () => {
 
           <div className="space-y-4">
             {upcomingEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
+              <EventCard 
+                key={event.id} 
+                event={event} 
+                onManagePricing={setSelectedEventId}
+              />
             ))}
 
             {upcomingEvents.length === 0 && (
@@ -377,7 +227,6 @@ const EnhancedOrganizerDashboard = () => {
           </div>
         </TabsContent>
 
-        
         <TabsContent value="analytics">
           <OrganizerAnalytics />
         </TabsContent>
@@ -412,86 +261,11 @@ const EnhancedOrganizerDashboard = () => {
         </TabsContent>
 
         <TabsContent value="ai-insights" className="space-y-6">
-          <div className="grid gap-6">
-            {aiRecommendations?.map((recommendation, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Wand2 className="h-5 w-5 text-purple-600" />
-                      {recommendation.title}
-                    </CardTitle>
-                    <Badge variant="outline">
-                      {recommendation.confidence}% confidence
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-4">{recommendation.description}</p>
-                  {recommendation.actionable && (
-                    <Button size="sm" variant="outline">
-                      Apply Recommendation
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <AIInsightsTab aiRecommendations={aiRecommendations || []} />
         </TabsContent>
 
         <TabsContent value="tools" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wand2 className="h-5 w-5 text-purple-600" />
-                  AI Poster Generator
-                </CardTitle>
-                <CardDescription>
-                  Generate stunning event posters with AI
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full" onClick={() => navigate("/poster-studio")}>
-                  Create Poster
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
-                  Advanced Analytics
-                </CardTitle>
-                <CardDescription>
-                  Deep dive into your event performance
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full" variant="outline">
-                  View Analytics
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-green-600" />
-                  Community Tools
-                </CardTitle>
-                <CardDescription>
-                  Manage event communities and chat
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full" variant="outline">
-                  Manage Communities
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          <DashboardTools />
         </TabsContent>
       </Tabs>
     </div>
