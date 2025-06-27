@@ -1,74 +1,44 @@
-
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { Toaster } from "@/components/ui/toaster";
-import ErrorBoundary from "@/components/error/ErrorBoundary";
-
-import Index from "@/pages/Index";
-import Auth from "@/pages/Auth";
-import Events from "@/pages/Events";
-import EventDetail from "@/pages/EventDetail";
-import CreateEvent from "@/pages/CreateEvent";
-import BecomeOrganizer from "@/pages/BecomeOrganizer";
-import Dashboard from "@/pages/Dashboard";
-import Profile from "@/pages/Profile";
-import FollowedOrganizers from "@/pages/FollowedOrganizers";
-import OrganizerProfile from "@/pages/OrganizerProfile";
-import PosterStudio from "@/pages/PosterStudio";
-import Communities from "@/pages/Communities";
-import Community from "@/pages/Community";
-import SplitPaymentPage from "@/pages/SplitPaymentPage";
-import AdminPanel from "@/pages/AdminPanel";
-import NotFound from "@/pages/NotFound";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: (failureCount, error: any) => {
-        // Don't retry on 4xx errors
-        if (error?.status >= 400 && error?.status < 500) {
-          return false;
-        }
-        return failureCount < 3;
-      },
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from "@/components/ui/toaster"
+import EventList from './pages/EventList';
+import EventDetails from './pages/EventDetails';
+import CreateEvent from './pages/CreateEvent';
+import Auth from './pages/Auth';
+import Profile from './pages/Profile';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+import { AuthContextProvider } from './contexts/AuthContext';
+import OrganizerDashboard from './pages/OrganizerDashboard';
+import BecomeOrganizer from './pages/BecomeOrganizer';
+import AdminPanel from './pages/AdminPanel';
+import EnhancedOrganizerDashboard from './components/organizer/EnhancedOrganizerDashboard';
+import PosterStudio from './pages/PosterStudio';
+import { QueryClient } from "@tanstack/react-query";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 function App() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Router>
-            <div className="min-h-screen bg-background">
-              <Toaster />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/login" element={<Auth />} />
-                <Route path="/events" element={<Events />} />
-                <Route path="/events/:id" element={<EventDetail />} />
-                <Route path="/create-event" element={<CreateEvent />} />
-                <Route path="/become-organizer" element={<BecomeOrganizer />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/followed-organizers" element={<FollowedOrganizers />} />
-                <Route path="/organizer/:organizerName" element={<OrganizerProfile />} />
-                <Route path="/poster-studio" element={<PosterStudio />} />
-                <Route path="/communities" element={<Communities />} />
-                <Route path="/community/:communityId" element={<Community />} />
-                <Route path="/split-payment/:splitId" element={<SplitPaymentPage />} />
-                <Route path="/admin" element={<AdminPanel />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-          </Router>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <QueryClient>
+      <BrowserRouter>
+        <Toaster />
+        <LanguageProvider>
+          <AuthContextProvider>
+            <Routes>
+              <Route path="/" element={<><Header /><EventList /><Footer /></>} />
+              <Route path="/events/:eventId" element={<><Header /><EventDetails /><Footer /></>} />
+              <Route path="/create-event" element={<><Header /><CreateEvent /><Footer /></>} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/profile" element={<><Header /><Profile /><Footer /></>} />
+              <Route path="/organizer-dashboard" element={<><Header /><EnhancedOrganizerDashboard /><Footer /></>} />
+              <Route path="/become-organizer" element={<><Header /><BecomeOrganizer /><Footer /></>} />
+              <Route path="/admin-panel" element={<AdminPanel />} />
+              <Route path="/poster-studio" element={<><Header /><PosterStudio /><Footer /></>} />
+            </Routes>
+          </AuthContextProvider>
+        </LanguageProvider>
+      </BrowserRouter>
+    </QueryClient>
   );
 }
 

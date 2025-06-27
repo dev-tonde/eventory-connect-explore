@@ -1,0 +1,235 @@
+
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DatePickerWithRange } from "@/components/ui/date-picker";
+import { DollarSign, Download, Search, Filter } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { DateRange } from "react-day-picker";
+
+interface PaymentRecord {
+  id: string;
+  payment_reference: string;
+  total_price: number;
+  payment_status: string;
+  payment_method: string;
+  created_at: string;
+  event: {
+    title: string;
+  };
+  user: {
+    email: string;
+  };
+}
+
+const PaymentReconciliation = () => {
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  useEffect(() => {
+    loadPayments();
+  }, [dateRange, statusFilter]);
+
+  const loadPayments = async () => {
+    try {
+      let query = supabase
+        .from('tickets')
+        .select(`
+          id,
+          payment_reference,
+          total_price,
+          payment_status,
+          payment_method,
+          created_at,
+          events:event_id (title),
+          profiles:user_id (email)
+        `)
+        .not('payment_reference', 'is', null)
+        .order('created_at', { ascending: false });
+
+      if (statusFilter !== 'all') {
+        query = query.eq('payment_status', statusFilter);
+      }
+
+      if (dateRange?.from) {
+        query = query.gte('created_at', dateRange.from.toISOString());
+      }
+      if (dateRange?.to) {
+        query = query.lte('created_at', dateRange.to.toISOString());
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      setPayments(data || []);
+    } catch (error) {
+      console.error('Error loading payments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportPayments = () => {
+    const csv = [
+      ['Date', 'Reference', 'Event', 'User Email', 'Amount', 'Status', 'Method'].join(','),
+      ...payments.map(payment => [
+        new Date(payment.created_at).toLocaleDateString(),
+        payment.payment_reference,
+        payment.event?.title || 'N/A',
+        payment.user?.email || 'N/A',
+        `R${payment.total_price.toFixed(2)}`,
+        payment.payment_status,
+        payment.payment_method
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payments-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
+
+  const filteredPayments = payments.filter(payment =>
+    payment.payment_reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    payment.event?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    payment.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalRevenue = filteredPayments.reduce((sum, payment) => 
+    payment.payment_status === 'completed' ? sum + Number(payment.total_price) : sum, 0
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Payment Reconciliation</h2>
+        <Button onClick={exportPayments} className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">R{totalRevenue.toLocaleString()}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{filteredPayments.length}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed Payments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {filteredPayments.filter(p => p.payment_status === 'completed').length}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by reference, event, or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border rounded-md"
+            >
+              <option value="all">All Statuses</option>
+              <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Payments Table */}
+      <Card>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Reference</TableHead>
+                <TableHead>Event</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Method</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPayments.map((payment) => (
+                <TableRow key={payment.id}>
+                  <TableCell>
+                    {new Date(payment.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {payment.payment_reference}
+                  </TableCell>
+                  <TableCell>{payment.event?.title || 'N/A'}</TableCell>
+                  <TableCell>{payment.user?.email || 'N/A'}</TableCell>
+                  <TableCell>R{payment.total_price.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Badge variant={
+                      payment.payment_status === 'completed' ? 'default' :
+                      payment.payment_status === 'pending' ? 'secondary' : 'destructive'
+                    }>
+                      {payment.payment_status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{payment.payment_method}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          
+          {filteredPayments.length === 0 && !loading && (
+            <div className="text-center py-8 text-muted-foreground">
+              No payments found matching your criteria.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default PaymentReconciliation;
