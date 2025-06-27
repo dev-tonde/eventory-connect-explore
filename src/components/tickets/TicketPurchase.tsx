@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,10 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, CreditCard, User, Mail, Phone, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useTickets } from "@/hooks/useTickets";
 import { Event } from "@/types/event";
 import DynamicPricing from "@/components/pricing/DynamicPricing";
 import SplitPayment from "@/components/payments/SplitPayment";
+import YocoPaymentForm from "@/components/payments/YocoPaymentForm";
 
 interface TicketPurchaseProps {
   event: Event;
@@ -26,10 +25,10 @@ interface TicketPurchaseProps {
 const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
   const { user, profile, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const { purchaseTicket, isPurchasing } = useTickets();
   const [quantity, setQuantity] = useState(1);
   const [currentPrice, setCurrentPrice] = useState(event.price);
   const [paymentMethod, setPaymentMethod] = useState<'full' | 'split'>('full');
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [buyerInfo, setBuyerInfo] = useState({
     name: profile ? `${profile.first_name} ${profile.last_name}`.trim() : "",
     email: profile?.email || "",
@@ -53,7 +52,7 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
     onPurchaseComplete?.();
   };
 
-  const handlePurchase = async () => {
+  const handleProceedToPayment = () => {
     if (!isAuthenticated) {
       toast({
         title: "Please log in",
@@ -72,16 +71,20 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
       return;
     }
 
-    try {
-      await purchaseTicket({
-        eventId: event.id,
-        quantity,
-        totalPrice,
-      });
-      onPurchaseComplete?.();
-    } catch (error) {
-      console.error("Purchase error:", error);
-    }
+    setShowPaymentForm(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowPaymentForm(false);
+    toast({
+      title: "Payment Successful!",
+      description: "Your tickets have been purchased successfully.",
+    });
+    onPurchaseComplete?.();
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentForm(false);
   };
 
   if (isSoldOut) {
@@ -95,6 +98,18 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
           </p>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (showPaymentForm) {
+    return (
+      <YocoPaymentForm
+        eventId={event.id}
+        quantity={quantity}
+        totalPrice={totalPrice}
+        onSuccess={handlePaymentSuccess}
+        onCancel={handlePaymentCancel}
+      />
     );
   }
 
@@ -251,25 +266,22 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
               <div className="flex justify-between items-center mb-4">
                 <span className="font-medium">Total:</span>
                 <span className="text-xl font-bold">
-                  {currentPrice === 0 ? "Free" : `$${totalPrice.toFixed(2)}`}
+                  {currentPrice === 0 ? "Free" : `R${totalPrice.toFixed(2)}`}
                 </span>
               </div>
 
               <Button
                 className="w-full"
                 size="lg"
-                onClick={handlePurchase}
+                onClick={handleProceedToPayment}
                 disabled={
-                  isPurchasing ||
-                  (!isAuthenticated &&
-                    (!buyerInfo.name || !buyerInfo.email || !buyerInfo.phone))
+                  !isAuthenticated &&
+                  (!buyerInfo.name || !buyerInfo.email || !buyerInfo.phone)
                 }
               >
-                {isPurchasing
-                  ? "Processing..."
-                  : currentPrice === 0
+                {currentPrice === 0
                   ? "Register for Free"
-                  : "Purchase Tickets"}
+                  : "Proceed to Payment"}
               </Button>
             </div>
           </TabsContent>

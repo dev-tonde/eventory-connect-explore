@@ -27,7 +27,8 @@ export const useTickets = () => {
           )
         `)
         .eq("user_id", user.id)
-        .eq("status", "active");
+        .eq("status", "active")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
@@ -35,6 +36,7 @@ export const useTickets = () => {
     enabled: !!user,
   });
 
+  // This mutation is now mainly for free tickets or admin purposes
   const purchaseTicketMutation = useMutation({
     mutationFn: async ({ eventId, quantity, totalPrice }: {
       eventId: string;
@@ -43,6 +45,11 @@ export const useTickets = () => {
     }) => {
       if (!user) throw new Error("User not authenticated");
 
+      // Only allow free tickets through this method
+      if (totalPrice > 0) {
+        throw new Error("Paid tickets must be processed through YOCO payment gateway");
+      }
+
       const { data, error } = await supabase
         .from("tickets")
         .insert([{
@@ -50,13 +57,15 @@ export const useTickets = () => {
           event_id: eventId,
           quantity,
           total_price: totalPrice,
+          payment_status: 'completed',
+          payment_method: 'free',
         }])
         .select()
         .single();
 
       if (error) throw error;
 
-      // Update attendance count manually since TypeScript types don't include our new function
+      // Update attendance count
       const { data: currentEvent } = await supabase
         .from("events")
         .select("current_attendees")
@@ -72,21 +81,22 @@ export const useTickets = () => {
           .eq("id", eventId);
       }
 
-      // Queue email notification using the new email_notifications table
+      // Queue email notification for free tickets
       await supabase
         .from("email_notifications")
         .insert({
           user_id: user.id,
           event_id: eventId,
-          email_type: 'ticket_purchase',
+          email_type: 'free_ticket_confirmation',
           recipient_email: user.email || '',
-          subject: 'Ticket Purchase Confirmation',
-          content: `Your ticket has been confirmed for ${quantity} attendee(s). Total: $${totalPrice.toFixed(2)}`,
+          subject: 'Free Event Registration Confirmation',
+          content: `Your registration for ${quantity} attendee(s) has been confirmed.`,
           template_data: { 
             eventId, 
             quantity, 
-            totalPrice,
-            ticketId: data.id
+            totalPrice: 0,
+            ticketId: data.id,
+            ticketNumber: data.ticket_number
           }
         });
 
@@ -96,14 +106,14 @@ export const useTickets = () => {
       queryClient.invalidateQueries({ queryKey: ["tickets", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
       toast({
-        title: "Ticket Purchased",
-        description: "Your ticket has been purchased successfully.",
+        title: "Registration Successful",
+        description: "Your free event registration has been confirmed.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
-        title: "Purchase Failed",
-        description: "Failed to purchase ticket. Please try again.",
+        title: "Registration Failed",
+        description: error.message || "Failed to register for event. Please try again.",
         variant: "destructive",
       });
     },
