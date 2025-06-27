@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +29,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [role, setRole] = useState<"attendee" | "organizer">("attendee");
   
   // Phone auth states
   const [phone, setPhone] = useState("");
@@ -163,7 +161,7 @@ const Login = () => {
           navigate("/");
         }
       } else {
-        const { error } = await signup(email, password, firstName, lastName, role);
+        const { error } = await signup(email, password, firstName, lastName, "attendee");
         if (error) {
           if (error.message.includes("User already registered")) {
             toast({
@@ -289,30 +287,6 @@ const Login = () => {
                         placeholder="Enter your last name"
                         required={!isLogin}
                       />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="role"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Account Type
-                      </label>
-                      <select
-                        id="role"
-                        value={role}
-                        onChange={(e) =>
-                          setRole(e.target.value as "attendee" | "organizer")
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      >
-                        <option value="attendee">
-                          Attendee - Discover and attend events
-                        </option>
-                        <option value="organizer">
-                          Organizer - Create and manage events
-                        </option>
-                      </select>
                     </div>
                   </>
                 )}

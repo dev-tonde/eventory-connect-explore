@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar, Users, Zap, MapPin, Heart, Star } from "lucide-react";
@@ -10,6 +11,7 @@ import NearbyEventsSection from "@/components/events/NearbyEventsSection";
 import EventsWithFilters from "@/components/events/EventsWithFilters";
 import NewsletterSignup from "@/components/newsletter/NewsletterSignup";
 import TestimonialsSection from "@/components/testimonials/TestimonialsSection";
+import GoogleSignInModal from "@/components/auth/GoogleSignInModal";
 import { supabase } from "@/integrations/supabase/client";
 import { Event } from "@/types/event";
 
@@ -205,6 +207,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <GoogleSignInModal />
       
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-20">
