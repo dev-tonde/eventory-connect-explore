@@ -38,6 +38,7 @@ const PaymentReconciliation = () => {
 
   const loadPayments = async () => {
     try {
+      setLoading(true);
       let query = supabase
         .from('tickets')
         .select(`
@@ -64,9 +65,13 @@ const PaymentReconciliation = () => {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
-
-      setPayments(data || []);
+      
+      if (error) {
+        console.error('Error loading payments:', error);
+        setPayments([]);
+      } else {
+        setPayments(data || []);
+      }
     } catch (error) {
       console.error('Error loading payments:', error);
       setPayments([]);
@@ -229,6 +234,12 @@ const PaymentReconciliation = () => {
           {filteredPayments.length === 0 && !loading && (
             <div className="text-center py-8 text-muted-foreground">
               No payments found matching your criteria.
+            </div>
+          )}
+          
+          {loading && (
+            <div className="text-center py-8 text-muted-foreground">
+              Loading payments...
             </div>
           )}
         </CardContent>

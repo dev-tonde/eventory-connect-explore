@@ -33,7 +33,7 @@ export const useOfflineTickets = () => {
     };
   }, []);
 
-  // Load tickets from IndexedDB
+  // Load tickets from localStorage
   const loadOfflineTickets = useCallback(async () => {
     try {
       const stored = localStorage.getItem(`offline_tickets_${user?.id}`);
@@ -69,7 +69,10 @@ export const useOfflineTickets = () => {
         .eq('user_id', user.id)
         .eq('status', 'active');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error syncing tickets:', error);
+        return;
+      }
 
       const offlineTickets: OfflineTicket[] = tickets?.map((ticket: any) => ({
         id: ticket.id,

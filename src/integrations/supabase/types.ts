@@ -1208,27 +1208,42 @@ export type Database = {
         Row: {
           event_id: string | null
           id: string
+          payment_method: string | null
+          payment_reference: string | null
+          payment_status: string | null
           purchase_date: string | null
+          qr_code: string | null
           quantity: number
           status: string | null
+          ticket_number: string | null
           total_price: number
           user_id: string | null
         }
         Insert: {
           event_id?: string | null
           id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string | null
           purchase_date?: string | null
+          qr_code?: string | null
           quantity?: number
           status?: string | null
+          ticket_number?: string | null
           total_price: number
           user_id?: string | null
         }
         Update: {
           event_id?: string | null
           id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string | null
           purchase_date?: string | null
+          qr_code?: string | null
           quantity?: number
           status?: string | null
+          ticket_number?: string | null
           total_price?: number
           user_id?: string | null
         }
@@ -1465,6 +1480,10 @@ export type Database = {
         Returns: string
       }
       generate_invite_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_ticket_number: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
