@@ -16,7 +16,7 @@ interface PaymentRecord {
   total_price: number;
   payment_status: string | null;
   payment_method: string | null;
-  created_at: string;
+  purchase_date: string;
   events?: {
     title: string;
   } | null;
@@ -47,21 +47,21 @@ const PaymentReconciliation = () => {
           total_price,
           payment_status,
           payment_method,
-          created_at,
+          purchase_date,
           events:event_id (title),
           profiles:user_id (email)
         `)
-        .order('created_at', { ascending: false });
+        .order('purchase_date', { ascending: false });
 
       if (statusFilter !== 'all') {
         query = query.eq('payment_status', statusFilter);
       }
 
       if (dateRange?.from) {
-        query = query.gte('created_at', dateRange.from.toISOString());
+        query = query.gte('purchase_date', dateRange.from.toISOString());
       }
       if (dateRange?.to) {
-        query = query.lte('created_at', dateRange.to.toISOString());
+        query = query.lte('purchase_date', dateRange.to.toISOString());
       }
 
       const { data, error } = await query;
@@ -84,7 +84,7 @@ const PaymentReconciliation = () => {
     const csv = [
       ['Date', 'Reference', 'Event', 'User Email', 'Amount', 'Status', 'Method'].join(','),
       ...payments.map(payment => [
-        new Date(payment.created_at).toLocaleDateString(),
+        new Date(payment.purchase_date).toLocaleDateString(),
         payment.payment_reference || 'N/A',
         payment.events?.title || 'N/A',
         payment.profiles?.email || 'N/A',
@@ -209,7 +209,7 @@ const PaymentReconciliation = () => {
               {filteredPayments.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell>
-                    {new Date(payment.created_at).toLocaleDateString()}
+                    {new Date(payment.purchase_date).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="font-mono text-sm">
                     {payment.payment_reference || 'N/A'}
