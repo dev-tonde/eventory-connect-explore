@@ -23,6 +23,8 @@ export const useFavorites = () => {
       return data.map(fav => fav.event_id);
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const toggleFavoriteMutation = useMutation({
@@ -53,7 +55,13 @@ export const useFavorites = () => {
       return !isFavorited;
     },
     onSuccess: (isFavorited, eventId) => {
-      queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
+      // Update cache immediately for better UX
+      queryClient.setQueryData(["favorites", user?.id], (old: string[] = []) => {
+        return isFavorited 
+          ? [...old, eventId]
+          : old.filter(id => id !== eventId);
+      });
+      
       toast({
         title: isFavorited ? "Added to Favorites" : "Removed from Favorites",
         description: isFavorited 

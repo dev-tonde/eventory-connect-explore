@@ -18,10 +18,10 @@ interface SearchFilters {
   searchTerm?: string;
 }
 
-export const useEventSearch = (filters: SearchFilters = {}) => {
-  // Create stable query key
+export const useOptimizedEventSearch = (filters: SearchFilters = {}) => {
+  // Create a stable query key based on filters
   const queryKey = useMemo(() => 
-    ["events", "search", JSON.stringify(filters)], 
+    ["events", "optimized-search", JSON.stringify(filters)], 
     [filters]
   );
 
@@ -60,7 +60,7 @@ export const useEventSearch = (filters: SearchFilters = {}) => {
         query = query.ilike("venue", `%${filters.location}%`);
       }
 
-      if (filters.dateRange) {
+      if (filters.dateRange?.start && filters.dateRange?.end) {
         query = query
           .gte("date", filters.dateRange.start)
           .lte("date", filters.dateRange.end);
@@ -82,10 +82,11 @@ export const useEventSearch = (filters: SearchFilters = {}) => {
         query = query.or(`title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
       }
 
+      // Use indexed columns for ordering
       query = query
         .order("date", { ascending: true })
         .order("created_at", { ascending: false })
-        .limit(50); // Reasonable limit
+        .limit(100);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -109,9 +110,9 @@ export const useEventSearch = (filters: SearchFilters = {}) => {
         tags: event.tags || []
       })) as Event[];
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes for search
+    staleTime: 2 * 60 * 1000, // 2 minutes for search results
     gcTime: 5 * 60 * 1000, // 5 minutes
-    enabled: Object.keys(filters).some(key => filters[key as keyof SearchFilters] !== undefined),
+    enabled: Object.keys(filters).length > 0 || filters.searchTerm !== undefined,
   });
 
   return { events, isLoading };

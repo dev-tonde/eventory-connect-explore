@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,20 +7,35 @@ export const useEvents = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Use optimized query with proper caching
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["events"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
         .select(`
-          *,
+          id,
+          title,
+          description,
+          date,
+          time,
+          venue,
+          address,
+          price,
+          category,
+          image_url,
+          current_attendees,
+          max_attendees,
+          tags,
           profiles!events_organizer_id_fkey (
             first_name,
             last_name
           )
         `)
         .eq("is_active", true)
-        .order("date", { ascending: true });
+        .gte("date", new Date().toISOString().split('T')[0]) // Only future events
+        .order("date", { ascending: true })
+        .limit(50); // Reasonable limit
 
       if (error) throw error;
       
@@ -44,6 +58,9 @@ export const useEvents = () => {
         tags: event.tags || []
       })) as Event[];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   const uploadEventImage = async (file: File): Promise<string> => {
@@ -109,7 +126,9 @@ export const useEvents = () => {
       return data;
     },
     onSuccess: () => {
+      // Invalidate multiple related queries
       queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["optimized-events"] });
       toast({
         title: "Event Created",
         description: "Your event has been created successfully.",
