@@ -22,28 +22,62 @@ export class BackupService {
 
   async createDataExport(): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      // Export critical user data
-      const tables = ['profiles', 'events', 'tickets', 'favorites'];
+      // Export critical user data with type-safe table access
       const exportData: any = {};
       let totalRecords = 0;
 
-      for (const table of tables) {
-        const { data, error } = await supabase
-          .from(table)
-          .select('*');
+      // Export profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
 
-        if (error) {
-          throw new Error(`Failed to export ${table}: ${error.message}`);
-        }
-
-        exportData[table] = data;
-        totalRecords += data?.length || 0;
+      if (profilesError) {
+        throw new Error(`Failed to export profiles: ${profilesError.message}`);
       }
+
+      exportData.profiles = profiles;
+      totalRecords += profiles?.length || 0;
+
+      // Export events
+      const { data: events, error: eventsError } = await supabase
+        .from('events')
+        .select('*');
+
+      if (eventsError) {
+        throw new Error(`Failed to export events: ${eventsError.message}`);
+      }
+
+      exportData.events = events;
+      totalRecords += events?.length || 0;
+
+      // Export tickets
+      const { data: tickets, error: ticketsError } = await supabase
+        .from('tickets')
+        .select('*');
+
+      if (ticketsError) {
+        throw new Error(`Failed to export tickets: ${ticketsError.message}`);
+      }
+
+      exportData.tickets = tickets;
+      totalRecords += tickets?.length || 0;
+
+      // Export favorites
+      const { data: favorites, error: favoritesError } = await supabase
+        .from('favorites')
+        .select('*');
+
+      if (favoritesError) {
+        throw new Error(`Failed to export favorites: ${favoritesError.message}`);
+      }
+
+      exportData.favorites = favorites;
+      totalRecords += favorites?.length || 0;
 
       const backup = {
         metadata: {
           timestamp: new Date().toISOString(),
-          tables,
+          tables: ['profiles', 'events', 'tickets', 'favorites'],
           recordCount: totalRecords,
           version: '1.0.0'
         },

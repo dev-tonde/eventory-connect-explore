@@ -1,3 +1,4 @@
+
 interface PerformanceMetric {
   name: string;
   value: number;
@@ -71,7 +72,14 @@ export const setupPerformanceMonitoring = () => {
   // Monitor Core Web Vitals
   const observer = new PerformanceObserver((list) => {
     for (const entry of list.getEntries()) {
-      monitoring.trackMetric(entry.name, entry.value);
+      // Cast to specific performance entry types that have duration/value properties
+      if (entry.entryType === 'measure' || entry.entryType === 'navigation') {
+        const performanceEntry = entry as PerformanceNavigationTiming | PerformanceMeasure;
+        monitoring.trackMetric(entry.name, performanceEntry.duration || 0);
+      } else if (entry.entryType === 'paint') {
+        const paintEntry = entry as PerformancePaintTiming;
+        monitoring.trackMetric(entry.name, paintEntry.startTime);
+      }
     }
   });
 
@@ -80,8 +88,9 @@ export const setupPerformanceMonitoring = () => {
   // Monitor resource loading
   const resourceObserver = new PerformanceObserver((list) => {
     for (const entry of list.getEntries()) {
-      if (entry.duration > 1000) {
-        monitoring.trackMetric(`slow_resource_${entry.name}`, entry.duration);
+      const resourceEntry = entry as PerformanceResourceTiming;
+      if (resourceEntry.duration > 1000) {
+        monitoring.trackMetric(`slow_resource_${entry.name}`, resourceEntry.duration);
       }
     }
   });
