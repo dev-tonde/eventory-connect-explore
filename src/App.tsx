@@ -25,10 +25,34 @@ import SplitPaymentPage from './pages/SplitPaymentPage';
 import NotFound from './pages/NotFound';
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import PWAInstaller from './components/pwa/PWAInstaller';
+import { monitoring } from './lib/monitoring';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        // Log API failures
+        monitoring.trackApiCall('query_error', 0, false);
+        return failureCount < 2;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+    },
+    mutations: {
+      retry: false,
+      onError: (error: any) => {
+        monitoring.trackApiCall('mutation_error', 0, false);
+      }
+    }
+  }
+});
 
 function App() {
+  React.useEffect(() => {
+    // Track app initialization
+    monitoring.trackPageLoad('app_init');
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
