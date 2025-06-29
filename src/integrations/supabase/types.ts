@@ -1122,6 +1122,66 @@ export type Database = {
           },
         ]
       }
+      social_posts: {
+        Row: {
+          caption: string
+          community_id: string | null
+          created_at: string
+          event_id: string | null
+          external_post_id: string | null
+          id: string
+          image_url: string | null
+          platform: string
+          posted_at: string
+          poster_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          caption: string
+          community_id?: string | null
+          created_at?: string
+          event_id?: string | null
+          external_post_id?: string | null
+          id?: string
+          image_url?: string | null
+          platform: string
+          posted_at?: string
+          poster_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          caption?: string
+          community_id?: string | null
+          created_at?: string
+          event_id?: string | null
+          external_post_id?: string | null
+          id?: string
+          image_url?: string | null
+          platform?: string
+          posted_at?: string
+          poster_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_posts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_posts_poster_id_fkey"
+            columns: ["poster_id"]
+            isOneToOne: false
+            referencedRelation: "generated_posters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       split_payment_participants: {
         Row: {
           amount: number

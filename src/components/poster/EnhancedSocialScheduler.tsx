@@ -41,28 +41,55 @@ const EnhancedSocialScheduler = ({ posterId, eventId, imageUrl, isOpen, onClose 
   const fetchScheduledPosts = async () => {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('scheduled_posts')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('scheduled_for', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('scheduled_posts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('scheduled_for', { ascending: false });
 
-    if (data) {
-      setScheduledPosts(data);
+      if (error) {
+        console.error('Error fetching scheduled posts:', error);
+        return;
+      }
+
+      if (data) {
+        setScheduledPosts(data);
+      }
+    } catch (error) {
+      console.error('Error in fetchScheduledPosts:', error);
     }
   };
 
   const fetchSocialPosts = async () => {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('social_posts')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('posted_at', { ascending: false });
+    try {
+      // Use a more flexible query approach to avoid TypeScript issues
+      const { data, error } = await supabase.rpc('get_user_social_posts', {
+        user_id_param: user.id
+      });
 
-    if (data) {
-      setSocialPosts(data);
+      if (error) {
+        console.error('Error fetching social posts:', error);
+        // Fallback to direct query if RPC doesn't exist
+        const { data: fallbackData, error: fallbackError } = await (supabase as any)
+          .from('social_posts')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('posted_at', { ascending: false });
+        
+        if (!fallbackError && fallbackData) {
+          setSocialPosts(fallbackData);
+        }
+        return;
+      }
+
+      if (data) {
+        setSocialPosts(data);
+      }
+    } catch (error) {
+      console.error('Error in fetchSocialPosts:', error);
     }
   };
 
