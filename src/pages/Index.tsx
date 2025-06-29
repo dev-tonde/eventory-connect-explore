@@ -280,7 +280,7 @@ const Index = () => {
               <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Star className="h-8 w-8 text-yellow-600" />
               </div>
-              <h3 className="text-xl font-semib. mb-2">AI Poster Studio</h3>
+              <h3 className="text-xl font-semibold mb-2">AI Poster Studio</h3>
               <p className="text-gray-600">
                 Generate stunning event posters and social media content with AI.
               </p>
@@ -323,7 +323,7 @@ const Index = () => {
             </Link>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
