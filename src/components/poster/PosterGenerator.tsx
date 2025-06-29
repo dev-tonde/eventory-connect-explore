@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import EnhancedSocialScheduler from "./EnhancedSocialScheduler";
 
 interface PosterTemplate {
   id: string;
@@ -33,6 +35,7 @@ const PosterGenerator = ({ eventId, eventTitle, eventDate, eventLocation }: Post
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [currentPosterId, setCurrentPosterId] = useState<string | null>(null);
+  const [showScheduler, setShowScheduler] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -51,7 +54,6 @@ const PosterGenerator = ({ eventId, eventTitle, eventDate, eventLocation }: Post
       }
 
       if (data) {
-        // Transform the data to match our interface
         const transformedTemplates: PosterTemplate[] = data.map(template => ({
           id: template.id,
           name: template.name,
@@ -81,7 +83,6 @@ const PosterGenerator = ({ eventId, eventTitle, eventDate, eventLocation }: Post
       const template = templates.find(t => t.id === selectedTemplate);
       if (!template) throw new Error('Template not found');
 
-      // Save generation request to database first
       const { data: posterRecord, error: dbError } = await supabase
         .from('generated_posters')
         .insert({
@@ -99,7 +100,6 @@ const PosterGenerator = ({ eventId, eventTitle, eventDate, eventLocation }: Post
       if (dbError) throw dbError;
       setCurrentPosterId(posterRecord.id);
 
-      // Call edge function to generate poster
       const { data, error } = await supabase.functions.invoke('generate-poster', {
         body: {
           eventTitle: eventTitle || 'Sample Event',
@@ -113,7 +113,6 @@ const PosterGenerator = ({ eventId, eventTitle, eventDate, eventLocation }: Post
 
       if (error) throw error;
 
-      // Update database with generated image
       await supabase
         .from('generated_posters')
         .update({
@@ -213,23 +212,23 @@ const PosterGenerator = ({ eventId, eventTitle, eventDate, eventLocation }: Post
                 <Button variant="outline">
                   Download
                 </Button>
-                <Button 
-                  onClick={() => {
-                    // This will be handled by the SocialScheduler component
-                    if (currentPosterId) {
-                      const event = new CustomEvent('openScheduler', { 
-                        detail: { posterId: currentPosterId } 
-                      });
-                      window.dispatchEvent(event);
-                    }
-                  }}
-                >
-                  Schedule Post
+                <Button onClick={() => setShowScheduler(true)}>
+                  Share to Social Media
                 </Button>
               </div>
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {showScheduler && generatedImage && (
+        <EnhancedSocialScheduler
+          posterId={currentPosterId}
+          eventId={eventId}
+          imageUrl={generatedImage}
+          isOpen={showScheduler}
+          onClose={() => setShowScheduler(false)}
+        />
       )}
     </div>
   );
