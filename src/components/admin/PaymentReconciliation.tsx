@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,12 +17,8 @@ interface PaymentRecord {
   payment_status: string | null;
   payment_method: string | null;
   purchase_date: string;
-  events?: {
-    title: string;
-  } | null;
-  profiles?: {
-    email: string;
-  } | null;
+  event_title?: string;
+  user_email?: string;
 }
 
 const PaymentReconciliation = () => {
@@ -47,8 +44,8 @@ const PaymentReconciliation = () => {
           payment_status,
           payment_method,
           purchase_date,
-          events:event_id (title),
-          profiles:user_id (email)
+          event_id,
+          user_id
         `)
         .order('purchase_date', { ascending: false });
 
@@ -63,14 +60,61 @@ const PaymentReconciliation = () => {
         query = query.lte('purchase_date', dateRange.to.toISOString());
       }
 
-      const { data, error } = await query;
+      const { data: ticketsData, error } = await query;
       
       if (error) {
         console.error('Error loading payments:', error);
         setPayments([]);
-      } else {
-        setPayments(data || []);
+        return;
       }
+
+      if (!ticketsData || ticketsData.length === 0) {
+        setPayments([]);
+        return;
+      }
+
+      // Get unique event IDs and user IDs
+      const eventIds = [...new Set(ticketsData.map(t => t.event_id).filter(Boolean))];
+      const userIds = [...new Set(ticketsData.map(t => t.user_id).filter(Boolean))];
+
+      // Fetch events data
+      let eventsData: any[] = [];
+      if (eventIds.length > 0) {
+        const { data: events } = await supabase
+          .from('events')
+          .select('id, title')
+          .in('id', eventIds);
+        eventsData = events || [];
+      }
+
+      // Fetch profiles data
+      let profilesData: any[] = [];
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, email')
+          .in('id', userIds);
+        profilesData = profiles || [];
+      }
+
+      // Combine the data
+      const enrichedPayments: PaymentRecord[] = ticketsData.map(ticket => {
+        const event = eventsData.find(e => e.id === ticket.event_id);
+        const profile = profilesData.find(p => p.id === ticket.user_id);
+        
+        return {
+          id: ticket.id,
+          payment_reference: ticket.payment_reference,
+          total_price: ticket.total_price,
+          payment_status: ticket.payment_status,
+          payment_method: ticket.payment_method,
+          purchase_date: ticket.purchase_date,
+          event_title: event?.title,
+          user_email: profile?.email
+        };
+      });
+
+      setPayments(enrichedPayments);
     } catch (error) {
       console.error('Error loading payments:', error);
       setPayments([]);
@@ -85,8 +129,8 @@ const PaymentReconciliation = () => {
       ...payments.map(payment => [
         new Date(payment.purchase_date).toLocaleDateString(),
         payment.payment_reference || 'N/A',
-        payment.events?.title || 'N/A',
-        payment.profiles?.email || 'N/A',
+        payment.event_title || 'N/A',
+        payment.user_email || 'N/A',
         `R${payment.total_price.toFixed(2)}`,
         payment.payment_status || 'N/A',
         payment.payment_method || 'N/A'
@@ -103,8 +147,8 @@ const PaymentReconciliation = () => {
 
   const filteredPayments = payments.filter(payment =>
     (payment.payment_reference?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (payment.events?.title?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (payment.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+    (payment.event_title?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (payment.user_email?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const totalRevenue = filteredPayments.reduce((sum, payment) => 
@@ -213,8 +257,8 @@ const PaymentReconciliation = () => {
                   <TableCell className="font-mono text-sm">
                     {payment.payment_reference || 'N/A'}
                   </TableCell>
-                  <TableCell>{payment.events?.title || 'N/A'}</TableCell>
-                  <TableCell>{payment.profiles?.email || 'N/A'}</TableCell>
+                  <TableCell>{payment.event_title || 'N/A'}</TableCell>
+                  <TableCell>{payment.user_email || 'N/A'}</TableCell>
                   <TableCell>R{payment.total_price.toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge variant={
