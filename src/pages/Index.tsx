@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar, Users, Zap, MapPin, Heart, Star } from "lucide-react";
@@ -17,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const { events: optimizedEvents, isLoading } = useOptimizedEvents();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [allEvents, setAllEvents] = useState<Event[]>([]);
 
   // Set SEO metadata for homepage
@@ -308,7 +309,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* 7. Ready to Get Started CTA - Only show Sign Up Free if user is not logged in */}
+      {/* 7. Ready to Get Started CTA - Only show Sign Up Free if user is not authenticated */}
       <section className="py-16 bg-gray-900 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
@@ -317,8 +318,8 @@ const Index = () => {
             to create memorable experiences.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {!user && (
-              <Link to="/login">
+            {!isAuthenticated && (
+              <Link to="/auth">
                 <Button size="lg" className="bg-purple-600 hover:bg-purple-700">
                   Sign Up Free
                   <ArrowRight className="ml-2 h-5 w-5" />

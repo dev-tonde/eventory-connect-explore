@@ -180,7 +180,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     profile,
     session,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !!session,
     login,
     signup,
     logout,
