@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar, Users, Zap, MapPin, Heart, Star } from "lucide-react";
@@ -11,6 +10,8 @@ import NewsletterSignup from "@/components/newsletter/NewsletterSignup";
 import TestimonialsSection from "@/components/testimonials/TestimonialsSection";
 import GoogleSignInModal from "@/components/auth/GoogleSignInModal";
 import { useOptimizedEvents } from "@/hooks/useOptimizedEvents";
+import { useMetadata } from "@/hooks/useMetadata";
+import { defaultMetadata } from "@/lib/metadata";
 import { Event } from "@/types/event";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -18,6 +19,14 @@ const Index = () => {
   const { events: optimizedEvents, isLoading } = useOptimizedEvents();
   const { user } = useAuth();
   const [allEvents, setAllEvents] = useState<Event[]>([]);
+
+  // Set SEO metadata for homepage
+  useMetadata({
+    ...defaultMetadata,
+    title: 'Eventory - Discover Amazing Events | AI-Powered Event Discovery',
+    description: 'Connect with your community through AI-powered event discovery, dynamic pricing, and seamless social integration. Find concerts, conferences, workshops and more.',
+    keywords: 'events, event discovery, AI events, community events, concerts, conferences, workshops, meetups, social events'
+  });
 
   useEffect(() => {
     // Enhanced mock data for demo purposes - this ensures we always have events to show

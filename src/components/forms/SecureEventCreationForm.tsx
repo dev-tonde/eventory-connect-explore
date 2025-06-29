@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Calendar, MapPin, DollarSign, Tag, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEvents } from "@/hooks/useEvents";
+import { useOptimizedEventCreation } from "@/hooks/useOptimizedEventCreation";
 import { useSecurityFeatures } from "@/hooks/useSecurityFeatures";
 import { SecureFileUpload } from "@/components/security/SecureFileUpload";
 import { CSRFToken } from "@/components/security/CSRFProtection";
@@ -28,6 +28,15 @@ interface EventFormData {
   enableDynamicPricing: boolean;
   minPrice?: number;
   maxPrice?: number;
+  // Enhanced metadata fields
+  metaDescription?: string;
+  seoKeywords?: string[];
+  accessibilityInfo?: string;
+  parkingInfo?: string;
+  publicTransportInfo?: string;
+  ageRestrictions?: string;
+  dresscode?: string;
+  languages?: string[];
 }
 
 interface SecureEventCreationFormProps {
@@ -36,7 +45,7 @@ interface SecureEventCreationFormProps {
 
 const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) => {
   const { profile } = useAuth();
-  const { createEvent, isCreating } = useEvents();
+  const { createEvent, isCreating } = useOptimizedEventCreation();
   const { checkFormRateLimit, sanitizeInput } = useSecurityFeatures();
   
   const [formData, setFormData] = useState<EventFormData>({
@@ -54,13 +63,23 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
     enableDynamicPricing: false,
     minPrice: 0,
     maxPrice: 0,
+    // Enhanced metadata defaults
+    metaDescription: "",
+    seoKeywords: [],
+    accessibilityInfo: "",
+    parkingInfo: "",
+    publicTransportInfo: "",
+    ageRestrictions: "",
+    dresscode: "",
+    languages: ["English"]
   });
   
   const [imagePreview, setImagePreview] = useState<string>("/placeholder.svg");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = [
-    "Music", "Technology", "Food", "Sports", "Arts", "Business", "Education", "Health",
+    "Music", "Technology", "Food & Drink", "Sports", "Arts & Culture", "Business", 
+    "Education", "Health & Wellness", "Entertainment"
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,6 +103,13 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
         location: sanitizeInput(formData.location),
         address: sanitizeInput(formData.address),
         tags: formData.tags.map(tag => sanitizeInput(tag)).filter(tag => tag.trim() !== ""),
+        metaDescription: sanitizeInput(formData.metaDescription || ""),
+        seoKeywords: formData.seoKeywords?.map(keyword => sanitizeInput(keyword)).filter(Boolean) || [],
+        accessibilityInfo: sanitizeInput(formData.accessibilityInfo || ""),
+        parkingInfo: sanitizeInput(formData.parkingInfo || ""),
+        publicTransportInfo: sanitizeInput(formData.publicTransportInfo || ""),
+        ageRestrictions: sanitizeInput(formData.ageRestrictions || ""),
+        dresscode: sanitizeInput(formData.dresscode || ""),
       };
 
       // Validate dynamic pricing settings
@@ -98,8 +124,22 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
         }
       }
 
+      // Auto-generate SEO metadata if not provided
+      if (!sanitizedData.metaDescription) {
+        sanitizedData.metaDescription = `Join ${sanitizedData.title} on ${new Date(sanitizedData.date).toLocaleDateString()} at ${sanitizedData.location}. ${sanitizedData.description.substring(0, 100)}...`;
+      }
+
+      if (!sanitizedData.seoKeywords || sanitizedData.seoKeywords.length === 0) {
+        sanitizedData.seoKeywords = [
+          sanitizedData.category.toLowerCase(),
+          sanitizedData.location.toLowerCase().split(' ')[0],
+          'event',
+          'tickets'
+        ];
+      }
+
       await createEvent(sanitizedData);
-      toast.success("Event created successfully!");
+      toast.success("Event created successfully with enhanced SEO metadata!");
       onSuccess?.();
     } catch (error) {
       toast.error("Failed to create event. Please try again.");
@@ -119,6 +159,11 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
     setFormData({ ...formData, tags });
   };
 
+  const handleSeoKeywordsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const keywords = e.target.value.split(",").map((keyword) => keyword.trim());
+    setFormData({ ...formData, seoKeywords: keywords });
+  };
+
   const handleDynamicPricingToggle = (enabled: boolean) => {
     setFormData({ 
       ...formData, 
@@ -136,7 +181,7 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
           Create New Event
         </CardTitle>
         <CardDescription>
-          Create your event with advanced security and AI-powered assistance
+          Create your event with advanced security, SEO optimization, and AI-powered assistance
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -270,6 +315,94 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
             />
           </div>
 
+          {/* SEO & Metadata Section */}
+          <div className="space-y-6 p-6 border rounded-lg bg-blue-50">
+            <div>
+              <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
+                <Sparkles className="h-5 w-5" />
+                SEO & Discoverability
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">Optimize your event for search engines and better discoverability</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="metaDescription">Meta Description</Label>
+                <textarea
+                  id="metaDescription"
+                  value={formData.metaDescription || ""}
+                  onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                  placeholder="Brief description for search engines (160 characters max)"
+                  className="w-full h-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                  maxLength={160}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="seoKeywords">SEO Keywords</Label>
+                <Input
+                  id="seoKeywords"
+                  value={formData.seoKeywords?.join(", ") || ""}
+                  onChange={handleSeoKeywordsChange}
+                  placeholder="tech, conference, networking (separate with commas)"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Keywords to help people find your event
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Event Information */}
+          <div className="space-y-6 p-6 border rounded-lg bg-green-50">
+            <div>
+              <h3 className="text-lg font-medium mb-4">Additional Event Information</h3>
+              <p className="text-sm text-gray-600 mb-4">Help attendees plan better with detailed information</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="accessibilityInfo">Accessibility Information</Label>
+                <Input
+                  id="accessibilityInfo"
+                  value={formData.accessibilityInfo || ""}
+                  onChange={(e) => setFormData({ ...formData, accessibilityInfo: e.target.value })}
+                  placeholder="Wheelchair accessible, sign language interpreter, etc."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="parkingInfo">Parking Information</Label>
+                <Input
+                  id="parkingInfo"
+                  value={formData.parkingInfo || ""}
+                  onChange={(e) => setFormData({ ...formData, parkingInfo: e.target.value })}
+                  placeholder="Free parking available, $10 valet, street parking only, etc."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="publicTransportInfo">Public Transport</Label>
+                <Input
+                  id="publicTransportInfo"
+                  value={formData.publicTransportInfo || ""}
+                  onChange={(e) => setFormData({ ...formData, publicTransportInfo: e.target.value })}
+                  placeholder="Metro Station 5 mins walk, Bus route 123, etc."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="ageRestrictions">Age Restrictions</Label>
+                <Input
+                  id="ageRestrictions"
+                  value={formData.ageRestrictions || ""}
+                  onChange={(e) => setFormData({ ...formData, ageRestrictions: e.target.value })}
+                  placeholder="All ages, 18+, 21+, Family friendly, etc."
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Pricing Section */}
           <div className="space-y-6 p-6 border rounded-lg bg-gray-50">
             <div className="flex items-center justify-between">
@@ -365,7 +498,7 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
             disabled={isCreating || isSubmitting} 
             className="w-full"
           >
-            {isCreating || isSubmitting ? "Creating Event..." : "Create Event"}
+            {isCreating || isSubmitting ? "Creating Event..." : "Create Event with Enhanced SEO"}
           </Button>
         </form>
       </CardContent>

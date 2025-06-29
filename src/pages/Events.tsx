@@ -1,6 +1,6 @@
-
 import { useState } from "react";
 import { useOptimizedEvents } from "@/hooks/useOptimizedEvents";
+import { useMetadata } from "@/hooks/useMetadata";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +16,14 @@ const Events = () => {
   const [selectedLocation, setSelectedLocation] = useState("");
 
   const { events, isLoading } = useOptimizedEvents();
+
+  // Set SEO metadata for events page
+  useMetadata({
+    title: 'All Events | Eventory - Find Amazing Events Near You',
+    description: `Discover ${events.length}+ amazing events. Find concerts, conferences, workshops, meetups and more. Browse by category, location, and date.`,
+    keywords: 'events, find events, event listings, concerts, conferences, workshops, meetups, community events, event search',
+    type: 'website'
+  });
 
   // Filter events based on search criteria
   const filteredEvents = useMemo(() => {
