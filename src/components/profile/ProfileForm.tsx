@@ -40,13 +40,24 @@ const ProfileForm = () => {
 
     try {
       const { data, error } = await supabase
-        .rpc('can_edit_username', { profile_id: user.id });
+        .from('profiles')
+        .select('username_last_changed')
+        .eq('id', user.id)
+        .single();
 
       if (error) {
         console.error("Error checking username editability:", error);
         setCanEditUsername(true); // Default to allowing edit if check fails
       } else {
-        setCanEditUsername(data);
+        const lastChanged = data?.username_last_changed;
+        if (!lastChanged) {
+          setCanEditUsername(true);
+        } else {
+          const sixMonthsAgo = new Date();
+          sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+          const canEdit = new Date(lastChanged) < sixMonthsAgo;
+          setCanEditUsername(canEdit);
+        }
       }
     } catch (error) {
       console.error("Error checking username editability:", error);

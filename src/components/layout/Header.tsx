@@ -7,7 +7,15 @@ import NavigationMenu from "./NavigationMenu";
 import HeaderLogo from "./HeaderLogo";
 
 const Header = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-50">
@@ -19,7 +27,7 @@ const Header = () => {
           
           <div className="flex items-center space-x-4">
             {user ? (
-              <UserMenu />
+              <UserMenu onLogout={handleLogout} />
             ) : (
               <div className="flex items-center space-x-2">
                 <Link to="/auth">

@@ -25,12 +25,7 @@ const Community = () => {
             id,
             user_id,
             role,
-            joined_at,
-            profiles (
-              first_name,
-              last_name,
-              username
-            )
+            joined_at
           )
         `)
         .eq("id", id)
@@ -38,6 +33,44 @@ const Community = () => {
 
       if (error) throw error;
       return data;
+    },
+    enabled: !!id,
+  });
+
+  const { data: communityMembers } = useQuery({
+    queryKey: ["community-members-with-profiles", id],
+    queryFn: async () => {
+      if (!id) return [];
+      
+      const { data, error } = await supabase
+        .from("community_members")
+        .select(`
+          id,
+          user_id,
+          role,
+          joined_at
+        `)
+        .eq("community_id", id);
+
+      if (error) throw error;
+
+      // Get profile data for each member
+      const membersWithProfiles = await Promise.all(
+        data.map(async (member) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("first_name, last_name, username")
+            .eq("id", member.user_id)
+            .single();
+
+          return {
+            ...member,
+            profile
+          };
+        })
+      );
+
+      return membersWithProfiles;
     },
     enabled: !!id,
   });
@@ -151,17 +184,17 @@ const Community = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Members ({community.community_members?.length || 0})
+                  Members ({communityMembers?.length || 0})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {community.community_members?.slice(0, 5).map((member) => (
+                  {communityMembers?.slice(0, 5).map((member) => (
                     <div key={member.id} className="flex items-center justify-between">
                       <span className="text-sm">
-                        {member.profiles?.first_name && member.profiles?.last_name
-                          ? `${member.profiles.first_name} ${member.profiles.last_name}`
-                          : member.profiles?.username || "Unknown User"
+                        {member.profile?.first_name && member.profile?.last_name
+                          ? `${member.profile.first_name} ${member.profile.last_name}`
+                          : member.profile?.username || "Unknown User"
                         }
                       </span>
                       <span className="text-xs text-gray-500 capitalize">
@@ -169,9 +202,9 @@ const Community = () => {
                       </span>
                     </div>
                   ))}
-                  {(community.community_members?.length || 0) > 5 && (
+                  {(communityMembers?.length || 0) > 5 && (
                     <p className="text-xs text-gray-500 text-center mt-2">
-                      +{(community.community_members?.length || 0) - 5} more members
+                      +{(communityMembers?.length || 0) - 5} more members
                     </p>
                   )}
                 </div>
