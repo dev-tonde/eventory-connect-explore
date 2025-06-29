@@ -193,7 +193,7 @@ const Profile = () => {
                   <CardTitle>Edit Profile</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ProfileForm profile={profile} onUpdate={setProfile} />
+                  <ProfileForm />
                 </CardContent>
               </Card>
             </div>
