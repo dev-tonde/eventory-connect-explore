@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import UserMenu from "./UserMenu";
 import NavigationMenu from "./NavigationMenu";
 import HeaderLogo from "./HeaderLogo";
+import LocationIndicator from "../location/LocationIndicator";
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -23,21 +24,24 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           <HeaderLogo />
           
-          <NavigationMenu />
-          
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <UserMenu onLogout={handleLogout} />
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Link to="/auth">
-                  <Button variant="ghost">Log In</Button>
-                </Link>
-                <Link to="/auth">
-                  <Button>Sign Up</Button>
-                </Link>
-              </div>
-            )}
+          <div className="flex items-center space-x-6">
+            <LocationIndicator />
+            <NavigationMenu />
+            
+            <div className="flex items-center space-x-4">
+              {user ? (
+                <UserMenu onLogout={handleLogout} />
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Link to="/auth">
+                    <Button variant="ghost">Log In</Button>
+                  </Link>
+                  <Link to="/auth">
+                    <Button>Sign Up</Button>
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
