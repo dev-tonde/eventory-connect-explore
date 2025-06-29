@@ -39,17 +39,22 @@ const ProfileForm = () => {
     if (!user?.id) return;
 
     try {
+      // First, let's check if the column exists by trying to select it
       const { data, error } = await supabase
         .from('profiles')
         .select('username_last_changed')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error checking username editability:", error);
-        setCanEditUsername(true); // Default to allowing edit if check fails
+        // If column doesn't exist, default to allowing edit
+        setCanEditUsername(true);
+      } else if (!data) {
+        // No profile found, allow edit
+        setCanEditUsername(true);
       } else {
-        const lastChanged = data?.username_last_changed;
+        const lastChanged = data.username_last_changed;
         if (!lastChanged) {
           setCanEditUsername(true);
         } else {
@@ -61,6 +66,7 @@ const ProfileForm = () => {
       }
     } catch (error) {
       console.error("Error checking username editability:", error);
+      // Default to allowing edit if there's an error
       setCanEditUsername(true);
     }
   };
