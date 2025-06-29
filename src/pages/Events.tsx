@@ -1,7 +1,6 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useOptimizedEvents } from "@/hooks/useOptimizedEvents";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,47 +8,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, Search, Filter } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useMemo } from "react";
 
 const Events = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
 
-  const { data: events = [], isLoading } = useQuery({
-    queryKey: ["events", searchTerm, selectedCategory, selectedLocation],
-    queryFn: async () => {
-      let query = supabase
-        .from("events")
-        .select(`
-          *,
-          profiles!events_organizer_id_fkey (
-            first_name,
-            last_name,
-            username
-          )
-        `)
-        .eq("is_active", true)
-        .gte("date", new Date().toISOString().split('T')[0])
-        .order("date", { ascending: true });
+  const { events, isLoading } = useOptimizedEvents();
 
-      // Apply filters
-      if (searchTerm) {
-        query = query.ilike("title", `%${searchTerm}%`);
-      }
+  // Filter events based on search criteria
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      const matchesSearch = !searchTerm || 
+        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.description.toLowerCase().includes(searchTerm.toLowerCase());
       
-      if (selectedCategory) {
-        query = query.eq("category", selectedCategory);
-      }
+      const matchesCategory = !selectedCategory || 
+        event.category.toLowerCase() === selectedCategory.toLowerCase();
+      
+      const matchesLocation = !selectedLocation || 
+        event.location.toLowerCase().includes(selectedLocation.toLowerCase());
 
-      if (selectedLocation) {
-        query = query.ilike("venue", `%${selectedLocation}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
-    },
-  });
+      return matchesSearch && matchesCategory && matchesLocation;
+    });
+  }, [events, searchTerm, selectedCategory, selectedLocation]);
 
   const categories = [
     "Music", "Technology", "Food & Drink", "Business", "Arts & Culture", 
@@ -74,7 +57,7 @@ const Events = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Discover Events</h1>
-          <p className="text-gray-600">Find amazing events happening around you</p>
+          <p className="text-gray-600">Find amazing events happening around you ({events.length} events available)</p>
         </div>
 
         {/* Search and Filters */}
@@ -133,15 +116,21 @@ const Events = () => {
         </div>
 
         {/* Results */}
+        <div className="mb-4">
+          <p className="text-sm text-gray-600">
+            Showing {filteredEvents.length} of {events.length} events
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.length > 0 ? (
-            events.map((event) => (
+          {filteredEvents.length > 0 ? (
+            filteredEvents.map((event) => (
               <Link key={event.id} to={`/events/${event.id}`}>
                 <Card className="hover:shadow-lg transition-shadow group cursor-pointer">
                   <div className="relative">
                     <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
                       <img
-                        src={event.image_url || "/placeholder.svg"}
+                        src={event.image || "/placeholder.svg"}
                         alt={event.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
@@ -170,11 +159,11 @@ const Events = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4" />
-                        <span className="line-clamp-1">{event.venue}</span>
+                        <span className="line-clamp-1">{event.location}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        <span>{event.current_attendees || 0} attending</span>
+                        <span>{event.attendeeCount || 0} attending</span>
                       </div>
                     </div>
 
@@ -196,7 +185,12 @@ const Events = () => {
                 <Search className="h-16 w-16 mx-auto mb-4" />
               </div>
               <h3 className="text-xl font-medium text-gray-900 mb-2">No events found</h3>
-              <p className="text-gray-600">Try adjusting your search criteria or clear the filters.</p>
+              <p className="text-gray-600">
+                {events.length === 0 
+                  ? "No events are currently available."
+                  : "Try adjusting your search criteria or clear the filters."
+                }
+              </p>
             </div>
           )}
         </div>

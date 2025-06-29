@@ -19,15 +19,15 @@ interface FeaturedEventsSectionProps {
 }
 
 const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
-  // Get follower counts and determine verified organizers
+  // Get follower counts from localStorage (for demo purposes)
   const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
   
-  // Filter events to prioritize verified organizers (10k+ followers) and get top 8
+  // Filter and sort events to get the best featured events
   const featuredEvents = events
     .map(event => ({
       ...event,
       isVerifiedOrganizer: (followerCounts[event.organizer] || 0) >= 10000,
-      followerCount: followerCounts[event.organizer] || 0
+      followerCount: followerCounts[event.organizer] || Math.floor(Math.random() * 15000) + 1000 // Random demo data
     }))
     .sort((a, b) => {
       // First sort by verified status, then by follower count, then by attendee count
@@ -40,6 +40,20 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
       return b.attendeeCount - a.attendeeCount;
     })
     .slice(0, 8); // Get top 8 featured events
+
+  // If no events, show empty state
+  if (featuredEvents.length === 0) {
+    return (
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Events</h2>
+            <p className="text-gray-600">No featured events available at the moment.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-16">
