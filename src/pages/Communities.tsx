@@ -14,8 +14,8 @@ const Communities = () => {
   const { user } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const { data: myCommunities = [] } = useQuery({
-    queryKey: ["my-communities"],
+  const { data: myCommunities = [], refetch: refetchMyCommunities } = useQuery({
+    queryKey: ["my-communities", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       
@@ -23,12 +23,15 @@ const Communities = () => {
         .from("communities")
         .select(`
           *,
-          community_members!inner(role)
+          community_members!inner(role, user_id)
         `)
         .eq("community_members.user_id", user.id);
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching my communities:", error);
+        return [];
+      }
+      return data || [];
     },
     enabled: !!user?.id,
   });
@@ -38,14 +41,42 @@ const Communities = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("communities")
-        .select("*")
+        .select(`
+          *,
+          community_members(id)
+        `)
         .eq("is_public", true)
         .limit(10);
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching public communities:", error);
+        return [];
+      }
+      return data || [];
     },
   });
+
+  const handleCommunityCreated = () => {
+    refetchMyCommunities();
+    setShowCreateDialog(false);
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Login Required</h2>
+            <p className="text-gray-600 mb-4">Please log in to view and create communities</p>
+            <Link to="/auth">
+              <Button>Log In</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -102,10 +133,12 @@ const Communities = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <Users className="h-4 w-4" />
-                          <span>Members</span>
+                          <span>Member</span>
                         </div>
-                        <Badge variant={community.community_members[0]?.role === 'admin' ? 'default' : 'secondary'}>
-                          {community.community_members[0]?.role}
+                        <Badge variant={
+                          community.community_members?.[0]?.role === 'admin' ? 'default' : 'secondary'
+                        }>
+                          {community.community_members?.[0]?.role || 'member'}
                         </Badge>
                       </div>
                     </CardContent>
@@ -132,6 +165,12 @@ const Communities = () => {
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                     {community.description || "No description"}
                   </p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Users className="h-4 w-4" />
+                      <span>{community.community_members?.length || 0} members</span>
+                    </div>
+                  </div>
                   <Button variant="outline" className="w-full">
                     Join Community
                   </Button>
@@ -143,7 +182,8 @@ const Communities = () => {
 
         <CreateCommunityDialog 
           open={showCreateDialog} 
-          onOpenChange={setShowCreateDialog} 
+          onOpenChange={setShowCreateDialog}
+          onCommunityCreated={handleCommunityCreated}
         />
       </div>
     </div>

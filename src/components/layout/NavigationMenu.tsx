@@ -1,38 +1,32 @@
 
-import { Link } from "react-router-dom";
-import { Calendar, Users, Palette } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-
-interface NavigationItem {
-  href: string;
-  label: string;
-  icon: React.ComponentType<any>;
-}
+import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const NavigationMenu = () => {
-  const { user } = useAuth();
+  const location = useLocation();
 
-  const navigationItems: NavigationItem[] = [
-    { href: "/events", label: "Events", icon: Calendar },
-    { href: "/communities", label: "Communities", icon: Users },
-    { href: "/poster-studio", label: "Poster Studio", icon: Palette },
+  const navItems = [
+    { href: "/", label: "Home" },
+    { href: "/events", label: "Events" },
+    { href: "/communities", label: "Communities" },
   ];
 
   return (
-    <nav className="hidden lg:flex space-x-6">
-      {navigationItems.map((item) => {
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            to={item.href}
-            className="flex items-center space-x-1 text-gray-600 hover:text-purple-600 transition-colors"
-          >
-            <Icon className="h-4 w-4" />
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
+    <nav className="hidden md:flex items-center space-x-8">
+      {navItems.map((item) => (
+        <Link
+          key={item.href}
+          to={item.href}
+          className={cn(
+            "text-sm font-medium transition-colors hover:text-purple-600",
+            location.pathname === item.href
+              ? "text-purple-600"
+              : "text-gray-700"
+          )}
+        >
+          {item.label}
+        </Link>
+      ))}
     </nav>
   );
 };

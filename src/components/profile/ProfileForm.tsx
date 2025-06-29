@@ -7,11 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import UsernameInput from "@/components/profile/UsernameInput";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProfileForm = () => {
   const { user, profile, updateProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [canEditUsername, setCanEditUsername] = useState(true);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -27,8 +29,30 @@ const ProfileForm = () => {
         username: profile.username || "",
         bio: profile.bio || "",
       });
+
+      // Check if username can be edited
+      checkUsernameEditability();
     }
   }, [profile]);
+
+  const checkUsernameEditability = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .rpc('can_edit_username', { profile_id: user.id });
+
+      if (error) {
+        console.error("Error checking username editability:", error);
+        setCanEditUsername(true); // Default to allowing edit if check fails
+      } else {
+        setCanEditUsername(data);
+      }
+    } catch (error) {
+      console.error("Error checking username editability:", error);
+      setCanEditUsername(true);
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,10 +131,26 @@ const ProfileForm = () => {
             <Input value={user?.email || ""} disabled />
           </div>
 
-          <UsernameInput
-            initialUsername={profile?.username || ""}
-            onUsernameChange={handleUsernameChange}
-          />
+          {canEditUsername ? (
+            <UsernameInput
+              initialUsername={profile?.username || ""}
+              onUsernameChange={handleUsernameChange}
+            />
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Username
+              </label>
+              <Input
+                value={formData.username}
+                disabled
+                className="bg-gray-100"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Username can only be changed every 6 months
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
