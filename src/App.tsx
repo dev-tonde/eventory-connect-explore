@@ -1,87 +1,56 @@
 
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster"
-import Index from './pages/Index';
-import Events from './pages/Events';
-import EventDetail from './pages/EventDetail';
-import CreateEvent from './pages/CreateEvent';
-import Auth from './pages/Auth';
-import Login from './pages/Login';
-import Profile from './pages/Profile';
-import Header from './components/layout/Header';
-import Footer from './components/layout/Footer';
-import { AuthProvider } from './contexts/AuthContext';
-import Dashboard from './pages/Dashboard';
-import BecomeOrganizer from './pages/BecomeOrganizer';
-import AdminPanel from './pages/AdminPanel';
-import PosterStudio from './pages/PosterStudio';
-import FollowedOrganizers from './pages/FollowedOrganizers';
-import Communities from './pages/Communities';
-import Community from './pages/Community';
-import OrganizerProfile from './pages/OrganizerProfile';
-import SplitPaymentPage from './pages/SplitPaymentPage';
-import NotFound from './pages/NotFound';
-import { LanguageProvider } from "@/contexts/LanguageContext";
-import PWAInstaller from './components/pwa/PWAInstaller';
-import { monitoring } from './lib/monitoring';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import Header from "./components/layout/Header";
+import Index from "./pages/Index";
+import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
+import Communities from "./pages/Communities";
+import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
+import Dashboard from "./pages/Dashboard";
+import CreateEvent from "./pages/CreateEvent";
+import BecomeOrganizer from "./pages/BecomeOrganizer";
+import Gamification from "./pages/Gamification";
+import PosterStudio from "./pages/PosterStudio";
+import FollowedOrganizers from "./pages/FollowedOrganizers";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: (failureCount, error: any) => {
-        // Log API failures
-        monitoring.trackApiCall('query_error', 0, false);
-        return failureCount < 2;
-      },
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
-    },
-    mutations: {
-      retry: false,
-      onError: (error: any) => {
-        monitoring.trackApiCall('mutation_error', 0, false);
-      }
-    }
-  }
-});
+const queryClient = new QueryClient();
 
 function App() {
-  React.useEffect(() => {
-    // Track app initialization
-    monitoring.trackPageLoad('app_init');
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <TooltipProvider>
         <Toaster />
-        <LanguageProvider>
+        <Sonner />
+        <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              <Route path="/" element={<><Header /><Index /><Footer /></>} />
-              <Route path="/events" element={<><Header /><Events /><Footer /></>} />
-              <Route path="/events/:eventId" element={<><Header /><EventDetail /><Footer /></>} />
-              <Route path="/create-event" element={<><Header /><CreateEvent /><Footer /></>} />
-              <Route path="/auth" element={<><Header /><Auth /><Footer /></>} />
-              <Route path="/login" element={<><Header /><Login /><Footer /></>} />
-              <Route path="/profile" element={<><Header /><Profile /><Footer /></>} />
-              <Route path="/dashboard" element={<><Header /><Dashboard /><Footer /></>} />
-              <Route path="/become-organizer" element={<><Header /><BecomeOrganizer /><Footer /></>} />
-              <Route path="/followed-organizers" element={<><Header /><FollowedOrganizers /><Footer /></>} />
-              <Route path="/communities" element={<><Header /><Communities /><Footer /></>} />
-              <Route path="/community/:communityId" element={<><Header /><Community /><Footer /></>} />
-              <Route path="/organizer/:organizerName" element={<><Header /><OrganizerProfile /><Footer /></>} />
-              <Route path="/split-payment/:splitId" element={<><Header /><SplitPaymentPage /><Footer /></>} />
-              <Route path="/admin-panel" element={<><Header /><AdminPanel /><Footer /></>} />
-              <Route path="/poster-studio" element={<><Header /><PosterStudio /><Footer /></>} />
-              <Route path="*" element={<><Header /><NotFound /><Footer /></>} />
-            </Routes>
-            <PWAInstaller />
+            <div className="min-h-screen bg-background">
+              <Header />
+              <main>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/events" element={<Events />} />
+                  <Route path="/events/:id" element={<EventDetail />} />
+                  <Route path="/communities" element={<Communities />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/create-event" element={<CreateEvent />} />
+                  <Route path="/become-organizer" element={<BecomeOrganizer />} />
+                  <Route path="/gamification" element={<Gamification />} />
+                  <Route path="/poster-studio" element={<PosterStudio />} />
+                  <Route path="/followed-organizers" element={<FollowedOrganizers />} />
+                </Routes>
+              </main>
+            </div>
           </AuthProvider>
-        </LanguageProvider>
-      </BrowserRouter>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

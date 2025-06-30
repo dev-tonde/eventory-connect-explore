@@ -1,11 +1,10 @@
-
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, ArrowLeft, Share2, Heart } from "lucide-react";
+import { Calendar, MapPin, Users, ArrowLeft, Share2, Heart, Star, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import WaitlistButton from "@/components/waitlist/WaitlistButton";
@@ -41,6 +40,23 @@ const EventDetail = () => {
     },
     enabled: !!id,
   });
+
+  // Track event view for analytics
+  React.useEffect(() => {
+    if (event?.id) {
+      const trackView = async () => {
+        try {
+          await supabase.rpc('track_event_view', {
+            event_uuid: event.id,
+            session_id: `session_${Date.now()}`
+          });
+        } catch (error) {
+          console.error('Failed to track event view:', error);
+        }
+      };
+      trackView();
+    }
+  }, [event?.id]);
 
   // Check if event is full
   const isEventFull = event && event.current_attendees >= event.max_attendees;
@@ -111,7 +127,10 @@ const EventDetail = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <Link to="/events" className="inline-flex items-center text-purple-600 hover:text-purple-700">
+          <Link 
+            to="/events" 
+            className="inline-flex items-center text-purple-600 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded px-2 py-1 transition-colors"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Events
           </Link>
@@ -132,19 +151,35 @@ const EventDetail = () => {
               />
             </div>
 
-            {/* Event Details */}
-            <Card>
+            {/* Event Details Card with Enhanced Features */}
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-2xl mb-2">{event.title}</CardTitle>
-                    <Badge variant="secondary">{event.category}</Badge>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="secondary">{event.category}</Badge>
+                      {event.is_featured && (
+                        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                          <Star className="h-3 w-3 mr-1" />
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 transition-colors"
+                    >
                       <Share2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="hover:bg-red-50 focus:ring-2 focus:ring-red-500 transition-colors"
+                    >
                       <Heart className="h-4 w-4" />
                     </Button>
                   </div>
@@ -201,17 +236,47 @@ const EventDetail = () => {
 
                 <div className="pt-4 border-t">
                   <h3 className="font-semibold mb-2">Organized by</h3>
-                  <p className="text-gray-700">{organizerName}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <User className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{organizerName}</p>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 p-0 h-auto font-normal"
+                      >
+                        Follow Organizer
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Event Reviews & Ratings */}
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-500" />
+                  Reviews & Ratings
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <Star className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                  <p>No reviews yet. Be the first to review this event!</p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Sidebar */}
+          {/* Enhanced Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-8 space-y-6">
               {/* Event Info Card */}
-              <Card>
+              <Card className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <CardTitle>Event Information</CardTitle>
                 </CardHeader>
@@ -228,11 +293,17 @@ const EventDetail = () => {
                     <span className="text-gray-600">Available:</span>
                     <span>{(event.max_attendees || 100) - (event.current_attendees || 0)} tickets left</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Price:</span>
+                    <span className="font-bold text-purple-600">
+                      {event.price === 0 ? 'Free' : `R${event.price}`}
+                    </span>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Ticket Purchase / Waitlist */}
-              <Card>
+              <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   {isEventFull ? (
                     <WaitlistButton eventId={event.id} isEventFull={true} />
@@ -247,25 +318,54 @@ const EventDetail = () => {
                 </CardContent>
               </Card>
 
-              {/* Social Sharing, Location, etc. */}
-              <div className="flex justify-between">
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Share2 className="h-4 w-4" />
+              {/* Quick Actions */}
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 transition-colors"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Add to Calendar
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <Heart className="h-4 w-4" />
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:bg-green-50 focus:ring-2 focus:ring-green-500 transition-colors"
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share Event
                   </Button>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Calendar className="h-4 w-4" />
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:bg-purple-50 focus:ring-2 focus:ring-purple-500 transition-colors"
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Get Directions
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <MapPin className="h-4 w-4" />
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:bg-orange-50 focus:ring-2 focus:ring-orange-500 transition-colors"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Join Community Chat
                   </Button>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
+
+              {/* Similar Events */}
+              <Card className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg">Similar Events</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-4 text-gray-500">
+                    <p className="text-sm">Loading similar events...</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

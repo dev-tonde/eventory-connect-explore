@@ -1,164 +1,227 @@
 
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Heart, User, Calendar, MapPin, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import OrganizerCard from "@/components/organizers/OrganizerCard";
-import EmptyFollowedOrganizers from "@/components/organizers/EmptyFollowedOrganizers";
-
-interface OrganizerProfile {
-  name: string;
-  followerCount: number;
-  isVerified: boolean;
-  events: any[];
-}
 
 const FollowedOrganizers = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
-  const { data: followedOrganizers = [], isLoading } = useQuery({
-    queryKey: ["followed-organizers", user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-
-      // For now, we'll use localStorage for follows until we create a follows table
-      const follows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
-      const userFollows = follows.filter((f: any) => f.userId === user.id);
-      
-      if (userFollows.length === 0) return [];
-
-      // Get events from Supabase for followed organizers
-      const { data: events, error } = await supabase
-        .from("events")
-        .select(`
-          *,
-          profiles!events_organizer_id_fkey (
-            first_name,
-            last_name
-          )
-        `)
-        .eq("is_active", true)
-        .order("date", { ascending: true });
-
-      if (error) {
-        console.error("Error loading events:", error);
-        return [];
-      }
-
-      // Group events by organizer
-      const organizerMap = new Map<string, OrganizerProfile>();
-      const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
-
-      userFollows.forEach((follow: any) => {
-        const organizerEvents = events.filter((event: any) => {
-          const organizerName = event.profiles 
-            ? `${event.profiles.first_name} ${event.profiles.last_name}`.trim()
-            : 'Unknown Organizer';
-          return organizerName === follow.organizerName;
-        });
-
-        const followerCount = followerCounts[follow.organizerName] || 0;
-        
-        organizerMap.set(follow.organizerName, {
-          name: follow.organizerName,
-          followerCount,
-          isVerified: followerCount >= 10000,
-          events: organizerEvents.map((event: any) => ({
-            id: event.id,
-            title: event.title,
-            date: event.date,
-            time: event.time,
-            location: event.venue,
-            price: Number(event.price),
-            image: event.image_url || "/placeholder.svg",
-            organizer: follow.organizerName,
-            attendeeCount: event.current_attendees || 0,
-            maxAttendees: event.max_attendees || 100,
-            tags: event.tags || [],
-            description: event.description || "",
-            address: event.address || "",
-            category: event.category
-          }))
-        });
-      });
-
-      return Array.from(organizerMap.values());
-    },
-    enabled: !!user,
-  });
-
-  const unfollowOrganizer = (organizerName: string) => {
-    const follows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
-    const updatedFollows = follows.filter((f: any) => !(f.userId === user?.id && f.organizerName === organizerName));
-    
-    localStorage.setItem('eventory_follows', JSON.stringify(updatedFollows));
-    
-    // Update follower count
-    const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
-    if (followerCounts[organizerName]) {
-      followerCounts[organizerName] = Math.max(0, followerCounts[organizerName] - 1);
-      localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/auth");
     }
+  }, [isAuthenticated, navigate]);
 
-    // Refresh the query
-    window.location.reload();
-    
+  // Mock data - in real app, this would come from the database
+  const followedOrganizers = [
+    {
+      id: "1",
+      name: "Tech Events SA",
+      bio: "Leading technology event organizer in South Africa",
+      followers: 2450,
+      upcomingEvents: 3,
+      avatar: "/placeholder.svg",
+      verified: true
+    },
+    {
+      id: "2", 
+      name: "Cape Town Music Collective",
+      bio: "Bringing the best live music experiences to Cape Town",
+      followers: 1890,
+      upcomingEvents: 5,
+      avatar: "/placeholder.svg",
+      verified: false
+    }
+  ];
+
+  const upcomingEvents = [
+    {
+      id: "1",
+      title: "React Conference 2024",
+      organizer: "Tech Events SA",
+      date: "2024-08-15",
+      time: "09:00",
+      venue: "Cape Town Convention Centre",
+      price: 299,
+      category: "Technology"
+    },
+    {
+      id: "2",
+      title: "Jazz Under the Stars",
+      organizer: "Cape Town Music Collective", 
+      date: "2024-08-20",
+      time: "19:00",
+      venue: "Kirstenbosch Gardens",
+      price: 150,
+      category: "Music"
+    }
+  ];
+
+  const handleUnfollow = (organizerId: string, organizerName: string) => {
     toast({
-      title: "Unfollowed organizer",
-      description: `You are no longer following ${organizerName}.`,
+      title: "Unfollowed",
+      description: `You unfollowed ${organizerName}`,
     });
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Please log in to view your followed organizers</h1>
-            <Link to="/login">
-              <Button>Login</Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Loading your followed organizers...</div>
-        </div>
-      </div>
-    );
+  if (!isAuthenticated) {
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Followed Organizers</h1>
-          <p className="text-gray-600">Stay updated with events from your favorite organizers</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Following
+          </h1>
+          <p className="text-gray-600">
+            Stay updated with your favorite event organizers
+          </p>
         </div>
 
-        {followedOrganizers.length === 0 ? (
-          <EmptyFollowedOrganizers />
-        ) : (
-          <div className="space-y-8">
-            {followedOrganizers.map((organizer: OrganizerProfile) => (
-              <OrganizerCard
-                key={organizer.name}
-                organizer={organizer}
-                onUnfollow={unfollowOrganizer}
-              />
-            ))}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Followed Organizers */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-red-500" />
+                  Followed Organizers ({followedOrganizers.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {followedOrganizers.length > 0 ? (
+                  <div className="space-y-4">
+                    {followedOrganizers.map((organizer) => (
+                      <div key={organizer.id} className="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                          <User className="h-8 w-8 text-purple-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-lg">{organizer.name}</h3>
+                            {organizer.verified && (
+                              <Badge className="bg-blue-100 text-blue-800 text-xs">
+                                Verified
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-gray-600 text-sm mb-2">{organizer.bio}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              {organizer.followers} followers
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              {organizer.upcomingEvents} upcoming events
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 transition-colors"
+                          >
+                            View Profile
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleUnfollow(organizer.id, organizer.name)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 focus:ring-2 focus:ring-red-500 transition-colors"
+                          >
+                            Unfollow
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Heart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No followed organizers yet
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Follow organizers to stay updated with their latest events
+                    </p>
+                    <Button onClick={() => navigate("/events")}>
+                      Discover Events
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        )}
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Upcoming Events from Followed Organizers */}
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">Upcoming Events</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {upcomingEvents.length > 0 ? (
+                  <div className="space-y-4">
+                    {upcomingEvents.map((event) => (
+                      <div key={event.id} className="border-b pb-4 last:border-b-0">
+                        <h4 className="font-medium text-sm mb-1">{event.title}</h4>
+                        <p className="text-xs text-gray-500 mb-2">by {event.organizer}</p>
+                        <div className="text-xs text-gray-600 space-y-1">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(event.date).toLocaleDateString()} at {event.time}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {event.venue}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {event.category}
+                          </Badge>
+                          <span className="text-sm font-medium text-purple-600">
+                            R{event.price}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No upcoming events</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Recommendations */}
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">Suggested Organizers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-4 text-gray-500">
+                  <User className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm">Follow more organizers to get suggestions</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { User, LogOut, Settings, UserPlus, Heart, BarChart3 } from "lucide-react";
+import { User, LogOut, Settings, UserPlus, Heart, BarChart3, Users, Wand2, Calendar, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface UserMenuProps {
@@ -24,7 +24,11 @@ const UserMenu = ({ onLogout }: UserMenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="flex items-center space-x-2 hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded-md transition-colors"
+        >
           <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
             <User className="h-4 w-4 text-purple-600" />
           </div>
@@ -33,7 +37,7 @@ const UserMenu = ({ onLogout }: UserMenuProps) => {
           </span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 bg-white border shadow-lg">
         <div className="px-2 py-1.5 text-sm">
           <div className="font-medium">{profile?.first_name} {profile?.last_name}</div>
           <div className="text-xs text-gray-500">{user.email}</div>
@@ -46,39 +50,80 @@ const UserMenu = ({ onLogout }: UserMenuProps) => {
         <DropdownMenuSeparator />
         
         <DropdownMenuItem asChild>
-          <Link to="/profile" className="flex items-center">
+          <Link to="/profile" className="flex items-center hover:bg-gray-50 focus:bg-gray-50 transition-colors">
             <User className="mr-2 h-4 w-4" />
             Profile
           </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem asChild>
-          <Link to="/followed-organizers" className="flex items-center">
+          <Link to="/communities" className="flex items-center hover:bg-gray-50 focus:bg-gray-50 transition-colors">
+            <Users className="mr-2 h-4 w-4" />
+            Communities
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link to="/followed-organizers" className="flex items-center hover:bg-gray-50 focus:bg-gray-50 transition-colors">
             <Heart className="mr-2 h-4 w-4" />
             Following
           </Link>
         </DropdownMenuItem>
 
+        <DropdownMenuItem asChild>
+          <Link to="/gamification" className="flex items-center hover:bg-gray-50 focus:bg-gray-50 transition-colors">
+            <Trophy className="mr-2 h-4 w-4" />
+            Points & Badges
+          </Link>
+        </DropdownMenuItem>
+
         {profile?.role === "organizer" && (
-          <DropdownMenuItem asChild>
-            <Link to="/dashboard" className="flex items-center">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Dashboard
-            </Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Organizer Tools
+            </div>
+            
+            <DropdownMenuItem asChild>
+              <Link to="/dashboard" className="flex items-center hover:bg-gray-50 focus:bg-gray-50 transition-colors">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Dashboard
+              </Link>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem asChild>
+              <Link to="/create-event" className="flex items-center hover:bg-gray-50 focus:bg-gray-50 transition-colors">
+                <Calendar className="mr-2 h-4 w-4" />
+                Create Event
+              </Link>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem asChild>
+              <Link to="/poster-studio" className="flex items-center hover:bg-gray-50 focus:bg-gray-50 transition-colors">
+                <Wand2 className="mr-2 h-4 w-4" />
+                Poster Studio
+              </Link>
+            </DropdownMenuItem>
+          </>
         )}
 
         {profile?.role === "attendee" && (
-          <DropdownMenuItem asChild>
-            <Link to="/become-organizer" className="flex items-center">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Create Organizer Account
-            </Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/become-organizer" className="flex items-center hover:bg-gray-50 focus:bg-gray-50 transition-colors">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Become an Organizer
+              </Link>
+            </DropdownMenuItem>
+          </>
         )}
 
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={onLogout} className="text-red-600">
+        <DropdownMenuItem 
+          onClick={onLogout} 
+          className="text-red-600 hover:bg-red-50 focus:bg-red-50 transition-colors cursor-pointer"
+        >
           <LogOut className="mr-2 h-4 w-4" />
           Logout
         </DropdownMenuItem>
