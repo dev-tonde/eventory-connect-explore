@@ -44,7 +44,7 @@ export const useGamification = () => {
       if (!user) return null;
 
       const { data, error } = await supabase
-        .from("user_points")
+        .from("user_points" as any)
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
@@ -53,7 +53,7 @@ export const useGamification = () => {
         throw error;
       }
 
-      return data || {
+      return data as UserPoints || {
         user_id: user.id,
         total_points: 0,
         level: 1,
@@ -70,7 +70,7 @@ export const useGamification = () => {
     queryKey: ["points-leaderboard"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("user_points")
+        .from("user_points" as any)
         .select(`
           user_id,
           total_points,
@@ -96,7 +96,7 @@ export const useGamification = () => {
 
       // Check if we can award points for this action today
       const { data: existingReward } = await supabase
-        .from("point_transactions")
+        .from("point_transactions" as any)
         .select("*")
         .eq("user_id", user.id)
         .eq("action", action)
@@ -109,7 +109,7 @@ export const useGamification = () => {
 
       // Award points
       const { error: transactionError } = await supabase
-        .from("point_transactions")
+        .from("point_transactions" as any)
         .insert({
           user_id: user.id,
           points,
@@ -120,7 +120,7 @@ export const useGamification = () => {
       if (transactionError) throw transactionError;
 
       // Update user total points
-      const { error: updateError } = await supabase.rpc("update_user_points", {
+      const { error: updateError } = await supabase.rpc("update_user_points" as any, {
         p_user_id: user.id,
         p_points: points,
       });

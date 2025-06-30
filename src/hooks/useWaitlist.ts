@@ -26,7 +26,7 @@ export const useWaitlist = (eventId: string) => {
       if (!user) return null;
       
       const { data, error } = await supabase
-        .from("event_waitlist")
+        .from("event_waitlist" as any)
         .select("*")
         .eq("event_id", eventId)
         .eq("user_id", user.id)
@@ -43,7 +43,7 @@ export const useWaitlist = (eventId: string) => {
     queryKey: ["waitlist-count", eventId],
     queryFn: async () => {
       const { count, error } = await supabase
-        .from("event_waitlist")
+        .from("event_waitlist" as any)
         .select("*", { count: "exact", head: true })
         .eq("event_id", eventId);
 
@@ -59,7 +59,7 @@ export const useWaitlist = (eventId: string) => {
       if (!user) throw new Error("Must be logged in");
 
       const { error } = await supabase
-        .from("event_waitlist")
+        .from("event_waitlist" as any)
         .insert({
           event_id: eventId,
           user_id: user.id,
@@ -90,7 +90,7 @@ export const useWaitlist = (eventId: string) => {
       if (!user) throw new Error("Must be logged in");
 
       const { error } = await supabase
-        .from("event_waitlist")
+        .from("event_waitlist" as any)
         .delete()
         .eq("event_id", eventId)
         .eq("user_id", user.id);

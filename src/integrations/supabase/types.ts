@@ -478,6 +478,41 @@ export type Database = {
         }
         Relationships: []
       }
+      event_waitlist: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: string
+          notified: boolean | null
+          position: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: string
+          notified?: boolean | null
+          position: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          notified?: boolean | null
+          position?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_waitlist_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           address: string | null
@@ -769,6 +804,33 @@ export type Database = {
           metadata?: Json | null
           metric_name?: string
           metric_value?: number
+        }
+        Relationships: []
+      }
+      point_transactions: {
+        Row: {
+          action: string
+          created_at: string | null
+          description: string | null
+          id: string
+          points: number
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points: number
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -1403,6 +1465,42 @@ export type Database = {
           },
         ]
       }
+      user_points: {
+        Row: {
+          badges: string[] | null
+          created_at: string | null
+          id: string
+          last_activity: string | null
+          level: number | null
+          streak_days: number | null
+          total_points: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          badges?: string[] | null
+          created_at?: string | null
+          id?: string
+          last_activity?: string | null
+          level?: number | null
+          streak_days?: number | null
+          total_points?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          badges?: string[] | null
+          created_at?: string | null
+          id?: string
+          last_activity?: string | null
+          level?: number | null
+          streak_days?: number | null
+          total_points?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_reports: {
         Row: {
           admin_notes: string | null
@@ -1591,6 +1689,10 @@ export type Database = {
       }
       track_event_view: {
         Args: { event_uuid: string; session_id?: string }
+        Returns: undefined
+      }
+      update_user_points: {
+        Args: { p_user_id: string; p_points: number }
         Returns: undefined
       }
     }
