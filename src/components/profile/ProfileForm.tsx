@@ -8,9 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import UsernameInput from "@/components/profile/UsernameInput";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 const ProfileForm = () => {
-  const { user, profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [canEditUsername, setCanEditUsername] = useState(true);
@@ -22,6 +23,8 @@ const ProfileForm = () => {
   });
 
   useEffect(() => {
+    console.log('ProfileForm: Profile updated:', profile);
+    
     if (profile) {
       setFormData({
         first_name: profile.first_name || "",
@@ -30,7 +33,6 @@ const ProfileForm = () => {
         bio: profile.bio || "",
       });
 
-      // Check if username can be edited
       checkUsernameEditability();
     }
   }, [profile]);
@@ -39,7 +41,6 @@ const ProfileForm = () => {
     if (!user?.id) return;
 
     try {
-      // Try to query the column, but handle the case where it doesn't exist
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -48,13 +49,10 @@ const ProfileForm = () => {
 
       if (error) {
         console.error("Error checking username editability:", error);
-        // If there's an error, default to allowing edit
         setCanEditUsername(true);
       } else if (!data) {
-        // No profile found, allow edit
         setCanEditUsername(true);
       } else {
-        // Check if the username_last_changed field exists and has a value
         const lastChanged = (data as any).username_last_changed;
         if (!lastChanged) {
           setCanEditUsername(true);
@@ -67,7 +65,6 @@ const ProfileForm = () => {
       }
     } catch (error) {
       console.error("Error checking username editability:", error);
-      // Default to allowing edit if there's an error
       setCanEditUsername(true);
     }
   };
@@ -77,23 +74,33 @@ const ProfileForm = () => {
     setIsLoading(true);
     
     try {
+      console.log('ProfileForm: Submitting profile update:', formData);
+      
       const { error } = await updateProfile(formData);
       
       if (error) {
+        console.error('ProfileForm: Update error:', error);
         toast({
           title: "Error",
           description: "Failed to update profile. Please try again.",
           variant: "destructive",
         });
       } else {
+        console.log('ProfileForm: Profile updated successfully');
+        
+        // Force a refresh to make sure we get the latest data
+        setTimeout(() => {
+          refreshProfile();
+        }, 500);
+        
         toast({
           title: "Success",
-          description: "Profile updated successfully!",
+          description: "Profile updated successfully! The changes will appear shortly.",
           variant: "default",
         });
       }
     } catch (error) {
-      console.error("Profile update error:", error);
+      console.error("ProfileForm: Profile update error:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -185,7 +192,14 @@ const ProfileForm = () => {
           </div>
 
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Updating..." : "Update Profile"}
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Update Profile"
+            )}
           </Button>
         </form>
       </CardContent>

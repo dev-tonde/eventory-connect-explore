@@ -3,78 +3,49 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User } from "lucide-react";
+import { User, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ProfileTabs from "@/components/profile/ProfileTabs";
 
-interface UserProfile {
-  id: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  username?: string;
-  bio?: string;
-  avatar_url?: string;
-  role?: string;
-}
-
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, profile, isLoading: authLoading, refreshProfile } = useAuth();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      fetchProfile();
-    }
-  }, [user]);
+    console.log('Profile page: Current user:', user?.id);
+    console.log('Profile page: Current profile:', profile);
+  }, [user, profile]);
 
-  const fetchProfile = async () => {
-    if (!user) return;
-
+  const handleRefreshProfile = async () => {
+    setIsRefreshing(true);
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-        // Create a basic profile if it doesn't exist
-        const newProfile: UserProfile = {
-          id: user.id,
-          email: user.email || "",
-          first_name: "",
-          last_name: "",
-          username: "",
-          bio: "",
-          role: "attendee"
-        };
-        setProfile(newProfile);
-      } else {
-        setProfile(data);
-      }
+      await refreshProfile();
+      toast({
+        title: "Profile Refreshed",
+        description: "Your profile has been updated with the latest information.",
+      });
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error refreshing profile:', error);
       toast({
         title: "Error",
-        description: "Failed to load profile",
+        description: "Failed to refresh profile",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading profile...</span>
+        </div>
       </div>
     );
   }
@@ -100,8 +71,21 @@ const Profile = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
-          <p className="text-gray-600">Manage your account and view your events</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
+              <p className="text-gray-600">Manage your account and view your events</p>
+            </div>
+            <Button 
+              onClick={handleRefreshProfile}
+              disabled={isRefreshing}
+              variant="outline"
+              size="sm"
+            >
+              {isRefreshing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Refresh Profile
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
@@ -116,11 +100,43 @@ const Profile = () => {
               <h3 className="text-xl font-semibold mb-2">
                 {profile?.first_name && profile?.last_name 
                   ? `${profile.first_name} ${profile.last_name}`
-                  : profile?.username || "User"
+                  : profile?.username || profile?.email?.split('@')[0] || "User"
                 }
               </h3>
-              <p className="text-gray-600 mb-4">{profile?.email}</p>
-              <Badge variant="secondary">{profile?.role || "Attendee"}</Badge>
+              <p className="text-gray-600 mb-2">{profile?.email || user.email}</p>
+              <div className="mb-4">
+                <Badge 
+                  variant={profile?.role === "organizer" ? "default" : "secondary"}
+                  className={profile?.role === "organizer" ? "bg-purple-600" : ""}
+                >
+                  {profile?.role === "organizer" ? "Event Organizer" : "Event Attendee"}
+                </Badge>
+              </div>
+              {profile?.bio && (
+                <p className="text-sm text-gray-600 mt-2">{profile.bio}</p>
+              )}
+              
+              {profile?.role === "organizer" && (
+                <div className="mt-4 p-3 bg-purple-50 rounded-lg">
+                  <p className="text-sm text-purple-800 font-medium">🎉 Organizer Features Active!</p>
+                  <p className="text-xs text-purple-600 mt-1">You can now create and manage events</p>
+                  <Link to="/dashboard">
+                    <Button size="sm" className="mt-2 w-full">
+                      Go to Dashboard
+                    </Button>
+                  </Link>
+                </div>
+              )}
+              
+              {profile?.role === "attendee" && (
+                <div className="mt-4">
+                  <Link to="/become-organizer">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Become an Organizer
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
 

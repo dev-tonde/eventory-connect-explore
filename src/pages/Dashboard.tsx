@@ -6,33 +6,45 @@ import EnhancedOrganizerDashboard from "@/components/organizer/EnhancedOrganizer
 import { CSRFProvider } from "@/components/security/CSRFProtection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Dashboard = () => {
-  const { user, profile, isAuthenticated } = useAuth();
+  const { user, profile, isAuthenticated, isLoading, refreshProfile } = useAuth();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isDashboardLoading, setIsDashboardLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Dashboard: Auth state:', { user: user?.id, profile: profile?.role, isAuthenticated, isLoading });
+    
     const timer = setTimeout(() => {
-      setIsLoading(false);
+      setIsDashboardLoading(false);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [user, profile, isAuthenticated, isLoading]);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isDashboardLoading && !isLoading && !isAuthenticated) {
+      console.log('Dashboard: Redirecting to auth - not authenticated');
       navigate("/auth");
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, isDashboardLoading, navigate]);
 
-  if (isLoading) {
+  // Force profile refresh if we have a user but no profile
+  useEffect(() => {
+    if (user && !profile && !isLoading) {
+      console.log('Dashboard: User exists but no profile, refreshing...');
+      refreshProfile();
+    }
+  }, [user, profile, isLoading, refreshProfile]);
+
+  if (isLoading || isDashboardLoading) {
     return (
       <CSRFProvider>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <Loader2 className="h-12 w-12 animate-spin text-purple-600 mx-auto mb-4" />
             <p className="text-gray-600">Loading dashboard...</p>
           </div>
         </div>
@@ -42,6 +54,42 @@ const Dashboard = () => {
 
   if (!isAuthenticated) {
     return null;
+  }
+
+  // Show error if user exists but profile couldn't be loaded
+  if (user && !profile) {
+    return (
+      <CSRFProvider>
+        <div className="min-h-screen bg-gray-50">
+          <div className="container mx-auto px-4 py-8">
+            <Card className="max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-orange-500" />
+                  Profile Loading Issue
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert>
+                  <AlertDescription>
+                    We're having trouble loading your profile. This might be because your account is still being set up.
+                  </AlertDescription>
+                </Alert>
+                <div className="flex gap-2">
+                  <Button onClick={refreshProfile}>
+                    <Loader2 className="h-4 w-4 mr-2" />
+                    Retry Loading Profile
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/profile")}>
+                    Go to Profile
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </CSRFProvider>
+    );
   }
 
   if (profile?.role !== "organizer") {
@@ -59,6 +107,12 @@ const Dashboard = () => {
                 <p className="text-gray-600">
                   You need to be an organizer to access the dashboard. Upgrade your account to start creating and managing events.
                 </p>
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">Current Status: {profile?.role || 'Unknown'}</h4>
+                  <p className="text-sm text-blue-800">
+                    Upgrade to organizer to unlock event creation, analytics, and management tools.
+                  </p>
+                </div>
                 <Button onClick={() => navigate("/become-organizer")} className="flex items-center gap-2">
                   <UserPlus className="h-4 w-4" />
                   Become an Organizer
@@ -80,7 +134,7 @@ const Dashboard = () => {
               Organizer Dashboard
             </h1>
             <p className="text-gray-600 mt-2">
-              Manage your events with AI-powered insights and advanced tools
+              Welcome back, {profile?.first_name || profile?.username || 'Organizer'}! Manage your events with AI-powered insights and advanced tools
             </p>
           </div>
 

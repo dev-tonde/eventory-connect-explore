@@ -4,12 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserPlus, Star, Calendar, Users } from "lucide-react";
+import { UserPlus, Star, Calendar, Users, CheckCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 const BecomeOrganizer = () => {
-  const { user, profile, updateProfile, isAuthenticated } = useAuth();
+  const { user, profile, updateProfile, isAuthenticated, refreshProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -20,41 +20,66 @@ const BecomeOrganizer = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    console.log('BecomeOrganizer: Auth state:', { isAuthenticated, profile });
+    
     if (!isAuthenticated) {
       navigate("/auth");
       return;
     }
 
     if (profile?.role === "organizer") {
+      toast({
+        title: "Already an Organizer",
+        description: "You're already an organizer! Redirecting to dashboard.",
+      });
       navigate("/dashboard");
       return;
     }
-  }, [isAuthenticated, profile, navigate]);
+  }, [isAuthenticated, profile, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const { error } = await updateProfile({
+      console.log('BecomeOrganizer: Submitting organizer upgrade...');
+      
+      const updates = {
         role: "organizer",
-        bio: formData.bio,
-      });
+        bio: formData.bio || "Event organizer passionate about creating amazing experiences.",
+      };
+
+      const { error } = await updateProfile(updates);
 
       if (error) {
+        console.error('BecomeOrganizer: Update error:', error);
         toast({
           title: "Error",
           description: "Failed to update your role. Please try again.",
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Welcome to Eventory Organizers!",
-          description: "You can now create and manage events.",
-        });
-        navigate("/dashboard");
+        return;
       }
+
+      console.log('BecomeOrganizer: Success! Refreshing profile...');
+      
+      // Wait a moment for the database to update, then refresh
+      setTimeout(async () => {
+        await refreshProfile();
+        
+        toast({
+          title: "🎉 Welcome to Eventory Organizers!",
+          description: "You can now create and manage events. Redirecting to your dashboard...",
+        });
+        
+        // Small delay to show the success message
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
+      }, 500);
+      
     } catch (error) {
+      console.error('BecomeOrganizer: Unexpected error:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
@@ -66,7 +91,11 @@ const BecomeOrganizer = () => {
   };
 
   if (!isAuthenticated || profile?.role === "organizer") {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
@@ -79,7 +108,7 @@ const BecomeOrganizer = () => {
               Become an Event Organizer
             </h1>
             <p className="text-gray-600">
-              Join thousands of organizers creating amazing experiences
+              Join thousands of organizers creating amazing experiences on Eventory
             </p>
           </div>
 
@@ -163,12 +192,24 @@ const BecomeOrganizer = () => {
                   />
                 </div>
 
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">What happens next?</h4>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Your organizer status will be activated immediately</li>
-                    <li>• You'll get access to the organizer dashboard</li>
-                    <li>• You can start creating events right away</li>
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg">
+                  <h4 className="font-medium text-purple-900 mb-3 flex items-center">
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    What happens next?
+                  </h4>
+                  <ul className="text-sm text-purple-800 space-y-2">
+                    <li className="flex items-start">
+                      <span className="w-2 h-2 bg-purple-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      Your organizer status will be activated immediately
+                    </li>
+                    <li className="flex items-start">
+                      <span className="w-2 h-2 bg-purple-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      You'll get access to the organizer dashboard
+                    </li>
+                    <li className="flex items-start">
+                      <span className="w-2 h-2 bg-purple-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      You can start creating events right away
+                    </li>
                   </ul>
                 </div>
 
@@ -178,7 +219,17 @@ const BecomeOrganizer = () => {
                   className="w-full"
                   size="lg"
                 >
-                  {isSubmitting ? "Processing..." : "Become an Organizer"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Become an Organizer
+                    </>
+                  )}
                 </Button>
               </form>
             </CardContent>
