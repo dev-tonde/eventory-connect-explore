@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
-import { hmac } from "https://deno.land/x/crypto@v0.17.2/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,7 +39,26 @@ const verifyWebhookSignature = async (payload: string, signature: string | null)
   }
 
   try {
-    const expectedSignature = await hmac('sha256', webhookSecret, payload, 'utf8', 'hex');
+    // Use Web Crypto API instead of external library
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(webhookSecret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signature_bytes = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      encoder.encode(payload)
+    );
+    
+    const expectedSignature = Array.from(new Uint8Array(signature_bytes))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
     const receivedSignature = signature.replace('sha256=', '');
     
     // Use constant-time comparison to prevent timing attacks

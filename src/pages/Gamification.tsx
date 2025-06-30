@@ -192,7 +192,7 @@ const Gamification = () => {
                           </div>
                           <div>
                             <div className="font-medium text-sm">
-                              {leader.profiles?.first_name} {leader.profiles?.last_name} 
+                              {leader.profiles?.[0]?.first_name} {leader.profiles?.[0]?.last_name} 
                               {leader.user_id === user?.id && <span className="text-purple-600"> (You)</span>}
                             </div>
                             <div className="text-xs text-gray-500">Level {leader.level}</div>
