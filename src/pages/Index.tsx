@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar, Users, Zap, MapPin, Heart, Star } from "lucide-react";
@@ -15,6 +14,9 @@ import { useMetadata } from "@/hooks/useMetadata";
 import { defaultMetadata } from "@/lib/metadata";
 import { Event } from "@/types/event";
 import { useAuth } from "@/contexts/AuthContext";
+import EventRecommendations from "@/components/recommendations/EventRecommendations";
+import EventCollections from "@/components/collections/EventCollections";
+import UserPointsDisplay from "@/components/gamification/UserPointsDisplay";
 
 const Index = () => {
   const { events: optimizedEvents, isLoading } = useOptimizedEvents();
@@ -209,6 +211,31 @@ const Index = () => {
               </Button>
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* User Progress (for authenticated users) */}
+      {isAuthenticated && (
+        <section className="py-8 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <UserPointsDisplay />
+          </div>
+        </section>
+      )}
+
+      {/* AI Recommendations (for authenticated users) */}
+      {isAuthenticated && (
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <EventRecommendations />
+          </div>
+        </section>
+      )}
+
+      {/* Event Collections */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <EventCollections />
         </div>
       </section>
 

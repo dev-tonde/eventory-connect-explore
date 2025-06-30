@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Calendar, Sparkles, History, Target } from "lucide-react";
+import { Plus, Calendar, Sparkles, History, Target, DollarSign } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +15,7 @@ import DashboardStats from "./dashboard/DashboardStats";
 import EventCard from "./dashboard/EventCard";
 import AIInsightsTab from "./dashboard/AIInsightsTab";
 import DashboardTools from "./dashboard/DashboardTools";
+import RevenueAnalyticsDashboard from "@/components/analytics/RevenueAnalyticsDashboard";
 
 const EnhancedOrganizerDashboard = () => {
   const { user, profile } = useAuth();
@@ -150,10 +150,11 @@ const EnhancedOrganizerDashboard = () => {
 
       {/* Main Dashboard Tabs */}
       <Tabs defaultValue="events" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="past-events">Past Events</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="revenue">Revenue</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
           <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
           <TabsTrigger value="tools">Tools</TabsTrigger>
@@ -229,6 +230,17 @@ const EnhancedOrganizerDashboard = () => {
 
         <TabsContent value="analytics">
           <OrganizerAnalytics />
+        </TabsContent>
+
+        <TabsContent value="revenue" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Revenue Analytics</h2>
+            <Badge variant="outline" className="flex items-center gap-1">
+              <DollarSign className="h-3 w-3" />
+              Advanced Analytics
+            </Badge>
+          </div>
+          <RevenueAnalyticsDashboard />
         </TabsContent>
 
         <TabsContent value="pricing" className="space-y-6">

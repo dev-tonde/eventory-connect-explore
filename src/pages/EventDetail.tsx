@@ -1,4 +1,3 @@
-
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, ArrowLeft, Share2, Heart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import WaitlistButton from "@/components/waitlist/WaitlistButton";
+import TicketPurchase from "@/components/ticket/TicketPurchase";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -37,6 +38,9 @@ const EventDetail = () => {
     },
     enabled: !!id,
   });
+
+  // Check if event is full
+  const isEventFull = event && event.current_attendees >= event.max_attendees;
 
   const handleTicketPurchase = () => {
     if (!user) {
@@ -94,7 +98,7 @@ const EventDetail = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-8">
             {/* Hero Image */}
             <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
               <img
@@ -183,55 +187,65 @@ const EventDetail = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Event Tickets</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-purple-600 mb-2">
-                      {event.price === 0 ? "Free" : `$${Number(event.price).toFixed(2)}`}
-                    </div>
-                    <p className="text-sm text-gray-600">per ticket</p>
+          <div className="lg:col-span-1">
+            <div className="sticky top-8 space-y-6">
+              {/* Event Info Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Event Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Category:</span>
+                    <span>{event.category}</span>
                   </div>
-                  
-                  <Button 
-                    onClick={handleTicketPurchase}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {event.price === 0 ? "Get Free Ticket" : "Buy Tickets"}
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Capacity:</span>
+                    <span>{event.max_attendees || 100} people</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Available:</span>
+                    <span>{(event.max_attendees || 100) - (event.current_attendees || 0)} tickets left</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Ticket Purchase / Waitlist */}
+              <Card>
+                <CardContent className="p-6">
+                  {isEventFull ? (
+                    <WaitlistButton eventId={event.id} isEventFull={true} />
+                  ) : (
+                    <TicketPurchase 
+                      event={event} 
+                      onPurchaseSuccess={() => {
+                        queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+                      }}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Social Sharing, Location, etc. */}
+              <div className="flex justify-between">
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm">
+                    <Share2 className="h-4 w-4" />
                   </Button>
-
-                  <div className="text-xs text-gray-500 text-center">
-                    {event.current_attendees || 0} people are attending
-                  </div>
+                  <Button variant="outline" size="sm">
+                    <Heart className="h-4 w-4" />
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Additional Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Event Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Category:</span>
-                  <span>{event.category}</span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm">
+                    <Calendar className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <MapPin className="h-4 w-4" />
+                  </Button>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Capacity:</span>
-                  <span>{event.max_attendees || 100} people</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Available:</span>
-                  <span>{(event.max_attendees || 100) - (event.current_attendees || 0)} tickets left</span>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </div>
