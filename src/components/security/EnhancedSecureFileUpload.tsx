@@ -73,7 +73,7 @@ export const EnhancedSecureFileUpload = ({
     return { valid, invalid };
   };
 
-  const uploadFile = async (uploadFile: UploadFile, csrfToken: string) => {
+  const processFileUpload = async (uploadFile: UploadFile, csrfToken: string) => {
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -183,8 +183,8 @@ export const EnhancedSecureFileUpload = ({
     }
 
     // Upload valid files
-    for (const uploadFile of validUploadFiles) {
-      uploadFile(uploadFile, csrfToken);
+    for (const uploadFileItem of validUploadFiles) {
+      processFileUpload(uploadFileItem, csrfToken);
     }
   };
 

@@ -74,17 +74,25 @@ const SecurePushNotifications = () => {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
 
+      // Get keys using the getKey method
+      const p256dhKey = subscription.getKey('p256dh');
+      const authKey = subscription.getKey('auth');
+
       // Validate subscription object
-      if (!subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
+      if (!subscription.endpoint || !p256dhKey || !authKey) {
         throw new Error('Invalid subscription object received');
       }
+
+      // Convert ArrayBuffer to base64
+      const p256dh = btoa(String.fromCharCode(...new Uint8Array(p256dhKey)));
+      const auth = btoa(String.fromCharCode(...new Uint8Array(authKey)));
 
       // Save subscription to database with proper validation
       const { error } = await supabase.from('push_subscriptions').insert({
         user_id: user?.id,
         endpoint: subscription.endpoint,
-        p256dh: subscription.keys.p256dh,
-        auth: subscription.keys.auth,
+        p256dh: p256dh,
+        auth: auth,
       });
 
       if (error) throw error;
