@@ -1,3 +1,4 @@
+
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import WaitlistButton from "@/components/waitlist/WaitlistButton";
 import TicketPurchase from "@/components/tickets/TicketPurchase";
+import { Event } from "@/types/event";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -86,6 +88,24 @@ const EventDetail = () => {
   const organizerName = event.profiles 
     ? `${event.profiles.first_name || ""} ${event.profiles.last_name || ""}`.trim() || event.profiles.username
     : "Unknown Organizer";
+
+  // Transform Supabase event data to match Event interface
+  const transformedEvent: Event = {
+    id: event.id,
+    title: event.title,
+    description: event.description || "",
+    date: event.date,
+    time: event.time,
+    location: event.venue,
+    address: event.address || "",
+    price: Number(event.price),
+    category: event.category,
+    image: event.image_url || "/placeholder.svg",
+    organizer: organizerName,
+    attendeeCount: event.current_attendees || 0,
+    maxAttendees: event.max_attendees || 100,
+    tags: event.tags || []
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -218,7 +238,7 @@ const EventDetail = () => {
                     <WaitlistButton eventId={event.id} isEventFull={true} />
                   ) : (
                     <TicketPurchase 
-                      event={event} 
+                      event={transformedEvent} 
                       onPurchaseComplete={() => {
                         queryClient.invalidateQueries({ queryKey: ["event", id] });
                       }}
