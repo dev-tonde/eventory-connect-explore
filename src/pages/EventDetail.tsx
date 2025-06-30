@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,13 @@ import { Calendar, MapPin, Users, ArrowLeft, Share2, Heart } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import WaitlistButton from "@/components/waitlist/WaitlistButton";
-import TicketPurchase from "@/components/ticket/TicketPurchase";
+import TicketPurchase from "@/components/tickets/TicketPurchase";
 
 const EventDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: event, isLoading, error } = useQuery({
     queryKey: ["event", id],
@@ -218,8 +219,8 @@ const EventDetail = () => {
                   ) : (
                     <TicketPurchase 
                       event={event} 
-                      onPurchaseSuccess={() => {
-                        queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+                      onPurchaseComplete={() => {
+                        queryClient.invalidateQueries({ queryKey: ["event", id] });
                       }}
                     />
                   )}
