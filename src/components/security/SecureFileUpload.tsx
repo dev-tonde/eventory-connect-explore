@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, AlertCircle, CheckCircle } from "lucide-react";
-import { useSecurityFeatures } from "@/hooks/useSecurityFeatures";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { validateFileUpload } from "@/lib/validation";
 
 interface SecureFileUploadProps {
   onUploadSuccess: (fileUrl: string) => void;
@@ -29,7 +29,6 @@ export const SecureFileUpload = ({
     message: string;
   }>({ type: null, message: '' });
 
-  const { validateFileUpload } = useSecurityFeatures();
   const { user } = useAuth();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,8 +39,8 @@ export const SecureFileUpload = ({
     setUploadStatus({ type: null, message: '' });
 
     try {
-      // Security validation
-      const validation = await validateFileUpload(file);
+      // Security validation using the enhanced validation
+      const validation = validateFileUpload(file);
       if (!validation.isValid) {
         setUploadStatus({ type: 'error', message: validation.error || 'File validation failed' });
         return;

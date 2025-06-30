@@ -7,17 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCSRF, CSRFToken } from "./EnhancedCSRFProtection";
 import { authSchema, sanitizeInput } from "@/lib/validation";
 import { z } from "zod";
 
-const AuthForm = () => {
+const SecureAuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const { login, signup } = useAuth();
+  const { validateToken } = useCSRF();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -62,10 +64,21 @@ const AuthForm = () => {
     validateField(field, sanitizedValue);
   };
 
-  const handleSubmit = async (isSignup: boolean) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>, isSignup: boolean) => {
+    event.preventDefault();
     setError("");
     setSuccess("");
     setIsLoading(true);
+
+    const formDataObj = new FormData(event.currentTarget);
+    const csrfToken = formDataObj.get('csrf_token') as string;
+
+    // Validate CSRF token
+    if (!validateToken(csrfToken)) {
+      setError("Invalid security token. Please refresh the page and try again.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Validate form data
@@ -118,7 +131,10 @@ const AuthForm = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Welcome to EventPlatform</CardTitle>
+          <div className="flex items-center justify-center mb-2">
+            <Shield className="h-8 w-8 text-purple-600" />
+          </div>
+          <CardTitle className="text-2xl font-bold">Secure Authentication</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
@@ -128,16 +144,18 @@ const AuthForm = () => {
             </TabsList>
 
             <TabsContent value="login">
-              <div className="space-y-4">
+              <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
+                <CSRFToken />
+                
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
                   <Input
                     id="login-email"
                     type="email"
-                    placeholder="Enter your email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className={validationErrors.email ? "border-red-500" : ""}
+                    required
                   />
                   {validationErrors.email && (
                     <p className="text-sm text-red-600">{validationErrors.email}</p>
@@ -150,10 +168,10 @@ const AuthForm = () => {
                     <Input
                       id="login-password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
                       className={validationErrors.password ? "border-red-500 pr-10" : "pr-10"}
+                      required
                     />
                     <Button
                       type="button"
@@ -170,28 +188,26 @@ const AuthForm = () => {
                   )}
                 </div>
 
-                <Button 
-                  onClick={() => handleSubmit(false)} 
-                  className="w-full" 
-                  disabled={isLoading}
-                >
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Signing In..." : "Sign In"}
                 </Button>
-              </div>
+              </form>
             </TabsContent>
 
             <TabsContent value="signup">
-              <div className="space-y-4">
+              <form onSubmit={(e) => handleSubmit(e, true)} className="space-y-4">
+                <CSRFToken />
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-firstname">First Name</Label>
                     <Input
                       id="signup-firstname"
                       type="text"
-                      placeholder="John"
                       value={formData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
                       className={validationErrors.firstName ? "border-red-500" : ""}
+                      required
                     />
                     {validationErrors.firstName && (
                       <p className="text-sm text-red-600">{validationErrors.firstName}</p>
@@ -203,10 +219,10 @@ const AuthForm = () => {
                     <Input
                       id="signup-lastname"
                       type="text"
-                      placeholder="Doe"
                       value={formData.lastName}
                       onChange={(e) => handleInputChange('lastName', e.target.value)}
                       className={validationErrors.lastName ? "border-red-500" : ""}
+                      required
                     />
                     {validationErrors.lastName && (
                       <p className="text-sm text-red-600">{validationErrors.lastName}</p>
@@ -219,10 +235,10 @@ const AuthForm = () => {
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="john@example.com"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className={validationErrors.email ? "border-red-500" : ""}
+                    required
                   />
                   {validationErrors.email && (
                     <p className="text-sm text-red-600">{validationErrors.email}</p>
@@ -235,10 +251,10 @@ const AuthForm = () => {
                     <Input
                       id="signup-password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Create a strong password"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
                       className={validationErrors.password ? "border-red-500 pr-10" : "pr-10"}
+                      required
                     />
                     <Button
                       type="button"
@@ -265,14 +281,10 @@ const AuthForm = () => {
                   </div>
                 </div>
 
-                <Button 
-                  onClick={() => handleSubmit(true)} 
-                  className="w-full" 
-                  disabled={isLoading}
-                >
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
-              </div>
+              </form>
             </TabsContent>
           </Tabs>
 
@@ -293,4 +305,4 @@ const AuthForm = () => {
   );
 };
 
-export default AuthForm;
+export default SecureAuthForm;
