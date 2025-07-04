@@ -59,7 +59,7 @@ const WaitlistButton = ({ eventId, isEventFull }: WaitlistButtonProps) => {
           </Badge>
         </div>
         <Button
-          onClick={leaveWaitlist}
+          onClick={() => leaveWaitlist()}
           disabled={isLeaving}
           variant="outline"
           size="lg"
@@ -90,7 +90,7 @@ const WaitlistButton = ({ eventId, isEventFull }: WaitlistButtonProps) => {
         </Badge>
       </div>
       <Button
-        onClick={joinWaitlist}
+        onClick={() => joinWaitlist()}
         disabled={isJoining}
         size="lg"
         className="w-full bg-orange-600 hover:bg-orange-700"

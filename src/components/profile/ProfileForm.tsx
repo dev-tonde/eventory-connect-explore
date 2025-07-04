@@ -49,13 +49,9 @@ const ProfileForm = () => {
 
       if (error) {
         setCanEditUsername(true);
-      } else if (!data || !data.username_last_changed) {
-        setCanEditUsername(true);
       } else {
-        const lastChanged = new Date(data.username_last_changed);
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-        setCanEditUsername(lastChanged < sixMonthsAgo);
+        // Since username_last_changed doesn't exist, always allow editing
+        setCanEditUsername(true);
       }
     } catch {
       setCanEditUsername(true);

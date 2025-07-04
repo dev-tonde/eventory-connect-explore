@@ -121,7 +121,7 @@ const OrganizerAnalytics = () => {
         const salesCount =
           ticketsResult.data
             ?.filter(
-              (t) => new Date(t.created_at).toLocaleDateString() === dateString
+              (t) => new Date(t.purchase_date).toLocaleDateString() === dateString
             )
             .reduce((sum, t) => sum + t.quantity, 0) || 0;
 

@@ -42,7 +42,7 @@ export class BackupService {
     try {
       const exportData: Record<string, unknown[]> = {};
       let totalRecords = 0;
-      const tables = ["profiles", "events", "tickets", "favorites"];
+      const tables = ["profiles", "events", "tickets", "favorites"] as const;
 
       for (const table of tables) {
         const { data, error } = await supabase.from(table).select("*");
@@ -56,7 +56,7 @@ export class BackupService {
       const backupStr = JSON.stringify(exportData);
       const metadata: BackupMetadata = {
         timestamp: new Date().toISOString(),
-        tables,
+        tables: [...tables],
         recordCount: totalRecords,
         size: `${(backupStr.length / 1024).toFixed(2)} KB`,
         version: "1.0.0",

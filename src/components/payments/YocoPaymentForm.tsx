@@ -102,7 +102,7 @@ const YocoPaymentForm = ({
         // navigate("/payment-success"); // <-- safe, hardcoded route
       } else {
         // Optionally, show user feedback here
-        console.error("Payment failed:", result.error);
+        console.error("Payment failed");
       }
     } catch (error) {
       console.error("Payment processing error:", error);

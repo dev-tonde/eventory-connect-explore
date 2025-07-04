@@ -162,7 +162,7 @@ const CreateCommunityDialog = ({
               id="public"
               checked={formData.isPublic}
               onCheckedChange={(checked) =>
-                handleInputChange("isPublic", checked)
+                handleInputChange("isPublic", checked.toString())
               }
             />
             <Label htmlFor="public">Make this community public</Label>

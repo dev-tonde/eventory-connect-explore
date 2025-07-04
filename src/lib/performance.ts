@@ -1,24 +1,33 @@
-interface PerformanceConfig {
-  enableBatchQueries: boolean;
-  cacheTimeout: number;
-  maxRetries: number;
-  requestTimeout: number;
+/**
+ * Performance optimization utilities for the Eventory application.
+ * Provides caching, request deduplication, and performance monitoring.
+ */
+
+interface CacheEntry {
+  data: unknown;
+  timestamp: number;
 }
 
-class PerformanceManager<T = unknown> {
-  private config: PerformanceConfig = {
-    enableBatchQueries: true,
-    cacheTimeout: 5 * 60 * 1000, // 5 minutes
-    maxRetries: 3,
-    requestTimeout: 30000, // 30 seconds
-  };
+interface PerformanceConfig {
+  cacheTimeout: number;
+  maxRetries: number;
+  retryDelay: number;
+}
 
-  private requestCache = new Map<string, { data: T; timestamp: number }>();
+export class PerformanceOptimizer {
+  private requestCache = new Map<string, CacheEntry>();
+  private config: PerformanceConfig;
 
-  /**
-   * Returns cached data if valid, otherwise fetches and caches new data.
-   */
-  async getCachedOrFetch<T>(
+  constructor(config: Partial<PerformanceConfig> = {}) {
+    this.config = {
+      cacheTimeout: 300000, // 5 minutes
+      maxRetries: 3,
+      retryDelay: 1000,
+      ...config,
+    };
+  }
+
+  async cacheRequest<T>(
     cacheKey: string,
     fetchFn: () => Promise<T>,
     customTimeout?: number
@@ -27,7 +36,7 @@ class PerformanceManager<T = unknown> {
     const timeout = customTimeout ?? this.config.cacheTimeout;
 
     if (cached && Date.now() - cached.timestamp < timeout) {
-      return cached.data;
+      return cached.data as T;
     }
 
     const data = await this.retryRequest(fetchFn);
@@ -38,80 +47,101 @@ class PerformanceManager<T = unknown> {
   }
 
   /**
-   * Retries a fetch function with exponential backoff and timeout.
+   * Retry a request with exponential backoff.
    */
   private async retryRequest<T>(
     fetchFn: () => Promise<T>,
-    retryCount = 0
+    attempt = 1
   ): Promise<T> {
     try {
-      return await Promise.race([
-        fetchFn(),
-        new Promise<never>((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Request timeout")),
-            this.config.requestTimeout
-          )
-        ),
-      ]);
+      return await fetchFn();
     } catch (error) {
-      if (retryCount < this.config.maxRetries) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, Math.pow(2, retryCount) * 1000)
-        );
-        return this.retryRequest(fetchFn, retryCount + 1);
+      if (attempt >= this.config.maxRetries) {
+        throw error;
       }
-      throw error;
+
+      const delay = this.config.retryDelay * Math.pow(2, attempt - 1);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return this.retryRequest(fetchFn, attempt + 1);
     }
   }
 
   /**
-   * Removes stale cache entries.
+   * Clean up old cache entries.
    */
-  private cleanupCache() {
+  private cleanupCache(): void {
     const now = Date.now();
-    for (const [key, value] of this.requestCache.entries()) {
-      if (now - value.timestamp > this.config.cacheTimeout * 2) {
+    for (const [key, entry] of this.requestCache.entries()) {
+      if (now - entry.timestamp > this.config.cacheTimeout) {
         this.requestCache.delete(key);
       }
     }
   }
 
   /**
-   * Clears all cached requests.
+   * Clear all cached data.
    */
-  clearCache() {
+  clearCache(): void {
     this.requestCache.clear();
   }
 
   /**
-   * Updates the performance configuration.
+   * Get cache statistics.
    */
-  updateConfig(newConfig: Partial<PerformanceConfig>) {
-    this.config = { ...this.config, ...newConfig };
+  getCacheStats(): { size: number; keys: string[] } {
+    return {
+      size: this.requestCache.size,
+      keys: Array.from(this.requestCache.keys()),
+    };
   }
 }
 
-export const performanceManager = new PerformanceManager();
+// Singleton instance
+export const performanceOptimizer = new PerformanceOptimizer();
 
 /**
- * Batch query helper for multiple async database/API calls.
- * Returns an array of results or throws on the first failure.
+ * Higher-order function to add caching to any async function.
  */
-export const batchQueries = async <T>(
-  queries: Array<() => Promise<T>>
-): Promise<T[]> => {
-  const results = await Promise.allSettled(queries.map((query) => query()));
+export function withCache<T extends (...args: unknown[]) => Promise<unknown>>(
+  fn: T,
+  cacheKey: string,
+  timeout?: number
+): T {
+  return (async (...args: Parameters<T>) => {
+    const key = `${cacheKey}-${JSON.stringify(args)}`;
+    return performanceOptimizer.cacheRequest(key, () => fn(...args), timeout);
+  }) as T;
+}
 
-  // If any query fails, throw the first error found
-  for (let i = 0; i < results.length; i++) {
-    const result = results[i];
-    if (result.status === "rejected") {
-      console.error(`Query ${i} failed:`, result.reason);
-      throw result.reason;
+/**
+ * Debounce function to limit how often a function can be called.
+ */
+export function debounce<T extends (...args: unknown[]) => void>(
+  func: T,
+  wait: number
+): T {
+  let timeout: NodeJS.Timeout | null = null;
+  
+  return ((...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  }) as T;
+}
+
+/**
+ * Throttle function to limit how often a function can be called.
+ */
+export function throttle<T extends (...args: unknown[]) => void>(
+  func: T,
+  limit: number
+): T {
+  let inThrottle: boolean;
+  
+  return ((...args: Parameters<T>) => {
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
     }
-  }
-
-  // All succeeded, return values
-  return results.map((result) => (result as PromiseFulfilledResult<T>).value);
-};
+  }) as T;
+}

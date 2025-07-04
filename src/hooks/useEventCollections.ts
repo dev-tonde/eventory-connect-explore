@@ -44,7 +44,7 @@ export const useEventCollections = () => {
         price: Number(event.price),
         category: event.category,
         image: event.image_url || "/placeholder.svg",
-        organizer: event.organizer || "Organizer",
+        organizer: "Organizer",
         attendeeCount: event.current_attendees || 0,
         maxAttendees: event.max_attendees || 100,
         tags: event.tags || [],

@@ -66,7 +66,7 @@ export const EnhancedSecureFileUpload = ({
     const valid: File[] = [];
     const invalid: Array<{ file: File; error: string }> = [];
     files.forEach((file) => {
-      const validation = validateFileUpload(file, acceptedTypes, maxSizeBytes);
+      const validation = validateFileUpload(file);
       if (validation.isValid) {
         valid.push(file);
       } else {

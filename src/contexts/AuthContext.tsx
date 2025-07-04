@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           avatar_url: data.avatar_url,
           role: data.role || "attendee",
           bio: data.bio,
-          social_links: data.social_links || {},
+          social_links: (data.social_links as Record<string, string>) || {},
           name: data.name,
           created_at: data.created_at,
           updated_at: data.updated_at,

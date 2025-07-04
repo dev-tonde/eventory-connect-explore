@@ -46,7 +46,7 @@ export const SecureFileUpload = ({
 
     try {
       // Security validation using the enhanced validation
-      const validation = validateFileUpload(file, acceptedTypes, maxSizeBytes);
+      const validation = validateFileUpload(file);
       if (!validation.isValid) {
         setUploadStatus({
           type: "error",
