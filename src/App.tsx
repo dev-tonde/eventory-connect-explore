@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Header from "./components/layout/Header";
+import Footer from "./components/layout/Footer";
 import Index from "./pages/Index";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
@@ -52,6 +53,7 @@ function App() {
                   />
                 </Routes>
               </main>
+              <Footer />
             </div>
           </AuthProvider>
         </BrowserRouter>
