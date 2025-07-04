@@ -58,6 +58,7 @@ export const useWaitlist = (eventId: string) => {
       const { error } = await supabase.from("event_waitlist").insert({
         event_id: eventId,
         user_id: user.id,
+        position: waitlistCount + 1,
       });
       if (error) throw error;
     },

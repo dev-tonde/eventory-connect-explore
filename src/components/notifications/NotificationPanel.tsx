@@ -58,7 +58,7 @@ const NotificationPanel = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={markAllAsRead}
+            onClick={() => markAllAsRead()}
             className="flex items-center gap-2"
             type="button"
             aria-label="Mark all as read"
