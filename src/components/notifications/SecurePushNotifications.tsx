@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +18,7 @@ const SecurePushNotifications = () => {
   const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
   useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
+    if ("serviceWorker" in navigator && "PushManager" in window) {
       setIsSupported(true);
       checkSubscriptionStatus();
     }
@@ -31,19 +30,17 @@ const SecurePushNotifications = () => {
       const subscription = await registration.pushManager.getSubscription();
       setIsSubscribed(!!subscription);
     } catch (error) {
-      console.error('Error checking subscription status:', error);
+      console.error("Error checking subscription status:", error);
     }
   };
 
   const urlBase64ToUint8Array = (base64String: string) => {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding)
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
     const rawData = window.atob(base64);
     const outputArray = new Uint8Array(rawData.length);
-
     for (let i = 0; i < rawData.length; ++i) {
       outputArray[i] = rawData.charCodeAt(i);
     }
@@ -54,7 +51,16 @@ const SecurePushNotifications = () => {
     if (!VAPID_PUBLIC_KEY) {
       toast({
         title: "Configuration Error",
-        description: "Push notifications are not properly configured. Please contact support.",
+        description:
+          "Push notifications are not properly configured. Please contact support.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to enable push notifications.",
         variant: "destructive",
       });
       return;
@@ -62,11 +68,22 @@ const SecurePushNotifications = () => {
 
     setIsLoading(true);
     try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        toast({
+          title: "Permission Denied",
+          description: "Please enable notifications in your browser settings.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const registration = await navigator.serviceWorker.ready;
-      
+
       // Validate VAPID key format
       if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.length < 80) {
-        throw new Error('Invalid VAPID public key format');
+        throw new Error("Invalid VAPID public key format");
       }
 
       const subscription = await registration.pushManager.subscribe({
@@ -75,12 +92,12 @@ const SecurePushNotifications = () => {
       });
 
       // Get keys using the getKey method
-      const p256dhKey = subscription.getKey('p256dh');
-      const authKey = subscription.getKey('auth');
+      const p256dhKey = subscription.getKey("p256dh");
+      const authKey = subscription.getKey("auth");
 
       // Validate subscription object
       if (!subscription.endpoint || !p256dhKey || !authKey) {
-        throw new Error('Invalid subscription object received');
+        throw new Error("Invalid subscription object received");
       }
 
       // Convert ArrayBuffer to base64
@@ -88,12 +105,14 @@ const SecurePushNotifications = () => {
       const auth = btoa(String.fromCharCode(...new Uint8Array(authKey)));
 
       // Save subscription to database with proper validation
-      const { error } = await supabase.from('push_subscriptions').insert({
-        user_id: user?.id,
-        endpoint: subscription.endpoint,
-        p256dh: p256dh,
-        auth: auth,
-      });
+      const { error } = await supabase.from("push_subscriptions").upsert([
+        {
+          user_id: user.id,
+          endpoint: subscription.endpoint,
+          p256dh,
+          auth,
+        },
+      ]);
 
       if (error) throw error;
 
@@ -103,10 +122,13 @@ const SecurePushNotifications = () => {
         description: "Push notifications enabled successfully!",
       });
     } catch (error) {
-      console.error('Error subscribing to push notifications:', error);
+      console.error("Error subscribing to push notifications:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to enable push notifications",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to enable push notifications",
         variant: "destructive",
       });
     } finally {
@@ -119,16 +141,16 @@ const SecurePushNotifications = () => {
     try {
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
-      
+
       if (subscription) {
         await subscription.unsubscribe();
-        
+
         // Remove from database
         const { error } = await supabase
-          .from('push_subscriptions')
+          .from("push_subscriptions")
           .delete()
-          .eq('user_id', user?.id)
-          .eq('endpoint', subscription.endpoint);
+          .eq("user_id", user?.id)
+          .eq("endpoint", subscription.endpoint);
 
         if (error) throw error;
       }
@@ -139,7 +161,7 @@ const SecurePushNotifications = () => {
         description: "Push notifications disabled successfully!",
       });
     } catch (error) {
-      console.error('Error unsubscribing from push notifications:', error);
+      console.error("Error unsubscribing from push notifications:", error);
       toast({
         title: "Error",
         description: "Failed to disable push notifications",
@@ -155,7 +177,7 @@ const SecurePushNotifications = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BellOff className="h-5 w-5" />
+            <BellOff className="h-5 w-5" aria-hidden="true" />
             Push Notifications
           </CardTitle>
         </CardHeader>
@@ -175,14 +197,15 @@ const SecurePushNotifications = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-red-500" />
+            <Shield className="h-5 w-5 text-red-500" aria-hidden="true" />
             Push Notifications - Configuration Required
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Alert className="border-red-200 bg-red-50">
             <AlertDescription className="text-red-800">
-              Push notifications are not configured. Please set the VITE_VAPID_PUBLIC_KEY environment variable.
+              Push notifications are not configured. Please set the
+              VITE_VAPID_PUBLIC_KEY environment variable.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -194,34 +217,36 @@ const SecurePushNotifications = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Bell className="h-5 w-5" />
+          <Bell className="h-5 w-5" aria-hidden="true" />
           Push Notifications
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-gray-600">
-          {isSubscribed 
+          {isSubscribed
             ? "You'll receive notifications about your events and important updates."
-            : "Enable push notifications to stay updated about your events and important announcements."
-          }
+            : "Enable push notifications to stay updated about your events and important announcements."}
         </p>
-        
         <Button
           onClick={isSubscribed ? unsubscribeUser : subscribeUser}
           disabled={isLoading}
           variant={isSubscribed ? "outline" : "default"}
           className="w-full"
+          type="button"
+          aria-label={
+            isSubscribed ? "Disable notifications" : "Enable notifications"
+          }
         >
           {isLoading ? (
             "Processing..."
           ) : isSubscribed ? (
             <>
-              <BellOff className="h-4 w-4 mr-2" />
+              <BellOff className="h-4 w-4 mr-2" aria-hidden="true" />
               Disable Notifications
             </>
           ) : (
             <>
-              <Bell className="h-4 w-4 mr-2" />
+              <Bell className="h-4 w-4 mr-2" aria-hidden="true" />
               Enable Notifications
             </>
           )}
@@ -232,3 +257,6 @@ const SecurePushNotifications = () => {
 };
 
 export default SecurePushNotifications;
+// This component provides a secure implementation of push notifications using the Push API and Supabase.
+// It checks for browser support, manages subscription state, and handles errors gracefully.
+// The component uses environment variables for configuration and ensures that the VAPID public key is valid

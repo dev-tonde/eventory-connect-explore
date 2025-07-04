@@ -1,8 +1,7 @@
-
+/* eslint-disable react-refresh/only-export-components */
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -10,14 +9,16 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:bg-primary/90",
+        default:
+          "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:bg-primary/90",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:bg-destructive/90",
         outline:
           "border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:bg-secondary/80",
-        ghost: "text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground",
+        ghost:
+          "text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline focus-visible:underline",
       },
       size: {
@@ -41,22 +42,28 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, children, disabled, ...props }, ref) => {
+  (
+    { className, variant, size, asChild = false, children, disabled, ...props },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button";
-    
-    // Ensure proper ARIA attributes for accessibility
-    const accessibilityProps = {
-      'aria-disabled': disabled,
-      ...(disabled && { tabIndex: -1 }),
-      ...props
-    };
+
+    // Accessibility: ensure aria-disabled and tabIndex for non-button elements
+    const accessibilityProps =
+      asChild && typeof Comp !== "string"
+        ? {
+            "aria-disabled": disabled,
+            ...(disabled && { tabIndex: -1 }),
+          }
+        : {};
 
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size }), className)}
         ref={ref}
-        disabled={disabled}
+        disabled={asChild ? undefined : disabled}
         {...accessibilityProps}
+        {...props}
       >
         {children}
       </Comp>
@@ -66,3 +73,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = "Button";
 
 export { Button, buttonVariants };
+// This component provides a customizable button UI using class-variance-authority for styling.

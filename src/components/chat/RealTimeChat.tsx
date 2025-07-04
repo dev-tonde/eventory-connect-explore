@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,13 +35,14 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
   useEffect(() => {
     loadMessages();
     setupRealTimeSubscription();
-    
+
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
     };
-  }, [communityId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [communityId, eventId, user?.id]);
 
   useEffect(() => {
     scrollToBottom();
@@ -50,17 +51,17 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
   const loadMessages = async () => {
     try {
       const { data, error } = await supabase
-        .from('community_messages')
-        .select('*')
-        .eq('community_id', communityId)
-        .eq('event_id', eventId || null)
-        .order('created_at', { ascending: true })
+        .from("community_messages")
+        .select("*")
+        .eq("community_id", communityId)
+        .eq("event_id", eventId || null)
+        .order("created_at", { ascending: true })
         .limit(50);
 
       if (error) throw error;
       setMessages(data || []);
     } catch (error) {
-      console.error('Error loading messages:', error);
+      console.error("Error loading messages:", error);
       toast({
         title: "Error",
         description: "Failed to load chat messages.",
@@ -70,41 +71,41 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
   };
 
   const setupRealTimeSubscription = () => {
+    if (!user) return;
     const channel = supabase
       .channel(`community-${communityId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'community_messages',
-          filter: `community_id=eq.${communityId}`
+          event: "INSERT",
+          schema: "public",
+          table: "community_messages",
+          filter: `community_id=eq.${communityId}`,
         },
         (payload) => {
-          setMessages(prev => [...prev, payload.new as Message]);
+          setMessages((prev) => [...prev, payload.new as Message]);
         }
       )
-      .on('presence', { event: 'sync' }, () => {
+      .on("presence", { event: "sync" }, () => {
         const newState = channel.presenceState();
-        const users = Object.keys(newState);
-        setOnlineUsers(users);
+        setOnlineUsers(Object.keys(newState));
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        setOnlineUsers(prev => [...prev, key]);
+      .on("presence", { event: "join" }, ({ key, newPresences }) => {
+        setOnlineUsers((prev) => [...prev, key]);
         toast({
           title: "User joined",
-          description: `${newPresences[0]?.name || 'Someone'} joined the chat`,
+          description: `${newPresences[0]?.name || "Someone"} joined the chat`,
         });
       })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        setOnlineUsers(prev => prev.filter(user => user !== key));
+      .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
+        setOnlineUsers((prev) => prev.filter((u) => u !== key));
         toast({
           title: "User left",
-          description: `${leftPresences[0]?.name || 'Someone'} left the chat`,
+          description: `${leftPresences[0]?.name || "Someone"} left the chat`,
         });
       })
       .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED' && user) {
+        if (status === "SUBSCRIBED" && user) {
           await channel.track({
             user_id: user.id,
             name: user.email,
@@ -121,20 +122,20 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('community_messages')
-        .insert([{
+      const { error } = await supabase.from("community_messages").insert([
+        {
           community_id: communityId,
           event_id: eventId || null,
           user_id: user.id,
           message: newMessage.trim(),
-          message_type: 'text'
-        }]);
+          message_type: "text",
+        },
+      ]);
 
       if (error) throw error;
       setNewMessage("");
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error("Error sending message:", error);
       toast({
         title: "Error",
         description: "Failed to send message.",
@@ -149,8 +150,8 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -167,7 +168,7 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
           </div>
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="flex-1 flex flex-col p-0">
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
@@ -180,14 +181,16 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
                 <div
                   key={message.id}
                   className={`flex gap-3 ${
-                    message.user_id === user?.id ? 'justify-end' : 'justify-start'
+                    message.user_id === user?.id
+                      ? "justify-end"
+                      : "justify-start"
                   }`}
                 >
                   <div
                     className={`max-w-[70%] rounded-lg px-3 py-2 ${
                       message.user_id === user?.id
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-900'
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-900"
                     }`}
                   >
                     {message.user_id !== user?.id && (
@@ -200,7 +203,10 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
                     )}
                     <p className="text-sm">{message.message}</p>
                     <span className="text-xs opacity-70">
-                      {new Date(message.created_at).toLocaleTimeString()}
+                      {new Date(message.created_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   </div>
                 </div>
@@ -215,15 +221,18 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               placeholder="Type your message..."
               disabled={isLoading}
               className="flex-1"
+              aria-label="Message input"
             />
             <Button
               onClick={sendMessage}
               disabled={isLoading || !newMessage.trim()}
               size="sm"
+              type="button"
+              aria-label="Send message"
             >
               <Send className="h-4 w-4" />
             </Button>
@@ -235,3 +244,5 @@ const RealTimeChat = ({ communityId, eventId }: RealTimeChatProps) => {
 };
 
 export default RealTimeChat;
+// This component provides a real-time chat interface for communities and events, allowing users to send and receive messages. It uses Supabase for real-time updates and presence tracking, displaying online users and their messages in a scrollable area. The chat supports text messages, with a user-friendly input field and send button.
+// The component handles message sending, real-time updates, and user presence tracking. It also includes error handling for message sending failures and displays a loading state while fetching messages. The chat interface is designed to be responsive and visually appealing, with different styles for messages sent by the current user and others.

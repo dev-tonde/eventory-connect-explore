@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,17 +11,35 @@ interface EventFiltersProps {
   onClearFilters: () => void;
 }
 
-const EventFilters = ({ filters, onFiltersChange, onClearFilters }: EventFiltersProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const categories = [
+  "Music",
+  "Technology",
+  "Food",
+  "Sports",
+  "Arts",
+  "Business",
+  "Education",
+  "Health",
+];
 
-  const categories = ['Music', 'Technology', 'Food', 'Sports', 'Arts', 'Business', 'Education', 'Health'];
+const sanitizeInput = (input: string) => input.replace(/[<>]/g, ""); // Basic sanitization for location input
+
+const EventFilters = ({
+  filters,
+  onFiltersChange,
+  onClearFilters,
+}: EventFiltersProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const updateFilters = (newFilters: Partial<EventFiltersType>) => {
     onFiltersChange({ ...filters, ...newFilters });
   };
 
-  const hasActiveFilters = filters.category || filters.location || 
-    (filters.priceRange && (filters.priceRange.min > 0 || filters.priceRange.max < 1000)) ||
+  const hasActiveFilters =
+    filters.category ||
+    filters.location ||
+    (filters.priceRange &&
+      (filters.priceRange.min > 0 || filters.priceRange.max < 1000)) ||
     (filters.dateRange && (filters.dateRange.start || filters.dateRange.end));
 
   return (
@@ -40,34 +57,42 @@ const EventFilters = ({ filters, onFiltersChange, onClearFilters }: EventFilters
                 Clear All
               </Button>
             )}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
+              aria-expanded={isExpanded}
+              aria-controls="event-filters-content"
             >
-              {isExpanded ? 'Hide' : 'Show'} Filters
+              {isExpanded ? "Hide" : "Show"} Filters
             </Button>
           </div>
         </div>
       </CardHeader>
-      
+
       {isExpanded && (
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4" id="event-filters-content">
           {/* Category Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Category
             </label>
             <select
-              value={filters.category || 'all'}
-              onChange={(e) => updateFilters({ 
-                category: e.target.value === 'all' ? undefined : e.target.value 
-              })}
+              value={filters.category || "all"}
+              onChange={(e) =>
+                updateFilters({
+                  category:
+                    e.target.value === "all" ? undefined : e.target.value,
+                })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              aria-label="Category"
             >
               <option value="all">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat.toLowerCase()}>{cat}</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat.toLowerCase()}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
@@ -79,9 +104,16 @@ const EventFilters = ({ filters, onFiltersChange, onClearFilters }: EventFilters
               Location
             </label>
             <Input
-              value={filters.location || ''}
-              onChange={(e) => updateFilters({ location: e.target.value || undefined })}
+              value={filters.location || ""}
+              onChange={(e) =>
+                updateFilters({
+                  location: sanitizeInput(e.target.value) || undefined,
+                })
+              }
               placeholder="Enter city or venue"
+              aria-label="Location"
+              maxLength={80}
+              autoComplete="off"
             />
           </div>
 
@@ -94,25 +126,31 @@ const EventFilters = ({ filters, onFiltersChange, onClearFilters }: EventFilters
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <Input
                 type="date"
-                value={filters.dateRange?.start || ''}
-                onChange={(e) => updateFilters({
-                  dateRange: {
-                    start: e.target.value,
-                    end: filters.dateRange?.end || ''
-                  }
-                })}
+                value={filters.dateRange?.start || ""}
+                onChange={(e) =>
+                  updateFilters({
+                    dateRange: {
+                      start: e.target.value,
+                      end: filters.dateRange?.end || "",
+                    },
+                  })
+                }
                 placeholder="Start date"
+                aria-label="Start date"
               />
               <Input
                 type="date"
-                value={filters.dateRange?.end || ''}
-                onChange={(e) => updateFilters({
-                  dateRange: {
-                    start: filters.dateRange?.start || '',
-                    end: e.target.value
-                  }
-                })}
+                value={filters.dateRange?.end || ""}
+                onChange={(e) =>
+                  updateFilters({
+                    dateRange: {
+                      start: filters.dateRange?.start || "",
+                      end: e.target.value,
+                    },
+                  })
+                }
                 placeholder="End date"
+                aria-label="End date"
               />
             </div>
           </div>
@@ -127,35 +165,44 @@ const EventFilters = ({ filters, onFiltersChange, onClearFilters }: EventFilters
               <Input
                 type="number"
                 min="0"
-                value={filters.priceRange?.min || ''}
-                onChange={(e) => updateFilters({
-                  priceRange: {
-                    min: parseInt(e.target.value) || 0,
-                    max: filters.priceRange?.max || 1000
-                  }
-                })}
+                value={filters.priceRange?.min ?? ""}
+                onChange={(e) =>
+                  updateFilters({
+                    priceRange: {
+                      min: parseInt(e.target.value) || 0,
+                      max: filters.priceRange?.max ?? 1000,
+                    },
+                  })
+                }
                 placeholder="Min price"
+                aria-label="Min price"
               />
               <Input
                 type="number"
                 min="0"
-                value={filters.priceRange?.max || ''}
-                onChange={(e) => updateFilters({
-                  priceRange: {
-                    min: filters.priceRange?.min || 0,
-                    max: parseInt(e.target.value) || 1000
-                  }
-                })}
+                value={filters.priceRange?.max ?? ""}
+                onChange={(e) =>
+                  updateFilters({
+                    priceRange: {
+                      min: filters.priceRange?.min ?? 0,
+                      max: parseInt(e.target.value) || 1000,
+                    },
+                  })
+                }
                 placeholder="Max price"
+                aria-label="Max price"
               />
             </div>
             <div className="flex items-center gap-2 mt-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => updateFilters({
-                  priceRange: { min: 0, max: 0 }
-                })}
+                onClick={() =>
+                  updateFilters({
+                    priceRange: { min: 0, max: 0 },
+                  })
+                }
+                aria-label="Free only"
               >
                 Free Only
               </Button>
@@ -168,3 +215,5 @@ const EventFilters = ({ filters, onFiltersChange, onClearFilters }: EventFilters
 };
 
 export default EventFilters;
+// This component provides a set of filters for events, allowing users to filter by category, location, date range, and price range.
+// It includes a button to clear all filters and toggle the visibility of the filter options.

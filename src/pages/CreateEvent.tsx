@@ -1,19 +1,18 @@
-
-import SecureEventCreationForm from "@/components/forms/SecureEventCreationForm";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import SecureEventCreationForm from "@/components/forms/SecureEventCreationForm";
 import { CSRFProvider } from "@/components/security/CSRFProtection";
 
 const CreateEvent = () => {
-  const { user, profile, isAuthenticated } = useAuth();
+  const { profile, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate("/login");
+      navigate("/login", { replace: true });
     } else if (profile?.role !== "organizer") {
-      navigate("/become-organizer");
+      navigate("/become-organizer", { replace: true });
     }
   }, [isAuthenticated, profile, navigate]);
 
@@ -22,7 +21,11 @@ const CreateEvent = () => {
   };
 
   if (!isAuthenticated || profile?.role !== "organizer") {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <span className="text-gray-500">Checking permissions...</span>
+      </div>
+    );
   }
 
   return (

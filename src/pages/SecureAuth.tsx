@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +10,7 @@ const SecureAuth = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/");
+      navigate("/", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -35,3 +34,4 @@ const SecureAuth = () => {
 };
 
 export default SecureAuth;
+// This component handles secure authentication by checking if the user is authenticated. If they are, it redirects them to the home page. If not, it displays a loading spinner while checking authentication status and renders the SecureAuthForm for user login or registration. The EnhancedCSRFProvider ensures that CSRF protection is applied to the authentication form.

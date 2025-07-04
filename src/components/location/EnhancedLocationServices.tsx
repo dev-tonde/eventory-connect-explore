@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Search, Navigation, Loader2 } from "lucide-react";
 import { useEnhancedGeolocation } from "@/hooks/useEnhancedGeolocation";
+
+// Basic sanitization to prevent XSS in address input
+const sanitizeInput = (input: string) => input.replace(/[<>]/g, "").trim();
 
 const EnhancedLocationServices = () => {
   const [searchAddress, setSearchAddress] = useState("");
@@ -18,8 +20,9 @@ const EnhancedLocationServices = () => {
   } = useEnhancedGeolocation();
 
   const handleAddressSearch = async () => {
-    if (!searchAddress.trim()) return;
-    await geocodeAddress(searchAddress);
+    const sanitized = sanitizeInput(searchAddress);
+    if (!sanitized) return;
+    await geocodeAddress(sanitized);
   };
 
   const handleGetCurrentLocation = async () => {
@@ -38,12 +41,30 @@ const EnhancedLocationServices = () => {
         {/* Current Location Display */}
         {currentLocation && (
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <h3 className="font-medium text-green-800 mb-2">Current Location</h3>
+            <h3 className="font-medium text-green-800 mb-2">
+              Current Location
+            </h3>
             <div className="space-y-1 text-sm text-green-700">
-              <p><strong>Address:</strong> {currentLocation.address}</p>
-              <p><strong>Coordinates:</strong> {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}</p>
-              {currentLocation.city && <p><strong>City:</strong> {currentLocation.city}</p>}
-              {currentLocation.country && <p><strong>Country:</strong> {currentLocation.country}</p>}
+              <p>
+                <strong>Address:</strong>{" "}
+                {sanitizeInput(currentLocation.address)}
+              </p>
+              <p>
+                <strong>Coordinates:</strong>{" "}
+                {currentLocation.latitude.toFixed(6)},{" "}
+                {currentLocation.longitude.toFixed(6)}
+              </p>
+              {currentLocation.city && (
+                <p>
+                  <strong>City:</strong> {sanitizeInput(currentLocation.city)}
+                </p>
+              )}
+              {currentLocation.country && (
+                <p>
+                  <strong>Country:</strong>{" "}
+                  {sanitizeInput(currentLocation.country)}
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -51,7 +72,7 @@ const EnhancedLocationServices = () => {
         {/* Error Display */}
         {error && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700">{error}</p>
+            <p className="text-red-700">{sanitizeInput(error)}</p>
           </div>
         )}
 
@@ -61,6 +82,8 @@ const EnhancedLocationServices = () => {
             onClick={handleGetCurrentLocation}
             disabled={isLoading}
             className="flex items-center gap-2"
+            aria-label="Get current location"
+            type="button"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -73,18 +96,26 @@ const EnhancedLocationServices = () => {
 
         {/* Address Search */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Search Address</label>
+          <label className="text-sm font-medium" htmlFor="address-search">
+            Search Address
+          </label>
           <div className="flex gap-2">
             <Input
+              id="address-search"
               value={searchAddress}
               onChange={(e) => setSearchAddress(e.target.value)}
               placeholder="Enter address to geocode..."
-              onKeyPress={(e) => e.key === 'Enter' && handleAddressSearch()}
+              onKeyDown={(e) => e.key === "Enter" && handleAddressSearch()}
+              maxLength={120}
+              autoComplete="off"
+              aria-label="Search address"
             />
             <Button
               onClick={handleAddressSearch}
               disabled={isLoading || !searchAddress.trim()}
               variant="outline"
+              aria-label="Search address"
+              type="button"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -112,3 +143,5 @@ const EnhancedLocationServices = () => {
 };
 
 export default EnhancedLocationServices;
+// This component provides enhanced location services with features like real-time geolocation, address geocoding, and error handling.
+// It includes a search input for address lookup, a button to get the current location, and displays the current location details.

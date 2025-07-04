@@ -1,11 +1,20 @@
-
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, CheckCircle, UserMinus } from "lucide-react";
 import { Event } from "@/types/event";
 import OrganizerEventGrid from "./OrganizerEventGrid";
+
+// Sanitize text to prevent XSS
+const sanitizeText = (text: string) =>
+  typeof text === "string" ? text.replace(/[<>]/g, "").trim() : "";
 
 interface OrganizerProfile {
   name: string;
@@ -26,19 +35,30 @@ const OrganizerCard = ({ organizer, onUnfollow }: OrganizerCardProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-              <User className="h-8 w-8 text-purple-600" />
+              <User className="h-8 w-8 text-purple-600" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <CardTitle className="text-xl">{organizer.name}</CardTitle>
+                <CardTitle className="text-xl">
+                  {sanitizeText(organizer.name)}
+                </CardTitle>
                 {organizer.isVerified && (
-                  <CheckCircle className="h-5 w-5 text-blue-500" />
+                  <CheckCircle
+                    className="h-5 w-5 text-blue-500"
+                    aria-label="Verified Organizer"
+                    aria-hidden="true"
+                  />
                 )}
               </div>
               <CardDescription className="flex items-center gap-4 mt-1">
-                <span>{organizer.followerCount.toLocaleString()} followers</span>
+                <span>
+                  {organizer.followerCount.toLocaleString()} followers
+                </span>
                 {organizer.isVerified && (
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-100 text-blue-800"
+                  >
                     Verified
                   </Badge>
                 )}
@@ -50,8 +70,10 @@ const OrganizerCard = ({ organizer, onUnfollow }: OrganizerCardProps) => {
             size="sm"
             onClick={() => onUnfollow(organizer.name)}
             className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            type="button"
+            aria-label={`Unfollow ${sanitizeText(organizer.name)}`}
           >
-            <UserMinus className="h-4 w-4 mr-2" />
+            <UserMinus className="h-4 w-4 mr-2" aria-hidden="true" />
             Unfollow
           </Button>
         </div>
@@ -61,11 +83,16 @@ const OrganizerCard = ({ organizer, onUnfollow }: OrganizerCardProps) => {
         <h3 className="text-lg font-semibold mb-4">
           Upcoming Events ({organizer.events.length})
         </h3>
-        
-        <OrganizerEventGrid events={organizer.events} organizerName={organizer.name} />
+        <OrganizerEventGrid
+          events={organizer.events}
+          organizerName={sanitizeText(organizer.name)}
+        />
       </CardContent>
     </Card>
   );
 };
 
 export default OrganizerCard;
+// This component renders a card for an organizer's profile, displaying their name, follower count, verification status, and a grid of their upcoming events.
+// It includes a button to unfollow the organizer, which triggers a callback function passed as a prop.
+// The organizer's name and other text are sanitized to prevent XSS attacks, ensuring safe rendering of user-generated content.

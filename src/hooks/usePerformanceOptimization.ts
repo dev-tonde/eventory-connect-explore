@@ -1,14 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useCallback, useRef, useEffect } from "react";
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-
-// Image lazy loading hook
+/**
+ * Hook for image lazy loading using IntersectionObserver.
+ */
 export const useImageLazyLoading = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    if (!imgRef.current) return;
+
+    const observer = new window.IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsInView(true);
@@ -18,9 +22,7 @@ export const useImageLazyLoading = () => {
       { threshold: 0.1 }
     );
 
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
-    }
+    observer.observe(imgRef.current);
 
     return () => observer.disconnect();
   }, []);
@@ -37,24 +39,23 @@ export const useImageLazyLoading = () => {
   };
 };
 
-// Debounce hook for search and input optimization
+/**
+ * Debounce hook for search and input optimization.
+ */
 export const useDebounce = <T>(value: T, delay: number): T => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
   }, [value, delay]);
 
   return debouncedValue;
 };
 
-// Cache management hook
+/**
+ * Cache management hook using localStorage with TTL.
+ */
 export const useCache = <T>(key: string, ttl: number = 5 * 60 * 1000) => {
   const getFromCache = useCallback((): T | null => {
     try {
@@ -66,23 +67,28 @@ export const useCache = <T>(key: string, ttl: number = 5 * 60 * 1000) => {
         localStorage.removeItem(key);
         return null;
       }
-
       return data;
     } catch {
       return null;
     }
   }, [key, ttl]);
 
-  const setCache = useCallback((data: T) => {
-    try {
-      localStorage.setItem(key, JSON.stringify({
-        data,
-        timestamp: Date.now(),
-      }));
-    } catch (error) {
-      console.warn('Failed to cache data:', error);
-    }
-  }, [key]);
+  const setCache = useCallback(
+    (data: T) => {
+      try {
+        localStorage.setItem(
+          key,
+          JSON.stringify({
+            data,
+            timestamp: Date.now(),
+          })
+        );
+      } catch (error) {
+        console.warn("Failed to cache data:", error);
+      }
+    },
+    [key]
+  );
 
   const clearCache = useCallback(() => {
     localStorage.removeItem(key);
@@ -95,14 +101,16 @@ export const useCache = <T>(key: string, ttl: number = 5 * 60 * 1000) => {
   };
 };
 
-// Virtual scrolling for large lists
+/**
+ * Virtual scrolling hook for large lists.
+ */
 export const useVirtualScrolling = (
   items: any[],
   itemHeight: number,
   containerHeight: number
 ) => {
   const [scrollTop, setScrollTop] = useState(0);
-  
+
   const visibleStart = Math.floor(scrollTop / itemHeight);
   const visibleEnd = Math.min(
     visibleStart + Math.ceil(containerHeight / itemHeight) + 1,

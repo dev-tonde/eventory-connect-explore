@@ -6,7 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Calendar, Clock, MapPin, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,7 +23,18 @@ interface SmartCalendarSyncProps {
   eventLocation?: string;
 }
 
-const SmartCalendarSync = ({ eventId, eventTitle, eventDate, eventLocation }: SmartCalendarSyncProps) => {
+const PROVIDERS = [
+  { value: "google", label: "Google Calendar" },
+  { value: "outlook", label: "Outlook Calendar" },
+  { value: "apple", label: "Apple Calendar" },
+];
+
+const SmartCalendarSync = ({
+  eventId,
+  eventTitle,
+  eventDate,
+  eventLocation,
+}: SmartCalendarSyncProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -25,8 +42,8 @@ const SmartCalendarSync = ({ eventId, eventTitle, eventDate, eventLocation }: Sm
   const [travelTime, setTravelTime] = useState(15);
   const [provider, setProvider] = useState<string>("");
 
-  const { data: syncData } = useQuery({
-    queryKey: ["calendar-sync", eventId],
+  const { data: syncData, isLoading: isSyncLoading } = useQuery({
+    queryKey: ["calendar-sync", eventId, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("calendar_sync")
@@ -34,30 +51,29 @@ const SmartCalendarSync = ({ eventId, eventTitle, eventDate, eventLocation }: Sm
         .eq("event_id", eventId)
         .eq("user_id", user?.id)
         .maybeSingle();
-
       if (error) throw error;
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 60_000,
   });
 
   const syncToCalendarMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase
-        .from("calendar_sync")
-        .upsert({
-          user_id: user?.id,
-          event_id: eventId,
-          calendar_provider: provider,
-          prep_time_minutes: prepTime,
-          travel_time_minutes: travelTime,
-        });
-
+      const { data, error } = await supabase.from("calendar_sync").upsert({
+        user_id: user?.id,
+        event_id: eventId,
+        calendar_provider: provider,
+        prep_time_minutes: prepTime,
+        travel_time_minutes: travelTime,
+      });
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["calendar-sync", eventId] });
+      queryClient.invalidateQueries({
+        queryKey: ["calendar-sync", eventId, user?.id],
+      });
       toast({
         title: "Success!",
         description: "Event synced to your calendar with smart time blocking.",
@@ -78,13 +94,15 @@ const SmartCalendarSync = ({ eventId, eventTitle, eventDate, eventLocation }: Sm
       setTravelTime(45);
       toast({
         title: "AI Suggestion",
-        description: "Based on traffic patterns, 45 minutes travel time recommended for downtown location.",
+        description:
+          "Based on traffic patterns, 45 minutes travel time recommended for downtown location.",
       });
     } else {
       setTravelTime(20);
       toast({
         title: "AI Suggestion",
-        description: "Suggested 20 minutes travel time based on typical traffic.",
+        description:
+          "Suggested 20 minutes travel time based on typical traffic.",
       });
     }
   };
@@ -101,6 +119,12 @@ const SmartCalendarSync = ({ eventId, eventTitle, eventDate, eventLocation }: Sm
     syncToCalendarMutation.mutate();
   };
 
+  // Helper to format time preview
+  const getTimeString = (date: string, offsetMinutes: number) => {
+    const d = new Date(new Date(date).getTime() - offsetMinutes * 60000);
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -110,14 +134,21 @@ const SmartCalendarSync = ({ eventId, eventTitle, eventDate, eventLocation }: Sm
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {syncData ? (
+        {isSyncLoading ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Loading sync status...
+          </div>
+        ) : syncData ? (
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center gap-2 text-green-700">
               <Calendar className="h-4 w-4" />
-              <span className="font-medium">Synced to {syncData.calendar_provider} Calendar</span>
+              <span className="font-medium">
+                Synced to {syncData.calendar_provider} Calendar
+              </span>
             </div>
             <p className="text-sm text-green-600 mt-1">
-              Prep time: {syncData.prep_time_minutes}min | Travel time: {syncData.travel_time_minutes}min
+              Prep time: {syncData.prep_time_minutes}min | Travel time:{" "}
+              {syncData.travel_time_minutes}min
             </p>
           </div>
         ) : (
@@ -129,9 +160,11 @@ const SmartCalendarSync = ({ eventId, eventTitle, eventDate, eventLocation }: Sm
                   <SelectValue placeholder="Select calendar provider" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="google">Google Calendar</SelectItem>
-                  <SelectItem value="outlook">Outlook Calendar</SelectItem>
-                  <SelectItem value="apple">Apple Calendar</SelectItem>
+                  {PROVIDERS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -172,17 +205,26 @@ const SmartCalendarSync = ({ eventId, eventTitle, eventDate, eventLocation }: Sm
               variant="outline"
               onClick={suggestTravelTime}
               className="w-full"
+              type="button"
             >
               <Zap className="h-4 w-4 mr-2" />
               AI Suggest Travel Time
             </Button>
 
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-              <h4 className="font-medium text-blue-900 mb-1">Smart Blocking Preview:</h4>
+              <h4 className="font-medium text-blue-900 mb-1">
+                Smart Blocking Preview:
+              </h4>
               <div className="text-blue-700 space-y-1">
-                <p>• Prep time: {new Date(new Date(eventDate).getTime() - prepTime * 60000).toLocaleTimeString()}</p>
-                <p>• Leave for event: {new Date(new Date(eventDate).getTime() - travelTime * 60000).toLocaleTimeString()}</p>
-                <p>• Event starts: {new Date(eventDate).toLocaleTimeString()}</p>
+                <p>• Prep time: {getTimeString(eventDate, prepTime)}</p>
+                <p>• Leave for event: {getTimeString(eventDate, travelTime)}</p>
+                <p>
+                  • Event starts:{" "}
+                  {new Date(eventDate).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
               </div>
             </div>
 
@@ -190,8 +232,11 @@ const SmartCalendarSync = ({ eventId, eventTitle, eventDate, eventLocation }: Sm
               onClick={handleSync}
               disabled={syncToCalendarMutation.isPending}
               className="w-full"
+              type="button"
             >
-              {syncToCalendarMutation.isPending ? "Syncing..." : "Sync to Calendar"}
+              {syncToCalendarMutation.isPending
+                ? "Syncing..."
+                : "Sync to Calendar"}
             </Button>
           </>
         )}
@@ -201,3 +246,4 @@ const SmartCalendarSync = ({ eventId, eventTitle, eventDate, eventLocation }: Sm
 };
 
 export default SmartCalendarSync;
+// This component provides a smart calendar sync feature that allows users to sync their event with a selected calendar provider (Google, Outlook, Apple). It includes options for prep time and travel time, with AI suggestions based on the event location. The component fetches existing sync data from Supabase and allows users to update their sync settings.

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Event } from "@/types/event";
@@ -13,25 +12,28 @@ interface EventCollection {
   tags: string[];
 }
 
+/**
+ * Custom hook to fetch and generate dynamic event collections.
+ */
 export const useEventCollections = () => {
-  return useQuery({
+  return useQuery<EventCollection[]>({
     queryKey: ["event-collections"],
-    queryFn: async (): Promise<EventCollection[]> => {
-      // Get curated collections (this would be managed by admins/curators)
+    queryFn: async () => {
       const collections: EventCollection[] = [];
 
-      // Get upcoming events to create dynamic collections
-      const { data: upcomingEvents } = await supabase
+      // Fetch upcoming active events
+      const { data: upcomingEvents, error } = await supabase
         .from("events")
         .select("*")
         .eq("is_active", true)
-        .gte("date", new Date().toISOString().split('T')[0])
+        .gte("date", new Date().toISOString().split("T")[0])
         .order("date", { ascending: true });
 
+      if (error) throw error;
       if (!upcomingEvents) return collections;
 
       // Transform events to Event type
-      const events: Event[] = upcomingEvents.map(event => ({
+      const events: Event[] = upcomingEvents.map((event) => ({
         id: event.id,
         title: event.title,
         description: event.description || "",
@@ -42,24 +44,23 @@ export const useEventCollections = () => {
         price: Number(event.price),
         category: event.category,
         image: event.image_url || "/placeholder.svg",
-        organizer: "Organizer",
+        organizer: event.organizer || "Organizer",
         attendeeCount: event.current_attendees || 0,
         maxAttendees: event.max_attendees || 100,
-        tags: event.tags || []
+        tags: event.tags || [],
       }));
 
-      // Create dynamic collections
       // This Weekend Collection
-      const thisWeekend = events.filter(event => {
-        const eventDate = new Date(event.date);
-        const today = new Date();
-        const dayOfWeek = today.getDay();
-        const daysUntilSaturday = 6 - dayOfWeek;
-        const saturday = new Date(today);
-        saturday.setDate(today.getDate() + daysUntilSaturday);
-        const sunday = new Date(saturday);
-        sunday.setDate(saturday.getDate() + 1);
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const daysUntilSaturday = (6 - dayOfWeek + 7) % 7;
+      const saturday = new Date(today);
+      saturday.setDate(today.getDate() + daysUntilSaturday);
+      const sunday = new Date(saturday);
+      sunday.setDate(saturday.getDate() + 1);
 
+      const thisWeekend = events.filter((event) => {
+        const eventDate = new Date(event.date);
         return eventDate >= saturday && eventDate <= sunday;
       });
 
@@ -71,12 +72,12 @@ export const useEventCollections = () => {
           image_url: "/placeholder.svg",
           events: thisWeekend.slice(0, 6),
           curator: "Eventory",
-          tags: ["weekend", "featured"]
+          tags: ["weekend", "featured"],
         });
       }
 
       // Free Events Collection
-      const freeEvents = events.filter(event => event.price === 0);
+      const freeEvents = events.filter((event) => event.price === 0);
       if (freeEvents.length > 0) {
         collections.push({
           id: "free-events",
@@ -85,7 +86,7 @@ export const useEventCollections = () => {
           image_url: "/placeholder.svg",
           events: freeEvents.slice(0, 8),
           curator: "Eventory",
-          tags: ["free", "budget-friendly"]
+          tags: ["free", "budget-friendly"],
         });
       }
 
@@ -102,37 +103,38 @@ export const useEventCollections = () => {
           image_url: "/placeholder.svg",
           events: popularEvents,
           curator: "Eventory",
-          tags: ["popular", "trending"]
+          tags: ["popular", "trending"],
         });
       }
 
-      // Category-based collections
-      const categories = [...new Set(events.map(event => event.category))];
-      
-      categories.forEach(category => {
+      // Category-based collections (minimum 3 events per category)
+      const categories = [...new Set(events.map((event) => event.category))];
+      categories.forEach((category) => {
         const categoryEvents = events
-          .filter(event => event.category === category)
+          .filter((event) => event.category === category)
           .slice(0, 6);
 
         if (categoryEvents.length >= 3) {
           collections.push({
-            id: `${category.toLowerCase().replace(/\s+/g, '-')}-collection`,
+            id: `${category.toLowerCase().replace(/\s+/g, "-")}-collection`,
             name: `${category} Events`,
             description: `Discover the best ${category.toLowerCase()} events`,
             image_url: "/placeholder.svg",
             events: categoryEvents,
             curator: "Eventory",
-            tags: [category.toLowerCase()]
+            tags: [category.toLowerCase()],
           });
         }
       });
 
       // Upcoming This Month
-      const thisMonth = events.filter(event => {
+      const thisMonth = events.filter((event) => {
         const eventDate = new Date(event.date);
-        const today = new Date();
-        return eventDate.getMonth() === today.getMonth() && 
-               eventDate.getFullYear() === today.getFullYear();
+        const now = new Date();
+        return (
+          eventDate.getMonth() === now.getMonth() &&
+          eventDate.getFullYear() === now.getFullYear()
+        );
       });
 
       if (thisMonth.length > 0) {
@@ -143,11 +145,12 @@ export const useEventCollections = () => {
           image_url: "/placeholder.svg",
           events: thisMonth.slice(0, 8),
           curator: "Eventory",
-          tags: ["monthly", "upcoming"]
+          tags: ["monthly", "upcoming"],
         });
       }
 
-      return collections.filter(collection => collection.events.length > 0);
+      // Only return collections with at least one event
+      return collections.filter((collection) => collection.events.length > 0);
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   });

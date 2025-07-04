@@ -1,11 +1,10 @@
-
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { monitoring } from '@/lib/monitoring';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Shield, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SecurityMetrics {
   totalErrors: number;
@@ -19,7 +18,7 @@ export const SecurityDashboard = () => {
     totalErrors: 0,
     rateLimitHits: 0,
     suspiciousActivity: 0,
-    activeUsers: 0
+    activeUsers: 0,
   });
   const [recentErrors, setRecentErrors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,43 +26,54 @@ export const SecurityDashboard = () => {
   useEffect(() => {
     const fetchSecurityMetrics = async () => {
       try {
-        // Fetch error logs
+        // Fetch error logs (last 24 hours)
         const { data: errors, error: errorsError } = await supabase
-          .from('error_logs')
-          .select('*')
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-          .order('created_at', { ascending: false })
+          .from("error_logs")
+          .select("*")
+          .gte(
+            "created_at",
+            new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+          )
+          .order("created_at", { ascending: false })
           .limit(10);
 
         if (errorsError) throw errorsError;
 
-        // Fetch rate limit data
+        // Fetch rate limit hits (last 24 hours)
         const { data: rateLimits, error: rateLimitError } = await supabase
-          .from('rate_limits')
-          .select('*')
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+          .from("rate_limits")
+          .select("*")
+          .gte(
+            "created_at",
+            new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+          );
 
         if (rateLimitError) throw rateLimitError;
 
-        // Fetch active sessions
+        // Fetch active sessions (last 30 minutes)
         const { data: sessions, error: sessionsError } = await supabase
-          .from('user_sessions')
-          .select('*')
-          .eq('is_active', true)
-          .gte('last_activity', new Date(Date.now() - 30 * 60 * 1000).toISOString());
+          .from("user_sessions")
+          .select("*")
+          .eq("is_active", true)
+          .gte(
+            "last_activity",
+            new Date(Date.now() - 30 * 60 * 1000).toISOString()
+          );
 
         if (sessionsError) throw sessionsError;
 
         setMetrics({
           totalErrors: errors?.length || 0,
           rateLimitHits: rateLimits?.length || 0,
-          suspiciousActivity: errors?.filter(e => e.error_type === 'security_event').length || 0,
-          activeUsers: sessions?.length || 0
+          suspiciousActivity:
+            errors?.filter((e) => e.error_type === "security_event").length ||
+            0,
+          activeUsers: sessions?.length || 0,
         });
 
         setRecentErrors(errors || []);
       } catch (error) {
-        console.error('Failed to fetch security metrics:', error);
+        console.error("Failed to fetch security metrics:", error);
       } finally {
         setLoading(false);
       }
@@ -76,16 +86,20 @@ export const SecurityDashboard = () => {
   }, []);
 
   const getErrorSeverity = (errorType: string) => {
-    if (errorType.includes('security') || errorType.includes('auth')) return 'high';
-    if (errorType.includes('rate_limit')) return 'medium';
-    return 'low';
+    if (errorType?.includes("security") || errorType?.includes("auth"))
+      return "high";
+    if (errorType?.includes("rate_limit")) return "medium";
+    return "low";
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'high': return 'destructive';
-      case 'medium': return 'secondary';
-      default: return 'default';
+      case "high":
+        return "destructive";
+      case "medium":
+        return "secondary";
+      default:
+        return "default";
     }
   };
 
@@ -134,7 +148,9 @@ export const SecurityDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rate Limit Hits</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Rate Limit Hits
+            </CardTitle>
             <Clock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -145,11 +161,15 @@ export const SecurityDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Events</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Security Events
+            </CardTitle>
             <Shield className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.suspiciousActivity}</div>
+            <div className="text-2xl font-bold">
+              {metrics.suspiciousActivity}
+            </div>
             <p className="text-xs text-muted-foreground">Last 24 hours</p>
           </CardContent>
         </Card>
@@ -164,9 +184,7 @@ export const SecurityDashboard = () => {
           <div className="space-y-2">
             <Alert>
               <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
-                ✅ HTTPS enforced everywhere
-              </AlertDescription>
+              <AlertDescription>✅ HTTPS enforced everywhere</AlertDescription>
             </Alert>
             <Alert>
               <CheckCircle className="h-4 w-4" />
@@ -182,9 +200,7 @@ export const SecurityDashboard = () => {
             </Alert>
             <Alert>
               <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
-                ✅ Rate limiting active
-              </AlertDescription>
+              <AlertDescription>✅ Rate limiting active</AlertDescription>
             </Alert>
           </div>
         </CardContent>
@@ -205,7 +221,10 @@ export const SecurityDashboard = () => {
               {recentErrors.map((error, index) => {
                 const severity = getErrorSeverity(error.error_type);
                 return (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 border rounded"
+                  >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <Badge variant={getSeverityColor(severity) as any}>
@@ -230,3 +249,4 @@ export const SecurityDashboard = () => {
     </div>
   );
 };
+// This component provides a security dashboard that displays key security metrics, recent security events, and the overall security status of the application. It fetches data from Supabase tables for error logs, rate limits, and active user sessions, updating every 30 seconds. The UI includes cards for active users, total errors, rate limit hits, and security events, along with a list of recent security errors with severity indicators.

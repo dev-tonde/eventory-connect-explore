@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Event } from "@/types/event";
@@ -18,19 +17,23 @@ interface SearchFilters {
   searchTerm?: string;
 }
 
+/**
+ * Custom hook to search for events with advanced filters.
+ */
 export const useEventSearch = (filters: SearchFilters = {}) => {
   // Create stable query key
-  const queryKey = useMemo(() => 
-    ["events", "search", JSON.stringify(filters)], 
+  const queryKey = useMemo(
+    () => ["events", "search", JSON.stringify(filters)],
     [filters]
   );
 
-  const { data: events = [], isLoading } = useQuery({
+  const { data: events = [], isLoading } = useQuery<Event[]>({
     queryKey,
     queryFn: async () => {
       let query = supabase
         .from("events")
-        .select(`
+        .select(
+          `
           id,
           title,
           description,
@@ -48,7 +51,8 @@ export const useEventSearch = (filters: SearchFilters = {}) => {
             first_name,
             last_name
           )
-        `)
+        `
+        )
         .eq("is_active", true);
 
       // Apply filters efficiently using indexed columns
@@ -66,7 +70,7 @@ export const useEventSearch = (filters: SearchFilters = {}) => {
           .lte("date", filters.dateRange.end);
       } else {
         // Default to future events only
-        query = query.gte("date", new Date().toISOString().split('T')[0]);
+        query = query.gte("date", new Date().toISOString().split("T")[0]);
       }
 
       if (filters.priceRange) {
@@ -79,18 +83,21 @@ export const useEventSearch = (filters: SearchFilters = {}) => {
       }
 
       if (filters.searchTerm) {
-        query = query.or(`title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
+        // Use ilike for case-insensitive search in title or description
+        query = query.or(
+          `title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`
+        );
       }
 
       query = query
         .order("date", { ascending: true })
         .order("created_at", { ascending: false })
-        .limit(50); // Reasonable limit
+        .limit(50);
 
       const { data, error } = await query;
       if (error) throw error;
 
-      return data.map(event => ({
+      return (data || []).map((event) => ({
         id: event.id,
         title: event.title,
         description: event.description || "",
@@ -101,17 +108,17 @@ export const useEventSearch = (filters: SearchFilters = {}) => {
         price: Number(event.price),
         category: event.category,
         image: event.image_url || "/placeholder.svg",
-        organizer: event.profiles 
+        organizer: event.profiles
           ? `${event.profiles.first_name} ${event.profiles.last_name}`.trim()
-          : 'Unknown Organizer',
+          : "Unknown Organizer",
         attendeeCount: event.current_attendees || 0,
         maxAttendees: event.max_attendees || 100,
-        tags: event.tags || []
+        tags: event.tags || [],
       })) as Event[];
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes for search
+    staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
-    enabled: Object.keys(filters).some(key => filters[key as keyof SearchFilters] !== undefined),
+    enabled: Object.values(filters).some((v) => v !== undefined && v !== ""),
   });
 
   return { events, isLoading };

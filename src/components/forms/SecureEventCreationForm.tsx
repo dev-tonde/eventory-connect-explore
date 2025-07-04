@@ -1,8 +1,13 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Calendar, MapPin, DollarSign, Tag, Sparkles } from "lucide-react";
@@ -28,7 +33,6 @@ interface EventFormData {
   enableDynamicPricing: boolean;
   minPrice?: number;
   maxPrice?: number;
-  // Enhanced metadata fields
   metaDescription?: string;
   seoKeywords?: string[];
   accessibilityInfo?: string;
@@ -43,11 +47,25 @@ interface SecureEventCreationFormProps {
   onSuccess?: () => void;
 }
 
-const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) => {
+const categories = [
+  "Music",
+  "Technology",
+  "Food & Drink",
+  "Sports",
+  "Arts & Culture",
+  "Business",
+  "Education",
+  "Health & Wellness",
+  "Entertainment",
+];
+
+const SecureEventCreationForm = ({
+  onSuccess,
+}: SecureEventCreationFormProps) => {
   const { profile } = useAuth();
   const { createEvent, isCreating } = useOptimizedEventCreation();
   const { checkFormRateLimit, sanitizeInput } = useSecurityFeatures();
-  
+
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
     description: "",
@@ -63,7 +81,6 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
     enableDynamicPricing: false,
     minPrice: 0,
     maxPrice: 0,
-    // Enhanced metadata defaults
     metaDescription: "",
     seoKeywords: [],
     accessibilityInfo: "",
@@ -71,70 +88,83 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
     publicTransportInfo: "",
     ageRestrictions: "",
     dresscode: "",
-    languages: ["English"]
+    languages: ["English"],
   });
-  
+
   const [imagePreview, setImagePreview] = useState<string>("/placeholder.svg");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categories = [
-    "Music", "Technology", "Food & Drink", "Sports", "Arts & Culture", "Business", 
-    "Education", "Health & Wellness", "Entertainment"
-  ];
+  // Sanitize array of strings
+  const sanitizeArray = (arr?: string[]) =>
+    (arr || []).map((v) => sanitizeInput(v)).filter(Boolean);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Rate limiting check
     const canSubmit = await checkFormRateLimit("event_creation", 3);
     if (!canSubmit) {
-      toast.error("Too many submissions. Please wait before creating another event.");
+      toast.error(
+        "Too many submissions. Please wait before creating another event."
+      );
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
-      // Sanitize inputs
+      // Sanitize all user input
       const sanitizedData = {
         ...formData,
         title: sanitizeInput(formData.title),
         description: sanitizeInput(formData.description),
         location: sanitizeInput(formData.location),
         address: sanitizeInput(formData.address),
-        tags: formData.tags.map(tag => sanitizeInput(tag)).filter(tag => tag.trim() !== ""),
+        tags: sanitizeArray(formData.tags),
         metaDescription: sanitizeInput(formData.metaDescription || ""),
-        seoKeywords: formData.seoKeywords?.map(keyword => sanitizeInput(keyword)).filter(Boolean) || [],
+        seoKeywords: sanitizeArray(formData.seoKeywords),
         accessibilityInfo: sanitizeInput(formData.accessibilityInfo || ""),
         parkingInfo: sanitizeInput(formData.parkingInfo || ""),
         publicTransportInfo: sanitizeInput(formData.publicTransportInfo || ""),
         ageRestrictions: sanitizeInput(formData.ageRestrictions || ""),
         dresscode: sanitizeInput(formData.dresscode || ""),
+        languages: sanitizeArray(formData.languages),
       };
 
       // Validate dynamic pricing settings
       if (sanitizedData.enableDynamicPricing) {
-        if (!sanitizedData.minPrice || !sanitizedData.maxPrice) {
-          toast.error("Please set minimum and maximum prices for dynamic pricing.");
-          return;
-        }
-        if (sanitizedData.minPrice >= sanitizedData.maxPrice) {
-          toast.error("Maximum price must be higher than minimum price.");
+        if (
+          sanitizedData.minPrice === undefined ||
+          sanitizedData.maxPrice === undefined ||
+          sanitizedData.minPrice < 0 ||
+          sanitizedData.maxPrice <= sanitizedData.minPrice
+        ) {
+          toast.error(
+            "Please set valid minimum and maximum prices for dynamic pricing."
+          );
+          setIsSubmitting(false);
           return;
         }
       }
 
       // Auto-generate SEO metadata if not provided
       if (!sanitizedData.metaDescription) {
-        sanitizedData.metaDescription = `Join ${sanitizedData.title} on ${new Date(sanitizedData.date).toLocaleDateString()} at ${sanitizedData.location}. ${sanitizedData.description.substring(0, 100)}...`;
+        sanitizedData.metaDescription = `Join ${
+          sanitizedData.title
+        } on ${new Date(sanitizedData.date).toLocaleDateString()} at ${
+          sanitizedData.location
+        }. ${sanitizedData.description.substring(0, 100)}...`;
       }
 
-      if (!sanitizedData.seoKeywords || sanitizedData.seoKeywords.length === 0) {
+      if (
+        !sanitizedData.seoKeywords ||
+        sanitizedData.seoKeywords.length === 0
+      ) {
         sanitizedData.seoKeywords = [
           sanitizedData.category.toLowerCase(),
-          sanitizedData.location.toLowerCase().split(' ')[0],
-          'event',
-          'tickets'
+          sanitizedData.location.toLowerCase().split(" ")[0],
+          "event",
+          "tickets",
         ];
       }
 
@@ -165,11 +195,13 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
   };
 
   const handleDynamicPricingToggle = (enabled: boolean) => {
-    setFormData({ 
-      ...formData, 
+    setFormData({
+      ...formData,
       enableDynamicPricing: enabled,
-      minPrice: enabled ? formData.price * 0.5 : undefined,
-      maxPrice: enabled ? formData.price * 2 : undefined,
+      minPrice: enabled ? Math.max(0, formData.price * 0.5) : undefined,
+      maxPrice: enabled
+        ? Math.max(formData.price * 2, formData.price)
+        : undefined,
     });
   };
 
@@ -181,13 +213,14 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
           Create New Event
         </CardTitle>
         <CardDescription>
-          Create your event with advanced security, SEO optimization, and AI-powered assistance
+          Create your event with advanced security, SEO optimization, and
+          AI-powered assistance
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8" autoComplete="off">
           <CSRFToken />
-          
+
           {/* Image Upload */}
           <div className="space-y-4">
             <Label className="text-base font-medium">Event Image</Label>
@@ -217,9 +250,12 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                   id="title"
                   required
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
                   placeholder="Enter event title"
                   maxLength={100}
+                  autoComplete="off"
                 />
               </div>
 
@@ -229,8 +265,11 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                   id="category"
                   required
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  aria-label="Event category"
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
@@ -248,8 +287,11 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                     type="date"
                     required
                     value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
+                    min={new Date().toISOString().split("T")[0]}
+                    autoComplete="off"
                   />
                 </div>
                 <div>
@@ -259,7 +301,10 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                     type="time"
                     required
                     value={formData.time}
-                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, time: e.target.value })
+                    }
+                    autoComplete="off"
                   />
                 </div>
               </div>
@@ -272,8 +317,12 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                   id="location"
                   required
                   value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, location: e.target.value })
+                  }
                   placeholder="e.g., Central Park"
+                  maxLength={80}
+                  autoComplete="off"
                 />
               </div>
 
@@ -283,8 +332,12 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                   id="address"
                   required
                   value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
                   placeholder="123 Street Name, City, State, ZIP"
+                  maxLength={120}
+                  autoComplete="off"
                 />
               </div>
 
@@ -295,7 +348,13 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                   type="number"
                   min="1"
                   value={formData.maxAttendees}
-                  onChange={(e) => setFormData({ ...formData, maxAttendees: parseInt(e.target.value) || 100 })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      maxAttendees: parseInt(e.target.value) || 100,
+                    })
+                  }
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -308,10 +367,13 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
               id="description"
               required
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               placeholder="Describe your event..."
               className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               maxLength={2000}
+              autoComplete="off"
             />
           </div>
 
@@ -322,7 +384,10 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                 <Sparkles className="h-5 w-5" />
                 SEO & Discoverability
               </h3>
-              <p className="text-sm text-gray-600 mb-4">Optimize your event for search engines and better discoverability</p>
+              <p className="text-sm text-gray-600 mb-4">
+                Optimize your event for search engines and better
+                discoverability
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -331,10 +396,16 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                 <textarea
                   id="metaDescription"
                   value={formData.metaDescription || ""}
-                  onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      metaDescription: e.target.value,
+                    })
+                  }
                   placeholder="Brief description for search engines (160 characters max)"
                   className="w-full h-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                   maxLength={160}
+                  autoComplete="off"
                 />
               </div>
 
@@ -345,6 +416,7 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                   value={formData.seoKeywords?.join(", ") || ""}
                   onChange={handleSeoKeywordsChange}
                   placeholder="tech, conference, networking (separate with commas)"
+                  autoComplete="off"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Keywords to help people find your event
@@ -356,18 +428,30 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
           {/* Additional Event Information */}
           <div className="space-y-6 p-6 border rounded-lg bg-green-50">
             <div>
-              <h3 className="text-lg font-medium mb-4">Additional Event Information</h3>
-              <p className="text-sm text-gray-600 mb-4">Help attendees plan better with detailed information</p>
+              <h3 className="text-lg font-medium mb-4">
+                Additional Event Information
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Help attendees plan better with detailed information
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="accessibilityInfo">Accessibility Information</Label>
+                <Label htmlFor="accessibilityInfo">
+                  Accessibility Information
+                </Label>
                 <Input
                   id="accessibilityInfo"
                   value={formData.accessibilityInfo || ""}
-                  onChange={(e) => setFormData({ ...formData, accessibilityInfo: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      accessibilityInfo: e.target.value,
+                    })
+                  }
                   placeholder="Wheelchair accessible, sign language interpreter, etc."
+                  autoComplete="off"
                 />
               </div>
 
@@ -376,8 +460,11 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                 <Input
                   id="parkingInfo"
                   value={formData.parkingInfo || ""}
-                  onChange={(e) => setFormData({ ...formData, parkingInfo: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, parkingInfo: e.target.value })
+                  }
                   placeholder="Free parking available, $10 valet, street parking only, etc."
+                  autoComplete="off"
                 />
               </div>
 
@@ -386,8 +473,14 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                 <Input
                   id="publicTransportInfo"
                   value={formData.publicTransportInfo || ""}
-                  onChange={(e) => setFormData({ ...formData, publicTransportInfo: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      publicTransportInfo: e.target.value,
+                    })
+                  }
                   placeholder="Metro Station 5 mins walk, Bus route 123, etc."
+                  autoComplete="off"
                 />
               </div>
 
@@ -396,8 +489,14 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                 <Input
                   id="ageRestrictions"
                   value={formData.ageRestrictions || ""}
-                  onChange={(e) => setFormData({ ...formData, ageRestrictions: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      ageRestrictions: e.target.value,
+                    })
+                  }
                   placeholder="All ages, 18+, 21+, Family friendly, etc."
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -411,7 +510,9 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                   <DollarSign className="h-5 w-5" />
                   Pricing Configuration
                 </h3>
-                <p className="text-sm text-gray-600">Set up your ticket pricing strategy</p>
+                <p className="text-sm text-gray-600">
+                  Set up your ticket pricing strategy
+                </p>
               </div>
             </div>
 
@@ -424,10 +525,18 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                   min="0"
                   step="0.01"
                   value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      price: parseFloat(e.target.value) || 0,
+                    })
+                  }
                   placeholder="0.00"
+                  autoComplete="off"
                 />
-                <p className="text-xs text-gray-500 mt-1">Set to 0 for free events</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Set to 0 for free events
+                </p>
               </div>
             </div>
 
@@ -439,12 +548,15 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                   checked={formData.enableDynamicPricing}
                   onCheckedChange={handleDynamicPricingToggle}
                 />
-                <Label htmlFor="dynamicPricing" className="flex items-center gap-2">
+                <Label
+                  htmlFor="dynamicPricing"
+                  className="flex items-center gap-2"
+                >
                   <Sparkles className="h-4 w-4" />
                   Enable Dynamic Pricing (AI-Powered)
                 </Label>
               </div>
-              
+
               {formData.enableDynamicPricing && (
                 <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-white">
                   <div>
@@ -454,9 +566,15 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                       type="number"
                       min="0"
                       step="0.01"
-                      value={formData.minPrice || ''}
-                      onChange={(e) => setFormData({ ...formData, minPrice: parseFloat(e.target.value) || 0 })}
+                      value={formData.minPrice || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          minPrice: parseFloat(e.target.value) || 0,
+                        })
+                      }
                       placeholder="Minimum ticket price"
+                      autoComplete="off"
                     />
                   </div>
                   <div>
@@ -466,13 +584,20 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
                       type="number"
                       min="0"
                       step="0.01"
-                      value={formData.maxPrice || ''}
-                      onChange={(e) => setFormData({ ...formData, maxPrice: parseFloat(e.target.value) || 0 })}
+                      value={formData.maxPrice || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          maxPrice: parseFloat(e.target.value) || 0,
+                        })
+                      }
                       placeholder="Maximum ticket price"
+                      autoComplete="off"
                     />
                   </div>
                   <div className="col-span-2 text-sm text-gray-600">
-                    Prices will automatically adjust based on demand, time until event, and attendance rates.
+                    Prices will automatically adjust based on demand, time until
+                    event, and attendance rates.
                   </div>
                 </div>
               )}
@@ -487,18 +612,22 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
               value={formData.tags.join(", ")}
               onChange={handleTagsChange}
               placeholder="outdoor, family-friendly, music (separate with commas)"
+              maxLength={100}
+              autoComplete="off"
             />
             <p className="text-xs text-gray-500 mt-1">
               Add tags to help people discover your event
             </p>
           </div>
 
-          <Button 
-            type="submit" 
-            disabled={isCreating || isSubmitting} 
+          <Button
+            type="submit"
+            disabled={isCreating || isSubmitting}
             className="w-full"
           >
-            {isCreating || isSubmitting ? "Creating Event..." : "Create Event with Enhanced SEO"}
+            {isCreating || isSubmitting
+              ? "Creating Event..."
+              : "Create Event with Enhanced SEO"}
           </Button>
         </form>
       </CardContent>
@@ -507,3 +636,5 @@ const SecureEventCreationForm = ({ onSuccess }: SecureEventCreationFormProps) =>
 };
 
 export default SecureEventCreationForm;
+// This component provides a secure and optimized form for creating events with advanced features like dynamic pricing, SEO metadata, and AI-powered suggestions.
+// It includes fields for event details, image upload, and additional information to enhance discoverability.

@@ -1,8 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * Custom hook for validating and checking username availability.
+ */
 export const useUsernameValidation = (initialUsername: string = "") => {
   const { user } = useAuth();
   const [username, setUsername] = useState(initialUsername);
@@ -35,7 +37,9 @@ export const useUsernameValidation = (initialUsername: string = "") => {
       }
 
       if (!/^[a-z0-9_.-]+$/.test(username)) {
-        setError("Username can only contain lowercase letters, numbers, underscores, dots, and hyphens");
+        setError(
+          "Username can only contain lowercase letters, numbers, underscores, dots, and hyphens"
+        );
         setIsAvailable(false);
         return;
       }
@@ -63,7 +67,8 @@ export const useUsernameValidation = (initialUsername: string = "") => {
       }
     };
 
-    const timeoutId = setTimeout(checkUsername, 500);
+    // Debounce username check
+    const timeoutId = setTimeout(checkUsername, 400);
     return () => clearTimeout(timeoutId);
   }, [username, initialUsername, user?.id]);
 

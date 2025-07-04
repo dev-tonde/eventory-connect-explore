@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ErrorLogEntry {
@@ -22,42 +21,46 @@ class ErrorHandler {
     return ErrorHandler.instance;
   }
 
-  async logError(error: Error | string, context?: Partial<ErrorLogEntry>): Promise<void> {
+  async logError(
+    error: Error | string,
+    context?: Partial<ErrorLogEntry>
+  ): Promise<void> {
     try {
       const errorMessage = error instanceof Error ? error.message : error;
       const stackTrace = error instanceof Error ? error.stack : undefined;
 
       const logEntry: ErrorLogEntry = {
-        error_type: context?.error_type || 'client_error',
+        error_type: context?.error_type || "client_error",
         error_message: errorMessage,
-        stack_trace: stackTrace,
-        url: window.location.href,
-        user_agent: navigator.userAgent,
-        ...context
+        stack_trace: stackTrace || context?.stack_trace,
+        url: context?.url || window.location.href,
+        user_agent: context?.user_agent || navigator.userAgent,
+        user_id: context?.user_id,
+        ...context,
       };
 
       // Log to Supabase
-      await supabase.from('error_logs').insert(logEntry);
+      await supabase.from("error_logs").insert(logEntry);
 
       // Also log to console in development
       if (import.meta.env.DEV) {
-        console.error('Error logged:', logEntry);
+        console.error("Error logged:", logEntry);
       }
     } catch (loggingError) {
       // Fallback to console if logging fails
-      console.error('Failed to log error:', loggingError);
-      console.error('Original error:', error);
+      console.error("Failed to log error:", loggingError);
+      console.error("Original error:", error);
     }
   }
 
   handleAsyncError = (error: Error, context?: string) => {
     this.logError(error, {
-      error_type: 'async_error',
-      error_message: `${context ? `${context}: ` : ''}${error.message}`
+      error_type: "async_error",
+      error_message: `${context ? `${context}: ` : ""}${error.message}`,
     });
   };
 
-  wrapAsyncFunction = <T extends (...args: any[]) => Promise<any>>(
+  wrapAsyncFunction = <T extends (...args: unknown[]) => Promise<unknown>>(
     fn: T,
     context: string
   ): T => {
@@ -74,21 +77,26 @@ class ErrorHandler {
 
 export const errorHandler = ErrorHandler.getInstance();
 
-// Global error handlers
+/**
+ * Sets up global error handlers for unhandled promise rejections and uncaught errors.
+ * Should be called once at app startup.
+ */
 export const setupGlobalErrorHandlers = () => {
   // Handle unhandled promise rejections
-  window.addEventListener('unhandledrejection', (event) => {
+  window.addEventListener("unhandledrejection", (event) => {
     errorHandler.logError(event.reason, {
-      error_type: 'unhandled_promise_rejection'
+      error_type: "unhandled_promise_rejection",
     });
   });
 
   // Handle uncaught errors
-  window.addEventListener('error', (event) => {
+  window.addEventListener("error", (event) => {
     errorHandler.logError(event.error || event.message, {
-      error_type: 'unhandled_error',
-      url: event.filename,
-      stack_trace: `Line: ${event.lineno}, Column: ${event.colno}`
+      error_type: "unhandled_error",
+      url: (event as ErrorEvent).filename,
+      stack_trace: `Line: ${(event as ErrorEvent).lineno}, Column: ${
+        (event as ErrorEvent).colno
+      }`,
     });
   });
 };

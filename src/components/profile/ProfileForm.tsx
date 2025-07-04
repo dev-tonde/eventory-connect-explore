@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,10 @@ import UsernameInput from "@/components/profile/UsernameInput";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+
+// Sanitize text to prevent XSS
+const sanitizeText = (text: string) =>
+  typeof text === "string" ? text.replace(/[<>]/g, "").trim() : "";
 
 const ProfileForm = () => {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
@@ -23,48 +26,38 @@ const ProfileForm = () => {
   });
 
   useEffect(() => {
-    console.log('ProfileForm: Profile updated:', profile);
-    
     if (profile) {
       setFormData({
-        first_name: profile.first_name || "",
-        last_name: profile.last_name || "",
-        username: profile.username || "",
-        bio: profile.bio || "",
+        first_name: sanitizeText(profile.first_name || ""),
+        last_name: sanitizeText(profile.last_name || ""),
+        username: sanitizeText(profile.username || ""),
+        bio: sanitizeText(profile.bio || ""),
       });
-
       checkUsernameEditability();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
   const checkUsernameEditability = async () => {
     if (!user?.id) return;
-
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("username_last_changed")
+        .eq("id", user.id)
         .maybeSingle();
 
       if (error) {
-        console.error("Error checking username editability:", error);
         setCanEditUsername(true);
-      } else if (!data) {
+      } else if (!data || !data.username_last_changed) {
         setCanEditUsername(true);
       } else {
-        const lastChanged = (data as any).username_last_changed;
-        if (!lastChanged) {
-          setCanEditUsername(true);
-        } else {
-          const sixMonthsAgo = new Date();
-          sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-          const canEdit = new Date(lastChanged) < sixMonthsAgo;
-          setCanEditUsername(canEdit);
-        }
+        const lastChanged = new Date(data.username_last_changed);
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        setCanEditUsername(lastChanged < sixMonthsAgo);
       }
-    } catch (error) {
-      console.error("Error checking username editability:", error);
+    } catch {
       setCanEditUsername(true);
     }
   };
@@ -72,35 +65,36 @@ const ProfileForm = () => {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
-      console.log('ProfileForm: Submitting profile update:', formData);
-      
-      const { error } = await updateProfile(formData);
-      
+      // Sanitize all fields before update
+      const sanitizedData = {
+        first_name: sanitizeText(formData.first_name),
+        last_name: sanitizeText(formData.last_name),
+        username: sanitizeText(formData.username),
+        bio: sanitizeText(formData.bio),
+      };
+
+      const { error } = await updateProfile(sanitizedData);
+
       if (error) {
-        console.error('ProfileForm: Update error:', error);
         toast({
           title: "Error",
           description: "Failed to update profile. Please try again.",
           variant: "destructive",
         });
       } else {
-        console.log('ProfileForm: Profile updated successfully');
-        
-        // Force a refresh to make sure we get the latest data
         setTimeout(() => {
           refreshProfile();
         }, 500);
-        
         toast({
           title: "Success",
-          description: "Profile updated successfully! The changes will appear shortly.",
+          description:
+            "Profile updated successfully! The changes will appear shortly.",
           variant: "default",
         });
       }
-    } catch (error) {
-      console.error("ProfileForm: Profile update error:", error);
+    } catch {
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -112,7 +106,7 @@ const ProfileForm = () => {
   };
 
   const handleUsernameChange = (username: string) => {
-    setFormData({ ...formData, username });
+    setFormData({ ...formData, username: sanitizeText(username) });
   };
 
   return (
@@ -121,7 +115,11 @@ const ProfileForm = () => {
         <CardTitle>Profile Information</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleUpdateProfile} className="space-y-4">
+        <form
+          onSubmit={handleUpdateProfile}
+          className="space-y-4"
+          autoComplete="off"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -133,6 +131,9 @@ const ProfileForm = () => {
                   setFormData({ ...formData, first_name: e.target.value })
                 }
                 placeholder="Enter your first name"
+                autoComplete="given-name"
+                maxLength={50}
+                aria-label="First Name"
               />
             </div>
             <div>
@@ -145,6 +146,9 @@ const ProfileForm = () => {
                   setFormData({ ...formData, last_name: e.target.value })
                 }
                 placeholder="Enter your last name"
+                autoComplete="family-name"
+                maxLength={50}
+                aria-label="Last Name"
               />
             </div>
           </div>
@@ -153,7 +157,7 @@ const ProfileForm = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Email
             </label>
-            <Input value={user?.email || ""} disabled />
+            <Input value={user?.email || ""} disabled aria-label="Email" />
           </div>
 
           {canEditUsername ? (
@@ -170,6 +174,7 @@ const ProfileForm = () => {
                 value={formData.username}
                 disabled
                 className="bg-gray-100"
+                aria-label="Username"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Username can only be changed every 6 months
@@ -188,13 +193,22 @@ const ProfileForm = () => {
               }
               placeholder="Tell us about yourself"
               className="min-h-[100px]"
+              maxLength={500}
+              aria-label="Bio"
             />
           </div>
 
-          <Button type="submit" disabled={isLoading}>
+          <Button
+            type="submit"
+            disabled={isLoading}
+            aria-label="Update Profile"
+          >
             {isLoading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2
+                  className="h-4 w-4 mr-2 animate-spin"
+                  aria-hidden="true"
+                />
                 Updating...
               </>
             ) : (
@@ -208,3 +222,5 @@ const ProfileForm = () => {
 };
 
 export default ProfileForm;
+// This component allows users to update their profile information including first name, last name, username, and bio.
+// It includes form validation, sanitization to prevent XSS attacks, and checks if the username can be edited based on the last change date.

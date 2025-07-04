@@ -1,4 +1,52 @@
 
+// /** @type {import('next').NextConfig} */
+// const nextConfig = {
+//   reactStrictMode: true,
+//   swcMinify: true,
+//   async headers() {
+//     return [
+//       {
+//         source: '/(.*)',
+//         headers: [
+//           {
+//             key: 'Content-Security-Policy',
+//             value: [
+//               "default-src 'self'",
+//               "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://yaihbkgojeuewdacmtje.supabase.co",
+//               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+//               "img-src 'self' data: https: blob:",
+//               "font-src 'self' https://fonts.gstatic.com",
+//               "connect-src 'self' https://yaihbkgojeuewdacmtje.supabase.co wss://yaihbkgojeuewdacmtje.supabase.co",
+//               "media-src 'self' https:",
+//               "frame-ancestors 'none'",
+//               "base-uri 'self'",
+//               "form-action 'self'"
+//             ].join('; ')
+//           },
+//           {
+//             key: 'X-Frame-Options',
+//             value: 'DENY'
+//           },
+//           {
+//             key: 'X-Content-Type-Options',
+//             value: 'nosniff'
+//           },
+//           {
+//             key: 'Referrer-Policy',
+//             value: 'strict-origin-when-cross-origin'
+//           },
+//           {
+//             key: 'Permissions-Policy',
+//             value: 'camera=(), microphone=(), geolocation=(self)'
+//           }
+//         ]
+//       }
+//     ];
+//   }
+// };
+
+// module.exports = nextConfig;
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -6,13 +54,14 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: "/(.*)",
         headers: [
           {
-            key: 'Content-Security-Policy',
+            key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://yaihbkgojeuewdacmtje.supabase.co",
+              // Remove 'unsafe-eval' and 'unsafe-inline' if possible for better security.
+              "script-src 'self' https://yaihbkgojeuewdacmtje.supabase.co",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' https://fonts.gstatic.com",
@@ -21,23 +70,23 @@ const nextConfig = {
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'"
-            ].join('; ')
+            ].join("; ")
           },
           {
-            key: 'X-Frame-Options',
-            value: 'DENY'
+            key: "X-Frame-Options",
+            value: "DENY"
           },
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            key: "X-Content-Type-Options",
+            value: "nosniff"
           },
           {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin"
           },
           {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(self)'
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(self)"
           }
         ]
       }

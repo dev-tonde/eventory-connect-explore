@@ -1,11 +1,23 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Metadata for a backup export.
+ */
 interface BackupMetadata {
   timestamp: string;
   tables: string[];
   recordCount: number;
   size: string;
+  version: string;
+}
+
+/**
+ * Result of a backup operation.
+ */
+interface BackupResult {
+  success: boolean;
+  data?: Record<string, unknown>;
+  error?: string;
 }
 
 export class BackupService {
@@ -13,6 +25,9 @@ export class BackupService {
 
   private constructor() {}
 
+  /**
+   * Singleton instance getter.
+   */
   static getInstance(): BackupService {
     if (!BackupService.instance) {
       BackupService.instance = new BackupService();
@@ -20,123 +35,103 @@ export class BackupService {
     return BackupService.instance;
   }
 
-  async createDataExport(): Promise<{ success: boolean; data?: any; error?: string }> {
+  /**
+   * Exports critical user data from the database.
+   */
+  async createDataExport(): Promise<BackupResult> {
     try {
-      // Export critical user data with type-safe table access
-      const exportData: any = {};
+      const exportData: Record<string, unknown[]> = {};
       let totalRecords = 0;
+      const tables = ["profiles", "events", "tickets", "favorites"];
 
-      // Export profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
-
-      if (profilesError) {
-        throw new Error(`Failed to export profiles: ${profilesError.message}`);
+      for (const table of tables) {
+        const { data, error } = await supabase.from(table).select("*");
+        if (error) {
+          throw new Error(`Failed to export ${table}: ${error.message}`);
+        }
+        exportData[table] = data;
+        totalRecords += data?.length || 0;
       }
 
-      exportData.profiles = profiles;
-      totalRecords += profiles?.length || 0;
-
-      // Export events
-      const { data: events, error: eventsError } = await supabase
-        .from('events')
-        .select('*');
-
-      if (eventsError) {
-        throw new Error(`Failed to export events: ${eventsError.message}`);
-      }
-
-      exportData.events = events;
-      totalRecords += events?.length || 0;
-
-      // Export tickets
-      const { data: tickets, error: ticketsError } = await supabase
-        .from('tickets')
-        .select('*');
-
-      if (ticketsError) {
-        throw new Error(`Failed to export tickets: ${ticketsError.message}`);
-      }
-
-      exportData.tickets = tickets;
-      totalRecords += tickets?.length || 0;
-
-      // Export favorites
-      const { data: favorites, error: favoritesError } = await supabase
-        .from('favorites')
-        .select('*');
-
-      if (favoritesError) {
-        throw new Error(`Failed to export favorites: ${favoritesError.message}`);
-      }
-
-      exportData.favorites = favorites;
-      totalRecords += favorites?.length || 0;
+      const backupStr = JSON.stringify(exportData);
+      const metadata: BackupMetadata = {
+        timestamp: new Date().toISOString(),
+        tables,
+        recordCount: totalRecords,
+        size: `${(backupStr.length / 1024).toFixed(2)} KB`,
+        version: "1.0.0",
+      };
 
       const backup = {
-        metadata: {
-          timestamp: new Date().toISOString(),
-          tables: ['profiles', 'events', 'tickets', 'favorites'],
-          recordCount: totalRecords,
-          version: '1.0.0'
-        },
-        data: exportData
+        metadata,
+        data: exportData,
       };
 
       return { success: true, data: backup };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Export failed' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Export failed",
       };
     }
   }
 
+  /**
+   * Triggers a download of the backup as a JSON file.
+   * No user-supplied URLs are used, so no unvalidated URL redirection is possible.
+   */
   async downloadBackup(): Promise<void> {
     const result = await this.createDataExport();
-    
+
     if (!result.success) {
       throw new Error(result.error);
     }
 
-    // Create downloadable file
     const dataStr = JSON.stringify(result.data, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+
+    // Secure download: no user-supplied URLs or redirection
     const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `eventory-backup-${new Date().toISOString().split('T')[0]}.json`;
-    
+    link.download = `eventory-backup-${
+      new Date().toISOString().split("T")[0]
+    }.json`;
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     URL.revokeObjectURL(url);
   }
 
-  validateBackup(backupData: any): { valid: boolean; errors: string[] } {
+  /**
+   * Validates the structure of a backup file.
+   */
+  validateBackup(backupData: {
+    metadata?: BackupMetadata;
+    data?: Record<string, unknown>;
+  }): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
+
     if (!backupData.metadata) {
-      errors.push('Missing backup metadata');
+      errors.push("Missing backup metadata");
     }
-    
+
     if (!backupData.data) {
-      errors.push('Missing backup data');
+      errors.push("Missing backup data");
     }
-    
-    const requiredTables = ['profiles', 'events'];
+
+    const requiredTables = ["profiles", "events"];
     for (const table of requiredTables) {
       if (!backupData.data?.[table]) {
         errors.push(`Missing ${table} data`);
       }
     }
-    
+
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 }

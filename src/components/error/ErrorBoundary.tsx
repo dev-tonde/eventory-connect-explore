@@ -1,4 +1,3 @@
-
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,21 +32,22 @@ class ErrorBoundary extends Component<Props, State> {
 
   logError = async (error: Error, errorInfo: ErrorInfo) => {
     try {
-      await supabase.from('error_logs').insert([{
-        error_type: error.name,
-        error_message: error.message,
-        stack_trace: error.stack,
-        url: window.location.href,
-        user_agent: navigator.userAgent,
-        // Additional context from React
-        created_at: new Date().toISOString()
-      }]);
+      await supabase.from("error_logs").insert([
+        {
+          error_type: error.name,
+          error_message: error.message,
+          stack_trace: error.stack,
+          url: window.location.href,
+          user_agent: navigator.userAgent,
+          created_at: new Date().toISOString(),
+        },
+      ]);
     } catch (logError) {
-      console.error('Failed to log error:', logError);
+      console.error("Failed to log error:", logError);
     }
 
     // Also log to console for development
-    console.error('Error caught by boundary:', error, errorInfo);
+    console.error("Error caught by boundary:", error, errorInfo);
   };
 
   handleRetry = () => {
@@ -59,9 +59,12 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   render() {
-    if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
+    const { hasError, error } = this.state;
+    const { fallback, children } = this.props;
+
+    if (hasError) {
+      if (fallback) {
+        return fallback;
       }
 
       return (
@@ -75,25 +78,38 @@ class ErrorBoundary extends Component<Props, State> {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600">
-                We're sorry, but something unexpected happened. The error has been logged and our team will investigate.
+                We're sorry, but something unexpected happened. The error has
+                been logged and our team will investigate.
               </p>
-              
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+
+              {process.env.NODE_ENV === "development" && error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h4 className="font-medium text-red-800 mb-2">Error Details (Development)</h4>
+                  <h4 className="font-medium text-red-800 mb-2">
+                    Error Details (Development)
+                  </h4>
                   <pre className="text-xs text-red-700 overflow-auto max-h-40">
-                    {this.state.error.message}
-                    {this.state.error.stack}
+                    {error.message}
+                    {"\n"}
+                    {error.stack}
                   </pre>
                 </div>
               )}
 
               <div className="flex gap-2">
-                <Button onClick={this.handleRetry} className="flex-1">
+                <Button
+                  onClick={this.handleRetry}
+                  className="flex-1"
+                  aria-label="Try again"
+                >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Try Again
                 </Button>
-                <Button onClick={this.handleReload} variant="outline" className="flex-1">
+                <Button
+                  onClick={this.handleReload}
+                  variant="outline"
+                  className="flex-1"
+                  aria-label="Reload page"
+                >
                   Reload Page
                 </Button>
               </div>
@@ -107,8 +123,10 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return children;
   }
 }
 
 export default ErrorBoundary;
+// This component is an Error Boundary that catches JavaScript errors in its child components.
+// It logs the error to a Supabase table and displays a fallback UI with options to retry or reload the page.

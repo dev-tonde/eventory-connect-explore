@@ -1,7 +1,7 @@
-
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface OfflineTicket {
   id: string;
@@ -16,44 +16,53 @@ interface OfflineTicket {
   cachedAt: number;
 }
 
+/**
+ * Custom hook for offline ticket access and validation.
+ * Handles syncing, caching, and offline lookup.
+ */
 export const useOfflineTickets = () => {
   const { user } = useAuth();
   const [offlineTickets, setOfflineTickets] = useState<OfflineTicket[]>([]);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
 
+  // Listen for online/offline status changes
   useEffect(() => {
     const handleOnlineStatus = () => setIsOnline(navigator.onLine);
-    
-    window.addEventListener('online', handleOnlineStatus);
-    window.addEventListener('offline', handleOnlineStatus);
-    
+
+    window.addEventListener("online", handleOnlineStatus);
+    window.addEventListener("offline", handleOnlineStatus);
+
     return () => {
-      window.removeEventListener('online', handleOnlineStatus);
-      window.removeEventListener('offline', handleOnlineStatus);
+      window.removeEventListener("online", handleOnlineStatus);
+      window.removeEventListener("offline", handleOnlineStatus);
     };
   }, []);
 
   // Load tickets from localStorage
-  const loadOfflineTickets = useCallback(async () => {
+  const loadOfflineTickets = useCallback(() => {
     try {
-      const stored = localStorage.getItem(`offline_tickets_${user?.id}`);
+      if (!user) return;
+      const stored = localStorage.getItem(`offline_tickets_${user.id}`);
       if (stored) {
         const tickets = JSON.parse(stored);
         setOfflineTickets(tickets);
       }
     } catch (error) {
-      console.error('Error loading offline tickets:', error);
+      console.error("Error loading offline tickets:", error);
     }
-  }, [user?.id]);
+  }, [user]);
 
-  // Sync tickets when online
+  // Sync tickets from Supabase and cache them
   const syncTickets = useCallback(async () => {
     if (!user || !isOnline) return;
 
     try {
       const { data: tickets, error } = await supabase
-        .from('tickets')
-        .select(`
+        .from("tickets")
+        .select(
+          `
           id,
           event_id,
           ticket_number,
@@ -65,92 +74,104 @@ export const useOfflineTickets = () => {
             date,
             venue
           )
-        `)
-        .eq('user_id', user.id)
-        .eq('status', 'active');
+        `
+        )
+        .eq("user_id", user.id)
+        .eq("status", "active");
 
       if (error) {
-        console.error('Error syncing tickets:', error);
+        console.error("Error syncing tickets:", error);
         return;
       }
 
-      const offlineTickets: OfflineTicket[] = tickets?.map((ticket: any) => ({
-        id: ticket.id,
-        eventId: ticket.event_id,
-        ticketNumber: ticket.ticket_number || '',
-        qrCode: ticket.qr_code || '',
-        eventTitle: ticket.events?.title || '',
-        eventDate: ticket.events?.date || '',
-        eventVenue: ticket.events?.venue || '',
-        quantity: ticket.quantity,
-        status: ticket.status,
-        cachedAt: Date.now(),
-      })) || [];
+      const offlineTickets: OfflineTicket[] = (tickets || []).map(
+        (ticket: any) => ({
+          id: ticket.id,
+          eventId: ticket.event_id,
+          ticketNumber: ticket.ticket_number || "",
+          qrCode: ticket.qr_code || "",
+          eventTitle: ticket.events?.title || "",
+          eventDate: ticket.events?.date || "",
+          eventVenue: ticket.events?.venue || "",
+          quantity: ticket.quantity,
+          status: ticket.status,
+          cachedAt: Date.now(),
+        })
+      );
 
       // Store in localStorage for offline access
       localStorage.setItem(
         `offline_tickets_${user.id}`,
         JSON.stringify(offlineTickets)
       );
-      
-      setOfflineTickets(offlineTickets);
-    } catch (error) {
-      console.error('Error syncing tickets:', error);
-    }
-  }, [user, isOnline]);
 
-  // Cache event images for offline viewing
+      setOfflineTickets(offlineTickets);
+
+      // Optionally cache event images for offline viewing
+      cacheEventImages(offlineTickets);
+    } catch (error) {
+      console.error("Error syncing tickets:", error);
+    }
+  }, [user, isOnline, cacheEventImages]);
+
+  // Cache event images for offline viewing (optional, requires service worker)
   const cacheEventImages = useCallback(async (tickets: OfflineTicket[]) => {
-    if (!('serviceWorker' in navigator)) return;
+    if (!("serviceWorker" in navigator)) return;
 
     const imageUrls = tickets
-      .map(ticket => `/api/events/${ticket.eventId}/image`)
+      .map((ticket) => `/api/events/${ticket.eventId}/image`)
       .filter(Boolean);
 
-    // Request service worker to cache images
     if (navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
-        type: 'CACHE_IMAGES',
+        type: "CACHE_IMAGES",
         urls: imageUrls,
       });
     }
   }, []);
 
+  // Load offline tickets on mount and when user changes
   useEffect(() => {
     loadOfflineTickets();
   }, [loadOfflineTickets]);
 
+  // Sync tickets when online
   useEffect(() => {
     if (isOnline) {
       syncTickets();
     }
   }, [isOnline, syncTickets]);
 
-  const getTicketByQR = useCallback((qrData: string) => {
-    return offlineTickets.find(ticket => ticket.qrCode === qrData);
-  }, [offlineTickets]);
+  // Find ticket by QR code
+  const getTicketByQR = useCallback(
+    (qrData: string) =>
+      offlineTickets.find((ticket) => ticket.qrCode === qrData),
+    [offlineTickets]
+  );
 
-  const validateTicket = useCallback(async (ticketId: string) => {
-    if (isOnline) {
-      // Online validation
-      try {
-        const { data, error } = await supabase
-          .from('tickets')
-          .select('status')
-          .eq('id', ticketId)
-          .single();
+  // Validate ticket (online if possible, otherwise offline)
+  const validateTicket = useCallback(
+    async (ticketId: string) => {
+      if (isOnline) {
+        try {
+          const { data, error } = await supabase
+            .from("tickets")
+            .select("status")
+            .eq("id", ticketId)
+            .single();
 
-        if (error) throw error;
-        return data.status === 'active';
-      } catch {
-        return false;
+          if (error) throw error;
+          return data.status === "active";
+        } catch {
+          return false;
+        }
+      } else {
+        const ticket = offlineTickets.find((t) => t.id === ticketId);
+        return ticket?.status === "active";
       }
-    } else {
-      // Offline validation
-      const ticket = offlineTickets.find(t => t.id === ticketId);
-      return ticket?.status === 'active';
-    }
-  }, [isOnline, offlineTickets]);
+    },
+    [isOnline, offlineTickets]
+  );
 
   return {
     offlineTickets,

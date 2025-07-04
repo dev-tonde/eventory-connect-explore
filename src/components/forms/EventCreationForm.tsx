@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +8,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Calendar, MapPin, DollarSign, Image as ImageIcon, Tag, Upload } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  DollarSign,
+  Image as ImageIcon,
+  Tag,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEvents } from "@/hooks/useEvents";
+
+// Sanitize all user input to prevent XSS or injection
+const sanitizeText = (text: string) => text.replace(/[<>]/g, "").trim();
 
 interface EventFormData {
   title: string;
@@ -32,6 +40,17 @@ interface EventCreationFormProps {
   onSuccess?: () => void;
 }
 
+const categories = [
+  "Music",
+  "Technology",
+  "Food",
+  "Sports",
+  "Arts",
+  "Business",
+  "Education",
+  "Health",
+];
+
 const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
   const { profile } = useAuth();
   const { createEvent, isCreating } = useEvents();
@@ -50,25 +69,20 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
   });
   const [imagePreview, setImagePreview] = useState<string>("/placeholder.svg");
 
-  const categories = [
-    "Music",
-    "Technology",
-    "Food",
-    "Sports",
-    "Arts",
-    "Business",
-    "Education",
-    "Health",
-  ];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    createEvent({
-      ...formData,
-      tags: formData.tags.filter((tag) => tag.trim() !== ""),
-    });
 
+    // Sanitize all text fields before submission
+    const sanitizedData = {
+      ...formData,
+      title: sanitizeText(formData.title),
+      description: sanitizeText(formData.description),
+      location: sanitizeText(formData.location),
+      address: sanitizeText(formData.address),
+      tags: formData.tags.map(sanitizeText).filter((tag) => tag !== ""),
+    };
+
+    await createEvent(sanitizedData);
     onSuccess?.();
   };
 
@@ -76,7 +90,7 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
     const file = e.target.files?.[0];
     if (file) {
       setFormData({ ...formData, imageFile: file });
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -87,7 +101,7 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
   };
 
   const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const tags = e.target.value.split(",").map((tag) => tag.trim());
+    const tags = e.target.value.split(",").map((tag) => sanitizeText(tag));
     setFormData({ ...formData, tags });
   };
 
@@ -103,7 +117,7 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
           {/* Image Upload */}
           <div className="space-y-4">
             <div>
@@ -147,6 +161,8 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                   setFormData({ ...formData, title: e.target.value })
                 }
                 placeholder="Enter event title"
+                maxLength={80}
+                autoComplete="off"
               />
             </div>
 
@@ -162,6 +178,8 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                 }
                 placeholder="Describe your event"
                 className="w-full h-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                maxLength={500}
+                autoComplete="off"
               />
             </div>
 
@@ -178,6 +196,7 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                   onChange={(e) =>
                     setFormData({ ...formData, date: e.target.value })
                   }
+                  aria-label="Event date"
                 />
               </div>
               <div>
@@ -191,6 +210,7 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                   onChange={(e) =>
                     setFormData({ ...formData, time: e.target.value })
                   }
+                  aria-label="Event time"
                 />
               </div>
             </div>
@@ -210,6 +230,8 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                   setFormData({ ...formData, location: e.target.value })
                 }
                 placeholder="e.g., Central Park"
+                maxLength={80}
+                autoComplete="off"
               />
             </div>
             <div>
@@ -223,6 +245,8 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                   setFormData({ ...formData, address: e.target.value })
                 }
                 placeholder="123 Street Name, City, State, ZIP"
+                maxLength={120}
+                autoComplete="off"
               />
             </div>
           </div>
@@ -246,6 +270,7 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                   })
                 }
                 placeholder="0.00"
+                aria-label="Ticket price"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Set to 0 for free events
@@ -262,6 +287,7 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                   setFormData({ ...formData, category: e.target.value })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                aria-label="Event category"
               >
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>
@@ -285,6 +311,7 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
                   })
                 }
                 placeholder="100"
+                aria-label="Max attendees"
               />
             </div>
           </div>
@@ -299,6 +326,9 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
               value={formData.tags.join(", ")}
               onChange={handleTagsChange}
               placeholder="outdoor, family-friendly, music (separate with commas)"
+              maxLength={100}
+              autoComplete="off"
+              aria-label="Event tags"
             />
             <p className="text-xs text-gray-500 mt-1">
               Add tags to help people discover your event
@@ -315,3 +345,6 @@ const EventCreationForm = ({ onSuccess }: EventCreationFormProps) => {
 };
 
 export default EventCreationForm;
+// This component provides a form for creating new events with fields for title, description, date, time, location, pricing, and more.
+// It includes image upload functionality with a preview, and sanitizes all user input to prevent XSS or injection attacks.
+// The form uses a card layout for better organization and includes icons for visual clarity

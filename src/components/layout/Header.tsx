@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,30 +13,36 @@ const Header = () => {
     try {
       await logout();
     } catch (error) {
-      console.error('Error signing out:', error);
+      // Optionally show a toast or error message here
+      // console.error('Error signing out:', error);
     }
   };
 
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <header
+      className="bg-white shadow-sm border-b sticky top-0 z-50"
+      role="banner"
+    >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <HeaderLogo />
-          
+
           <div className="flex items-center space-x-6">
             <LocationIndicator />
             <NavigationMenu />
-            
+
             <div className="flex items-center space-x-4">
               {user ? (
                 <UserMenu onLogout={handleLogout} />
               ) : (
                 <div className="flex items-center space-x-2">
-                  <Link to="/auth">
-                    <Button variant="ghost">Log In</Button>
+                  <Link to="/auth" aria-label="Log in to your account">
+                    <Button variant="ghost" type="button">
+                      Log In
+                    </Button>
                   </Link>
-                  <Link to="/auth">
-                    <Button>Sign Up</Button>
+                  <Link to="/auth" aria-label="Sign up for an account">
+                    <Button type="button">Sign Up</Button>
                   </Link>
                 </div>
               )}
@@ -50,3 +55,5 @@ const Header = () => {
 };
 
 export default Header;
+// This component renders the header of the application, including the logo, navigation menu, location indicator, and user authentication options.
+// It uses the `useAuth` context to manage user authentication state and provides links for logging

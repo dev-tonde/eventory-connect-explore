@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +26,10 @@ interface EnhancedRealTimeChatProps {
   eventId?: string;
 }
 
-const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProps) => {
+const EnhancedRealTimeChat = ({
+  communityId,
+  eventId,
+}: EnhancedRealTimeChatProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -35,10 +38,11 @@ const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProp
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
 
+  // Fetch messages
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ["community-messages", communityId, eventId],
     queryFn: async () => {
-      const query = supabase
+      let query = supabase
         .from("community_messages")
         .select("*")
         .eq("community_id", communityId)
@@ -46,7 +50,7 @@ const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProp
         .limit(100);
 
       if (eventId) {
-        query.eq("event_id", eventId);
+        query = query.eq("event_id", eventId);
       }
 
       const { data, error } = await query;
@@ -55,8 +59,13 @@ const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProp
     },
   });
 
+  // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (messageData: { message: string; message_type: string; image_url?: string }) => {
+    mutationFn: async (messageData: {
+      message: string;
+      message_type: string;
+      image_url?: string;
+    }) => {
       const { data, error } = await supabase
         .from("community_messages")
         .insert({
@@ -85,7 +94,6 @@ const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProp
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !user) return;
-    
     sendMessageMutation.mutate({
       message: newMessage,
       message_type: "text",
@@ -107,7 +115,7 @@ const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProp
     scrollToBottom();
   }, [messages]);
 
-  // Set up real-time subscription
+  // Real-time subscription for messages and presence
   useEffect(() => {
     if (!user) return;
 
@@ -130,14 +138,13 @@ const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProp
       )
       .on("presence", { event: "sync" }, () => {
         const newState = channel.presenceState();
-        const users = Object.keys(newState);
-        setOnlineUsers(users);
+        setOnlineUsers(Object.keys(newState));
       })
       .on("presence", { event: "join" }, ({ key }) => {
-        setOnlineUsers(prev => [...prev, key]);
+        setOnlineUsers((prev) => [...prev, key]);
       })
       .on("presence", { event: "leave" }, ({ key }) => {
-        setOnlineUsers(prev => prev.filter(u => u !== key));
+        setOnlineUsers((prev) => prev.filter((u) => u !== key));
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
@@ -173,7 +180,6 @@ const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProp
           </div>
         </CardTitle>
       </CardHeader>
-      
       <CardContent className="flex-1 flex flex-col p-0">
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
@@ -186,7 +192,9 @@ const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProp
                 <div
                   key={message.id}
                   className={`flex gap-3 ${
-                    message.user_id === user?.id ? "justify-end" : "justify-start"
+                    message.user_id === user?.id
+                      ? "justify-end"
+                      : "justify-start"
                   }`}
                 >
                   <div
@@ -199,21 +207,22 @@ const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProp
                     {message.user_id !== user?.id && (
                       <div className="flex items-center gap-2 mb-1">
                         <User className="h-3 w-3" />
-                        <span className="text-xs font-medium">
-                          User
-                        </span>
+                        <span className="text-xs font-medium">User</span>
                       </div>
                     )}
                     {message.image_url && (
-                      <img 
-                        src={message.image_url} 
-                        alt="Shared image" 
+                      <img
+                        src={message.image_url}
+                        alt="Shared"
                         className="max-w-full h-auto rounded mb-2"
                       />
                     )}
                     <p className="text-sm">{message.message}</p>
                     <span className="text-xs opacity-70">
-                      {new Date(message.created_at).toLocaleTimeString()}
+                      {new Date(message.created_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   </div>
                 </div>
@@ -222,27 +231,41 @@ const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProp
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
-
         <div className="border-t p-4">
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              aria-label="Send image"
+              disabled
+            >
               <Image className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              aria-label="Send emoji"
+              disabled
+            >
               <Smile className="h-4 w-4" />
             </Button>
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyPress}
               placeholder="Type your message..."
               disabled={sendMessageMutation.isPending}
               className="flex-1"
+              aria-label="Message input"
             />
             <Button
               onClick={handleSendMessage}
               disabled={sendMessageMutation.isPending || !newMessage.trim()}
               size="sm"
+              type="button"
+              aria-label="Send message"
             >
               <Send className="h-4 w-4" />
             </Button>
@@ -254,3 +277,5 @@ const EnhancedRealTimeChat = ({ communityId, eventId }: EnhancedRealTimeChatProp
 };
 
 export default EnhancedRealTimeChat;
+// This component provides a real-time chat interface for communities and events, allowing users to send and receive messages. It uses Supabase for real-time updates and presence tracking, displaying online users and their messages in a scrollable area. The chat supports text messages and image sharing, with a user-friendly input field and send button.
+// The component handles message sending, real-time updates, and user presence tracking. It also includes error handling for message sending failures and displays a loading state while fetching messages. The chat interface is designed to be responsive and visually appealing, with different styles for messages sent by the current user and others.

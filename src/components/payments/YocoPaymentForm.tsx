@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,32 +32,40 @@ const YocoPaymentForm = ({
 
   useEffect(() => {
     // Load YOCO SDK
-    const script = document.createElement('script');
-    script.src = 'https://js.yoco.com/sdk/v1/yoco-sdk-web.js';
+    const script = document.createElement("script");
+    script.src = "https://js.yoco.com/sdk/v1/yoco-sdk-web.js";
     script.async = true;
     script.onload = initializeYoco;
     document.head.appendChild(script);
 
     return () => {
-      document.head.removeChild(script);
+      if (script.parentNode) {
+        document.head.removeChild(script);
+      }
     };
   }, []);
 
   const initializeYoco = () => {
     if (window.YocoSDK) {
       const yoco = new window.YocoSDK({
-        publicKey: import.meta.env.VITE_YOCO_PUBLIC_KEY || 'pk_test_ed3c54a6gOol69qa7f45',
+        publicKey:
+          import.meta.env.VITE_YOCO_PUBLIC_KEY ||
+          "pk_test_ed3c54a6gOol69qa7f45",
       });
 
       const inlineForm = yoco.inline({
-        containerSelector: '#yoco-card-frame',
+        containerSelector: "#yoco-card-frame",
         styling: {
           base: {
-            fontSize: '16px',
-            color: '#424770',
-            '::placeholder': {
-              color: '#aab7c4',
+            fontSize: "16px",
+            color: "#424770",
+            fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+            "::placeholder": {
+              color: "#aab7c4",
             },
+          },
+          invalid: {
+            color: "#e53e3e",
           },
         },
       });
@@ -72,9 +80,10 @@ const YocoPaymentForm = ({
 
     try {
       const { error, token } = await yocoInlineForm.createToken();
-      
+
       if (error) {
-        console.error('YOCO token creation failed:', error);
+        // Optionally, show user feedback here
+        console.error("YOCO token creation failed:", error);
         return;
       }
 
@@ -84,10 +93,19 @@ const YocoPaymentForm = ({
       );
 
       if (result.success) {
-        onSuccess?.();
+        // Prevent unvalidated URL redirection by only allowing navigation to trusted, hardcoded routes
+        // Do NOT use user-supplied URLs for redirection
+        if (typeof onSuccess === "function") {
+          onSuccess();
+        }
+        // Example: If you want to redirect, use a trusted route only:
+        // navigate("/payment-success"); // <-- safe, hardcoded route
+      } else {
+        // Optionally, show user feedback here
+        console.error("Payment failed:", result.error);
       }
     } catch (error) {
-      console.error('Payment processing error:', error);
+      console.error("Payment processing error:", error);
     }
   };
 
@@ -95,7 +113,7 @@ const YocoPaymentForm = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
+          <CreditCard className="h-5 w-5" aria-hidden="true" />
           Payment Details
         </CardTitle>
       </CardHeader>
@@ -105,7 +123,7 @@ const YocoPaymentForm = ({
             R{totalPrice.toFixed(2)}
           </div>
           <div className="text-sm text-gray-600">
-            {quantity} ticket{quantity > 1 ? 's' : ''}
+            {quantity} ticket{quantity > 1 ? "s" : ""}
           </div>
         </div>
 
@@ -116,8 +134,10 @@ const YocoPaymentForm = ({
           >
             {!isSDKReady && (
               <div className="flex items-center justify-center h-20">
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="ml-2">Loading payment form...</span>
+                <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
+                <span className="ml-2 text-gray-600 text-sm">
+                  Loading payment form...
+                </span>
               </div>
             )}
           </div>
@@ -129,6 +149,8 @@ const YocoPaymentForm = ({
             onClick={onCancel}
             className="flex-1"
             disabled={isProcessing}
+            type="button"
+            aria-label="Cancel payment"
           >
             Cancel
           </Button>
@@ -136,10 +158,15 @@ const YocoPaymentForm = ({
             onClick={handlePayment}
             disabled={!isSDKReady || isProcessing}
             className="flex-1"
+            type="button"
+            aria-label={`Pay R${totalPrice.toFixed(2)}`}
           >
             {isProcessing ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2
+                  className="h-4 w-4 mr-2 animate-spin"
+                  aria-hidden="true"
+                />
                 Processing...
               </>
             ) : (
@@ -157,3 +184,8 @@ const YocoPaymentForm = ({
 };
 
 export default YocoPaymentForm;
+// This component provides a mobile-optimized payment form using the YOCO SDK.
+// It includes secure card input, payment processing, and responsive design for mobile devices.
+// The form displays the total price and quantity of tickets, and includes trust indicators for security.
+// The component handles loading the YOCO SDK, initializing the payment form, and processing payments.
+// It also provides a cancel button to allow users to exit the payment flow without completing the transaction.

@@ -1,7 +1,13 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,14 +36,16 @@ const PaymentReconciliation = () => {
 
   useEffect(() => {
     loadPayments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange, statusFilter]);
 
   const loadPayments = async () => {
     try {
       setLoading(true);
       let query = supabase
-        .from('tickets')
-        .select(`
+        .from("tickets")
+        .select(
+          `
           id,
           payment_reference,
           total_price,
@@ -46,24 +54,25 @@ const PaymentReconciliation = () => {
           purchase_date,
           event_id,
           user_id
-        `)
-        .order('purchase_date', { ascending: false });
+        `
+        )
+        .order("purchase_date", { ascending: false });
 
-      if (statusFilter !== 'all') {
-        query = query.eq('payment_status', statusFilter);
+      if (statusFilter !== "all") {
+        query = query.eq("payment_status", statusFilter);
       }
 
       if (dateRange?.from) {
-        query = query.gte('purchase_date', dateRange.from.toISOString());
+        query = query.gte("purchase_date", dateRange.from.toISOString());
       }
       if (dateRange?.to) {
-        query = query.lte('purchase_date', dateRange.to.toISOString());
+        query = query.lte("purchase_date", dateRange.to.toISOString());
       }
 
       const { data: ticketsData, error } = await query;
-      
+
       if (error) {
-        console.error('Error loading payments:', error);
+        console.error("Error loading payments:", error);
         setPayments([]);
         return;
       }
@@ -74,34 +83,38 @@ const PaymentReconciliation = () => {
       }
 
       // Get unique event IDs and user IDs
-      const eventIds = [...new Set(ticketsData.map(t => t.event_id).filter(Boolean))];
-      const userIds = [...new Set(ticketsData.map(t => t.user_id).filter(Boolean))];
+      const eventIds = [
+        ...new Set(ticketsData.map((t) => t.event_id).filter(Boolean)),
+      ];
+      const userIds = [
+        ...new Set(ticketsData.map((t) => t.user_id).filter(Boolean)),
+      ];
 
       // Fetch events data
-      let eventsData: any[] = [];
+      let eventsData: { id: string; title: string }[] = [];
       if (eventIds.length > 0) {
         const { data: events } = await supabase
-          .from('events')
-          .select('id, title')
-          .in('id', eventIds);
+          .from("events")
+          .select("id, title")
+          .in("id", eventIds);
         eventsData = events || [];
       }
 
       // Fetch profiles data
-      let profilesData: any[] = [];
+      let profilesData: { id: string; email: string }[] = [];
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, email')
-          .in('id', userIds);
+          .from("profiles")
+          .select("id, email")
+          .in("id", userIds);
         profilesData = profiles || [];
       }
 
       // Combine the data
-      const enrichedPayments: PaymentRecord[] = ticketsData.map(ticket => {
-        const event = eventsData.find(e => e.id === ticket.event_id);
-        const profile = profilesData.find(p => p.id === ticket.user_id);
-        
+      const enrichedPayments: PaymentRecord[] = ticketsData.map((ticket) => {
+        const event = eventsData.find((e) => e.id === ticket.event_id);
+        const profile = profilesData.find((p) => p.id === ticket.user_id);
+
         return {
           id: ticket.id,
           payment_reference: ticket.payment_reference,
@@ -110,13 +123,13 @@ const PaymentReconciliation = () => {
           payment_method: ticket.payment_method,
           purchase_date: ticket.purchase_date,
           event_title: event?.title,
-          user_email: profile?.email
+          user_email: profile?.email,
         };
       });
 
       setPayments(enrichedPayments);
     } catch (error) {
-      console.error('Error loading payments:', error);
+      console.error("Error loading payments:", error);
       setPayments([]);
     } finally {
       setLoading(false);
@@ -125,34 +138,62 @@ const PaymentReconciliation = () => {
 
   const exportPayments = () => {
     const csv = [
-      ['Date', 'Reference', 'Event', 'User Email', 'Amount', 'Status', 'Method'].join(','),
-      ...payments.map(payment => [
-        new Date(payment.purchase_date).toLocaleDateString(),
-        payment.payment_reference || 'N/A',
-        payment.event_title || 'N/A',
-        payment.user_email || 'N/A',
-        `R${payment.total_price.toFixed(2)}`,
-        payment.payment_status || 'N/A',
-        payment.payment_method || 'N/A'
-      ].join(','))
-    ].join('\n');
+      [
+        "Date",
+        "Reference",
+        "Event",
+        "User Email",
+        "Amount",
+        "Status",
+        "Method",
+      ].join(","),
+      ...payments.map((payment) =>
+        [
+          new Date(payment.purchase_date).toLocaleDateString(),
+          payment.payment_reference || "N/A",
+          payment.event_title || "N/A",
+          payment.user_email || "N/A",
+          `R${Number(payment.total_price).toFixed(2)}`,
+          payment.payment_status || "N/A",
+          payment.payment_method || "N/A",
+        ].join(",")
+      ),
+    ].join("\n");
 
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `payments-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `payments-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
   };
 
-  const filteredPayments = payments.filter(payment =>
-    (payment.payment_reference?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (payment.event_title?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (payment.user_email?.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Memoize filtered payments for performance
+  const filteredPayments = useMemo(
+    () =>
+      payments.filter(
+        (payment) =>
+          payment.payment_reference
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          payment.event_title
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          payment.user_email?.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [payments, searchTerm]
   );
 
-  const totalRevenue = filteredPayments.reduce((sum, payment) => 
-    payment.payment_status === 'completed' ? sum + Number(payment.total_price) : sum, 0
+  const totalRevenue = useMemo(
+    () =>
+      filteredPayments.reduce(
+        (sum, payment) =>
+          payment.payment_status === "completed"
+            ? sum + Number(payment.total_price)
+            : sum,
+        0
+      ),
+    [filteredPayments]
   );
 
   return (
@@ -173,26 +214,35 @@ const PaymentReconciliation = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R{totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              R{totalRevenue.toLocaleString()}
+            </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Transactions
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{filteredPayments.length}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Payments</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Completed Payments
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {filteredPayments.filter(p => p.payment_status === 'completed').length}
+              {
+                filteredPayments.filter((p) => p.payment_status === "completed")
+                  .length
+              }
             </div>
           </CardContent>
         </Card>
@@ -213,7 +263,7 @@ const PaymentReconciliation = () => {
                 />
               </div>
             </div>
-            
+
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -225,10 +275,7 @@ const PaymentReconciliation = () => {
               <option value="failed">Failed</option>
             </select>
 
-            <DatePickerWithRange
-              date={dateRange}
-              onDateChange={setDateRange}
-            />
+            <DatePickerWithRange date={dateRange} onDateChange={setDateRange} />
           </div>
         </CardContent>
       </Card>
@@ -255,31 +302,38 @@ const PaymentReconciliation = () => {
                     {new Date(payment.purchase_date).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="font-mono text-sm">
-                    {payment.payment_reference || 'N/A'}
+                    {payment.payment_reference || "N/A"}
                   </TableCell>
-                  <TableCell>{payment.event_title || 'N/A'}</TableCell>
-                  <TableCell>{payment.user_email || 'N/A'}</TableCell>
-                  <TableCell>R{payment.total_price.toFixed(2)}</TableCell>
+                  <TableCell>{payment.event_title || "N/A"}</TableCell>
+                  <TableCell>{payment.user_email || "N/A"}</TableCell>
                   <TableCell>
-                    <Badge variant={
-                      payment.payment_status === 'completed' ? 'default' :
-                      payment.payment_status === 'pending' ? 'secondary' : 'destructive'
-                    }>
-                      {payment.payment_status || 'unknown'}
+                    R{Number(payment.total_price).toFixed(2)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        payment.payment_status === "completed"
+                          ? "default"
+                          : payment.payment_status === "pending"
+                          ? "secondary"
+                          : "destructive"
+                      }
+                    >
+                      {payment.payment_status || "unknown"}
                     </Badge>
                   </TableCell>
-                  <TableCell>{payment.payment_method || 'N/A'}</TableCell>
+                  <TableCell>{payment.payment_method || "N/A"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          
+
           {filteredPayments.length === 0 && !loading && (
             <div className="text-center py-8 text-muted-foreground">
               No payments found matching your criteria.
             </div>
           )}
-          
+
           {loading && (
             <div className="text-center py-8 text-muted-foreground">
               Loading payments...
@@ -292,3 +346,4 @@ const PaymentReconciliation = () => {
 };
 
 export default PaymentReconciliation;
+// This component provides a payment reconciliation dashboard that allows administrators to view, filter, and export payment records. It fetches data from Supabase tables for tickets, events, and user profiles, displaying key metrics such as total revenue and completed transactions. The UI includes search functionality, date range filtering, and a table for detailed payment records.

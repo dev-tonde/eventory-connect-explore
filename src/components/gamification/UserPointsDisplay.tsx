@@ -1,9 +1,10 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Trophy, Star, Flame } from "lucide-react";
 import { useGamification } from "@/hooks/useGamification";
+
+const sanitizeBadgeText = (text: string) => text.replace(/[<>]/g, ""); // Prevent badge XSS
 
 const UserPointsDisplay = () => {
   const { userPoints, earnedBadges, isLoading } = useGamification();
@@ -51,7 +52,7 @@ const UserPointsDisplay = () => {
               {pointsToNextLevel} points to Level {currentLevel + 1}
             </p>
           </div>
-          
+
           {userPoints.streak_days > 0 && (
             <div className="text-center">
               <div className="flex items-center gap-1 text-orange-600">
@@ -85,9 +86,12 @@ const UserPointsDisplay = () => {
                   key={badge.id}
                   variant="outline"
                   className="bg-yellow-50 border-yellow-200 text-yellow-800"
+                  title={sanitizeBadgeText(badge.name)}
                 >
-                  <span className="mr-1">{badge.icon}</span>
-                  {badge.name}
+                  <span className="mr-1" aria-hidden="true">
+                    {sanitizeBadgeText(badge.icon)}
+                  </span>
+                  {sanitizeBadgeText(badge.name)}
                 </Badge>
               ))}
             </div>
@@ -99,3 +103,6 @@ const UserPointsDisplay = () => {
 };
 
 export default UserPointsDisplay;
+// This component displays the user's gamification points, level, progress towards the next level, and recently earned badges.
+// It uses a card layout with a gradient background and includes a progress bar to visualize the user's progress within the current level.
+// The component also handles loading states and sanitizes badge names to prevent XSS attacks.

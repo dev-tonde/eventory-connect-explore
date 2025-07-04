@@ -1,22 +1,37 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Star, Target, Calendar, Users, Award, Flame, TrendingUp } from "lucide-react";
+import {
+  Trophy,
+  Star,
+  Target,
+  Calendar,
+  Users,
+  Award,
+  Flame,
+  TrendingUp,
+} from "lucide-react";
 import { useGamification } from "@/hooks/useGamification";
 import UserPointsDisplay from "@/components/gamification/UserPointsDisplay";
 
 const Gamification = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { userPoints, leaderboard, earnedBadges, availableBadges, allBadges, isLoading } = useGamification();
+  const {
+    userPoints,
+    leaderboard,
+    earnedBadges,
+    availableBadges,
+    allBadges,
+    isLoading,
+  } = useGamification();
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate("/auth");
+      navigate("/auth", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -32,7 +47,10 @@ const Gamification = () => {
 
   const nextLevelPoints = userPoints.level * 100;
   const currentLevelPoints = (userPoints.level - 1) * 100;
-  const progressToNext = ((userPoints.total_points - currentLevelPoints) / (nextLevelPoints - currentLevelPoints)) * 100;
+  const progressToNext =
+    ((userPoints.total_points - currentLevelPoints) /
+      (nextLevelPoints - currentLevelPoints)) *
+    100;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -64,8 +82,12 @@ const Gamification = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Level {userPoints.level}</span>
-                  <span className="text-sm text-gray-600">Level {userPoints.level + 1}</span>
+                  <span className="text-sm text-gray-600">
+                    Level {userPoints.level}
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    Level {userPoints.level + 1}
+                  </span>
                 </div>
                 <Progress value={progressToNext} className="h-3" />
                 <div className="flex items-center justify-between text-sm">
@@ -86,15 +108,21 @@ const Gamification = () => {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">{userPoints.total_points}</div>
+                    <div className="text-2xl font-bold text-purple-600">
+                      {userPoints.total_points}
+                    </div>
                     <div className="text-sm text-gray-600">Total Points</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{userPoints.level}</div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      {userPoints.level}
+                    </div>
                     <div className="text-sm text-gray-600">Current Level</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{earnedBadges.length}</div>
+                    <div className="text-2xl font-bold text-green-600">
+                      {earnedBadges.length}
+                    </div>
                     <div className="text-sm text-gray-600">Badges Earned</div>
                   </div>
                   <div className="text-center">
@@ -120,10 +148,15 @@ const Gamification = () => {
                 {earnedBadges.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {earnedBadges.map((badge) => (
-                      <div key={badge.id} className="text-center p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg border">
+                      <div
+                        key={badge.id}
+                        className="text-center p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg border"
+                      >
                         <div className="text-3xl mb-2">{badge.icon}</div>
                         <div className="font-medium text-sm">{badge.name}</div>
-                        <div className="text-xs text-gray-600 mt-1">{badge.description}</div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          {badge.description}
+                        </div>
                         <Badge variant="secondary" className="mt-2 text-xs">
                           {badge.points_required} pts
                         </Badge>
@@ -133,7 +166,10 @@ const Gamification = () => {
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <Award className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                    <p>No badges earned yet. Keep participating to unlock achievements!</p>
+                    <p>
+                      No badges earned yet. Keep participating to unlock
+                      achievements!
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -151,10 +187,17 @@ const Gamification = () => {
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {availableBadges.map((badge) => (
-                      <div key={badge.id} className="text-center p-4 bg-gray-50 rounded-lg border border-dashed">
-                        <div className="text-3xl mb-2 opacity-50">{badge.icon}</div>
+                      <div
+                        key={badge.id}
+                        className="text-center p-4 bg-gray-50 rounded-lg border border-dashed"
+                      >
+                        <div className="text-3xl mb-2 opacity-50">
+                          {badge.icon}
+                        </div>
                         <div className="font-medium text-sm">{badge.name}</div>
-                        <div className="text-xs text-gray-600 mt-1">{badge.description}</div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          {badge.description}
+                        </div>
                         <Badge variant="outline" className="mt-2 text-xs">
                           {badge.points_required} pts required
                         </Badge>
@@ -180,25 +223,40 @@ const Gamification = () => {
                 {leaderboard.length > 0 ? (
                   <div className="space-y-3">
                     {leaderboard.slice(0, 10).map((leader, index) => (
-                      <div key={leader.user_id} className="flex items-center justify-between">
+                      <div
+                        key={leader.user_id}
+                        className="flex items-center justify-between"
+                      >
                         <div className="flex items-center gap-2">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                            index === 0 ? 'bg-yellow-100 text-yellow-800' :
-                            index === 1 ? 'bg-gray-100 text-gray-800' :
-                            index === 2 ? 'bg-orange-100 text-orange-800' :
-                            'bg-blue-50 text-blue-800'
-                          }`}>
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                              index === 0
+                                ? "bg-yellow-100 text-yellow-800"
+                                : index === 1
+                                ? "bg-gray-100 text-gray-800"
+                                : index === 2
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-blue-50 text-blue-800"
+                            }`}
+                          >
                             {index + 1}
                           </div>
                           <div>
                             <div className="font-medium text-sm">
-                              {leader.profiles?.[0]?.first_name} {leader.profiles?.[0]?.last_name} 
-                              {leader.user_id === user?.id && <span className="text-purple-600"> (You)</span>}
+                              {leader.profiles?.[0]?.first_name}{" "}
+                              {leader.profiles?.[0]?.last_name}
+                              {leader.user_id === user?.id && (
+                                <span className="text-purple-600"> (You)</span>
+                              )}
                             </div>
-                            <div className="text-xs text-gray-500">Level {leader.level}</div>
+                            <div className="text-xs text-gray-500">
+                              Level {leader.level}
+                            </div>
                           </div>
                         </div>
-                        <div className="text-sm font-medium">{leader.total_points}</div>
+                        <div className="text-sm font-medium">
+                          {leader.total_points}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -224,29 +282,57 @@ const Gamification = () => {
                   <div className="flex justify-between">
                     <span>Attendance</span>
                     <span className="text-gray-500">
-                      {earnedBadges.filter(b => b.category === 'attendance').length}/
-                      {allBadges.filter(b => b.category === 'attendance').length}
+                      {
+                        earnedBadges.filter((b) => b.category === "attendance")
+                          .length
+                      }
+                      /
+                      {
+                        allBadges.filter((b) => b.category === "attendance")
+                          .length
+                      }
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Organizing</span>
                     <span className="text-gray-500">
-                      {earnedBadges.filter(b => b.category === 'organizing').length}/
-                      {allBadges.filter(b => b.category === 'organizing').length}
+                      {
+                        earnedBadges.filter((b) => b.category === "organizing")
+                          .length
+                      }
+                      /
+                      {
+                        allBadges.filter((b) => b.category === "organizing")
+                          .length
+                      }
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Engagement</span>
                     <span className="text-gray-500">
-                      {earnedBadges.filter(b => b.category === 'engagement').length}/
-                      {allBadges.filter(b => b.category === 'engagement').length}
+                      {
+                        earnedBadges.filter((b) => b.category === "engagement")
+                          .length
+                      }
+                      /
+                      {
+                        allBadges.filter((b) => b.category === "engagement")
+                          .length
+                      }
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Planning</span>
                     <span className="text-gray-500">
-                      {earnedBadges.filter(b => b.category === 'planning').length}/
-                      {allBadges.filter(b => b.category === 'planning').length}
+                      {
+                        earnedBadges.filter((b) => b.category === "planning")
+                          .length
+                      }
+                      /
+                      {
+                        allBadges.filter((b) => b.category === "planning")
+                          .length
+                      }
                     </span>
                   </div>
                 </div>
@@ -260,3 +346,4 @@ const Gamification = () => {
 };
 
 export default Gamification;
+// This code defines a Gamification page that displays user points, badges, and leaderboard information. It includes components for user points display, level progress, activity stats, earned badges, available badges, and a leaderboard. The page is responsive and uses cards for layout, with loading states while fetching data.

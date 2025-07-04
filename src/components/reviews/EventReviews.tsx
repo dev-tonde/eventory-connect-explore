@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+// Defensive: sanitize text for display and storage
+const sanitizeText = (text: string) =>
+  typeof text === "string" ? text.replace(/[<>]/g, "").trim() : "";
+
 interface Review {
   id: string;
   rating: number;
@@ -18,14 +22,7 @@ interface Review {
   user_id: string;
 }
 
-interface UserReview {
-  id: string;
-  rating: number;
-  review_text: string | null;
-  is_verified_attendee: boolean;
-  created_at: string;
-  user_id: string;
-}
+interface UserReview extends Review {}
 
 interface EventReviewsProps {
   eventId: string;
@@ -47,20 +44,20 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
     if (user) {
       loadUserReview();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId, user]);
 
   const loadReviews = async () => {
     try {
       const { data, error } = await supabase
-        .from('event_reviews')
-        .select('*')
-        .eq('event_id', eventId)
-        .order('created_at', { ascending: false });
+        .from("event_reviews")
+        .select("*")
+        .eq("event_id", eventId)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setReviews(data || []);
     } catch (error) {
-      console.error('Error loading reviews:', error);
       toast({
         title: "Error",
         description: "Failed to load reviews.",
@@ -71,43 +68,34 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
 
   const loadAverageRating = async () => {
     try {
-      const { data, error } = await supabase
-        .rpc('get_event_rating', { event_uuid: eventId });
-
-      if (error) {
-        console.error('Error loading average rating:', error);
-        return;
-      }
-
-      setAverageRating(data || 0);
-    } catch (error) {
-      console.error('Error loading average rating:', error);
+      const { data, error } = await supabase.rpc("get_event_rating", {
+        event_uuid: eventId,
+      });
+      if (!error) setAverageRating(data || 0);
+    } catch {
+      // Silently fail, don't block UI
     }
   };
 
   const loadUserReview = async () => {
     if (!user) return;
-
     try {
       const { data, error } = await supabase
-        .from('event_reviews')
-        .select('*')
-        .eq('event_id', eventId)
-        .eq('user_id', user.id)
+        .from("event_reviews")
+        .select("*")
+        .eq("event_id", eventId)
+        .eq("user_id", user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading user review:', error);
-        return;
-      }
+      if (error && error.code !== "PGRST116") return;
 
       if (data) {
         setUserReview(data);
         setRating(data.rating);
-        setReviewText(data.review_text || '');
+        setReviewText(data.review_text || "");
       }
-    } catch (error) {
-      console.error('Error loading user review:', error);
+    } catch {
+      // Silently fail, don't block UI
     }
   };
 
@@ -128,14 +116,14 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
         event_id: eventId,
         user_id: user.id,
         rating,
-        review_text: reviewText.trim() || null,
+        review_text: reviewText.trim() ? sanitizeText(reviewText) : null,
       };
 
       if (userReview) {
         const { error } = await supabase
-          .from('event_reviews')
+          .from("event_reviews")
           .update(reviewData)
-          .eq('id', userReview.id);
+          .eq("id", userReview.id);
 
         if (error) throw error;
 
@@ -145,7 +133,7 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
         });
       } else {
         const { error } = await supabase
-          .from('event_reviews')
+          .from("event_reviews")
           .insert([reviewData]);
 
         if (error) throw error;
@@ -159,8 +147,7 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
       loadReviews();
       loadAverageRating();
       loadUserReview();
-    } catch (error) {
-      console.error('Error submitting review:', error);
+    } catch {
       toast({
         title: "Error",
         description: "Failed to submit review. Please try again.",
@@ -176,11 +163,11 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
       <Star
         key={i}
         className={`h-5 w-5 ${
-          i < count
-            ? "fill-yellow-400 text-yellow-400"
-            : "text-gray-300"
+          i < count ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
         } ${interactive ? "cursor-pointer hover:text-yellow-400" : ""}`}
         onClick={interactive ? () => setRating(i + 1) : undefined}
+        aria-label={interactive ? `Set rating to ${i + 1}` : undefined}
+        aria-hidden={!interactive}
       />
     ));
   };
@@ -192,7 +179,9 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
           <CardTitle className="flex items-center justify-between">
             <span>Reviews & Ratings</span>
             <div className="flex items-center gap-2">
-              <div className="flex">{renderStars(Math.round(averageRating))}</div>
+              <div className="flex">
+                {renderStars(Math.round(averageRating))}
+              </div>
               <span className="text-sm text-gray-600">
                 {averageRating.toFixed(1)} ({reviews.length} reviews)
               </span>
@@ -207,26 +196,36 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
               </h4>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Rating</label>
-                  <div className="flex gap-1">
-                    {renderStars(rating, true)}
-                  </div>
+                  <label className="block text-sm font-medium mb-2">
+                    Rating
+                  </label>
+                  <div className="flex gap-1">{renderStars(rating, true)}</div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Review (Optional)</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Review (Optional)
+                  </label>
                   <Textarea
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                     placeholder="Share your experience..."
                     className="min-h-[100px]"
+                    maxLength={500}
+                    aria-label="Review"
                   />
                 </div>
-                <Button 
-                  onClick={submitReview} 
+                <Button
+                  onClick={submitReview}
                   disabled={isSubmitting || !rating}
                   className="w-full"
+                  type="button"
+                  aria-label={userReview ? "Update Review" : "Submit Review"}
                 >
-                  {isSubmitting ? "Submitting..." : userReview ? "Update Review" : "Submit Review"}
+                  {isSubmitting
+                    ? "Submitting..."
+                    : userReview
+                    ? "Update Review"
+                    : "Submit Review"}
                 </Button>
               </div>
             </div>
@@ -243,20 +242,28 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-purple-600" />
+                        <User
+                          className="h-5 w-5 text-purple-600"
+                          aria-hidden="true"
+                        />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">Anonymous User</span>
                           {review.is_verified_attendee && (
                             <Badge variant="secondary" className="text-xs">
-                              <CheckCircle className="h-3 w-3 mr-1" />
+                              <CheckCircle
+                                className="h-3 w-3 mr-1"
+                                aria-hidden="true"
+                              />
                               Verified Attendee
                             </Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="flex">{renderStars(review.rating)}</div>
+                          <div className="flex">
+                            {renderStars(review.rating)}
+                          </div>
                           <span className="text-sm text-gray-500">
                             {new Date(review.created_at).toLocaleDateString()}
                           </span>
@@ -265,7 +272,9 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
                     </div>
                   </div>
                   {review.review_text && (
-                    <p className="text-gray-700 mt-2">{review.review_text}</p>
+                    <p className="text-gray-700 mt-2">
+                      {sanitizeText(review.review_text)}
+                    </p>
                   )}
                 </div>
               ))
@@ -278,3 +287,6 @@ const EventReviews = ({ eventId }: EventReviewsProps) => {
 };
 
 export default EventReviews;
+// This component allows users to view and submit reviews for an event.
+// It displays existing reviews, allows users to rate the event, and submit or update their own review.
+// The average rating is calculated and displayed, and the component handles loading states and error notifications.

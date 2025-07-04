@@ -1,7 +1,6 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -52,8 +51,12 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        IconLeft: (props) => (
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" {...props} />
+        ),
+        IconRight: (props) => (
+          <ChevronRight className="h-4 w-4" aria-hidden="true" {...props} />
+        ),
       }}
       {...props}
     />
@@ -62,3 +65,5 @@ function Calendar({
 Calendar.displayName = "Calendar";
 
 export { Calendar };
+// This component provides a customizable calendar UI using react-day-picker.
+// It includes navigation buttons, custom class names, and supports showing outside days.

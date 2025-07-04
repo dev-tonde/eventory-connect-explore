@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,13 +10,24 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, CreditCard, User, Mail, Phone, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  CreditCard,
+  User,
+  Mail,
+  Phone,
+  Users,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Event } from "@/types/event";
 import DynamicPricing from "@/components/pricing/DynamicPricing";
 import SplitPayment from "@/components/payments/SplitPayment";
 import YocoPaymentForm from "@/components/payments/YocoPaymentForm";
+
+// Sanitize text to prevent XSS
+const sanitizeText = (text: string) =>
+  typeof text === "string" ? text.replace(/[<>]/g, "").trim() : "";
 
 interface TicketPurchaseProps {
   event: Event;
@@ -27,7 +39,7 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [currentPrice, setCurrentPrice] = useState(event.price);
-  const [paymentMethod, setPaymentMethod] = useState<'full' | 'split'>('full');
+  const [paymentMethod, setPaymentMethod] = useState<"full" | "split">("full");
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [buyerInfo, setBuyerInfo] = useState({
     name: profile ? `${profile.first_name} ${profile.last_name}`.trim() : "",
@@ -36,7 +48,7 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
   });
 
   const ticketsRemaining = event.maxAttendees - event.attendeeCount;
-  const isLowStock = ticketsRemaining <= 20;
+  const isLowStock = ticketsRemaining <= 20 && ticketsRemaining > 0;
   const isSoldOut = ticketsRemaining <= 0;
   const totalPrice = currentPrice * quantity;
 
@@ -87,11 +99,23 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
     setShowPaymentForm(false);
   };
 
+  // Defensive: Only allow up to 10 tickets per purchase and never negative
+  const handleQuantityChange = (value: number) => {
+    const safeValue = Math.max(
+      1,
+      Math.min(value, Math.min(10, ticketsRemaining))
+    );
+    setQuantity(safeValue);
+  };
+
   if (isSoldOut) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <AlertTriangle
+            className="h-12 w-12 text-red-500 mx-auto mb-4"
+            aria-hidden="true"
+          />
           <h3 className="text-lg font-semibold text-red-600 mb-2">Sold Out</h3>
           <p className="text-gray-600">
             This event is sold out. Check back later for additional tickets.
@@ -117,12 +141,12 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
+          <CreditCard className="h-5 w-5" aria-hidden="true" />
           Purchase Tickets
         </CardTitle>
         {isLowStock && (
           <div className="flex items-center gap-2 text-orange-600 bg-orange-50 p-2 rounded">
-            <AlertTriangle className="h-4 w-4" />
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
             <span className="text-sm font-medium">
               Only {ticketsRemaining} tickets remaining!
             </span>
@@ -149,28 +173,31 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              onClick={() => handleQuantityChange(quantity - 1)}
               disabled={quantity <= 1}
+              type="button"
+              aria-label="Decrease ticket quantity"
             >
               -
             </Button>
             <Input
               type="number"
-              min="1"
+              min={1}
               max={Math.min(10, ticketsRemaining)}
               value={quantity}
               onChange={(e) =>
-                setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                handleQuantityChange(Number(e.target.value) || 1)
               }
               className="w-20 text-center"
+              aria-label="Ticket quantity"
             />
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setQuantity(Math.min(quantity + 1, ticketsRemaining, 10))
-              }
+              onClick={() => handleQuantityChange(quantity + 1)}
               disabled={quantity >= Math.min(10, ticketsRemaining)}
+              type="button"
+              aria-label="Increase ticket quantity"
             >
               +
             </Button>
@@ -181,14 +208,25 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
         </div>
 
         {/* Payment Method Selection */}
-        <Tabs value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'full' | 'split')}>
+        <Tabs
+          value={paymentMethod}
+          onValueChange={(value) => setPaymentMethod(value as "full" | "split")}
+        >
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="full" className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
+            <TabsTrigger
+              value="full"
+              className="flex items-center gap-2"
+              aria-label="Pay Full Amount"
+            >
+              <CreditCard className="h-4 w-4" aria-hidden="true" />
               Pay Full Amount
             </TabsTrigger>
-            <TabsTrigger value="split" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
+            <TabsTrigger
+              value="split"
+              className="flex items-center gap-2"
+              aria-label="Split Payment"
+            >
+              <Users className="h-4 w-4" aria-hidden="true" />
               Split Payment
             </TabsTrigger>
           </TabsList>
@@ -197,23 +235,34 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
             {/* Buyer Information */}
             <div className="space-y-3">
               <h4 className="font-medium">Buyer Information</h4>
-
               {isAuthenticated && profile ? (
                 <div className="p-4 bg-gray-50 rounded border text-sm text-gray-700 space-y-1">
                   <p className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-500" />
-                    {`${profile.first_name} ${profile.last_name}`.trim() || profile.username}
+                    <User
+                      className="h-4 w-4 text-gray-500"
+                      aria-hidden="true"
+                    />
+                    {sanitizeText(
+                      `${profile.first_name} ${profile.last_name}`.trim() ||
+                        profile.username
+                    )}
                   </p>
                   <p className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-500" />
-                    {profile.email}
+                    <Mail
+                      className="h-4 w-4 text-gray-500"
+                      aria-hidden="true"
+                    />
+                    {sanitizeText(profile.email)}
                   </p>
                 </div>
               ) : (
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      <User className="inline h-4 w-4 mr-1" />
+                      <User
+                        className="inline h-4 w-4 mr-1"
+                        aria-hidden="true"
+                      />
                       Full Name
                     </label>
                     <Input
@@ -223,12 +272,16 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
                       }
                       placeholder="Enter your full name"
                       required
+                      aria-label="Full Name"
+                      maxLength={80}
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      <Mail className="inline h-4 w-4 mr-1" />
+                      <Mail
+                        className="inline h-4 w-4 mr-1"
+                        aria-hidden="true"
+                      />
                       Email
                     </label>
                     <Input
@@ -239,12 +292,16 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
                       }
                       placeholder="Enter your email"
                       required
+                      aria-label="Email"
+                      maxLength={120}
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      <Phone className="inline h-4 w-4 mr-1" />
+                      <Phone
+                        className="inline h-4 w-4 mr-1"
+                        aria-hidden="true"
+                      />
                       Phone Number
                     </label>
                     <Input
@@ -255,6 +312,8 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
                       }
                       placeholder="Enter your phone number"
                       required
+                      aria-label="Phone Number"
+                      maxLength={20}
                     />
                   </div>
                 </>
@@ -269,7 +328,6 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
                   {currentPrice === 0 ? "Free" : `R${totalPrice.toFixed(2)}`}
                 </span>
               </div>
-
               <Button
                 className="w-full"
                 size="lg"
@@ -277,6 +335,12 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
                 disabled={
                   !isAuthenticated &&
                   (!buyerInfo.name || !buyerInfo.email || !buyerInfo.phone)
+                }
+                type="button"
+                aria-label={
+                  currentPrice === 0
+                    ? "Register for Free"
+                    : "Proceed to Payment"
                 }
               >
                 {currentPrice === 0
@@ -289,9 +353,9 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
           <TabsContent value="split">
             <SplitPayment
               totalAmount={totalPrice}
-              eventTitle={event.title}
+              eventTitle={sanitizeText(event.title)}
               onSplitComplete={handleSplitComplete}
-              onCancel={() => setPaymentMethod('full')}
+              onCancel={() => setPaymentMethod("full")}
             />
           </TabsContent>
         </Tabs>
@@ -308,3 +372,6 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
 };
 
 export default TicketPurchase;
+// This component allows users to purchase tickets for an event.
+// It includes dynamic pricing, quantity selection, buyer information input, and payment processing.
+// It handles low stock warnings, sold-out events, and provides options for full or split payments.

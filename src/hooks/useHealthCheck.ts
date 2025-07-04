@@ -1,7 +1,6 @@
-
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { checkSupabaseHealth } from '@/lib/supabaseOptimized';
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { checkSupabaseHealth } from "@/lib/supabaseOptimized";
 
 interface HealthStatus {
   database: boolean;
@@ -10,64 +9,72 @@ interface HealthStatus {
   overall: boolean;
 }
 
+/**
+ * Custom hook to check the health of Supabase services (database, auth, functions).
+ * Returns health status, loading state, and a manual check function.
+ */
 export const useHealthCheck = () => {
   const [health, setHealth] = useState<HealthStatus>({
     database: false,
     auth: false,
     functions: false,
-    overall: false
+    overall: false,
   });
   const [loading, setLoading] = useState(true);
 
-  const checkHealth = async () => {
+  const checkHealth = useCallback(async () => {
     setLoading(true);
-    
+
     try {
       // Check database connection
       const dbHealth = await checkSupabaseHealth();
-      
-      // Check auth
-      const { data: session } = await supabase.auth.getSession();
-      const authHealth = session !== null || session === null; // Auth service is responsive
-      
+
+      // Check auth service responsiveness
+      let authHealth = false;
+      try {
+        const { data: session, error } = await supabase.auth.getSession();
+        authHealth = !error;
+      } catch {
+        authHealth = false;
+      }
+
       // Check edge functions (basic connectivity)
       let functionsHealth = true;
       try {
-        // This will fail gracefully if functions are down
-        await supabase.functions.invoke('health-check', { body: {} });
+        await supabase.functions.invoke("health-check", { body: {} });
       } catch {
-        functionsHealth = false; // Functions might not be available but that's ok for MVP
+        functionsHealth = false;
       }
 
-      const overallHealth = dbHealth.healthy && authHealth;
-      
+      const overallHealth = Boolean(dbHealth.healthy && authHealth);
+
       setHealth({
-        database: dbHealth.healthy,
+        database: Boolean(dbHealth.healthy),
         auth: authHealth,
         functions: functionsHealth,
-        overall: overallHealth
+        overall: overallHealth,
       });
     } catch (error) {
-      console.error('Health check failed:', error);
+      console.error("Health check failed:", error);
       setHealth({
         database: false,
         auth: false,
         functions: false,
-        overall: false
+        overall: false,
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkHealth();
-    
+
     // Check health every 5 minutes
     const interval = setInterval(checkHealth, 5 * 60 * 1000);
-    
+
     return () => clearInterval(interval);
-  }, []);
+  }, [checkHealth]);
 
   return { health, loading, checkHealth };
 };

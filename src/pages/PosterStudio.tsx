@@ -1,23 +1,31 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wand2, Download, Share2, Sparkles, Image, Palette, Type, Layout } from "lucide-react";
+import {
+  Wand2,
+  Download,
+  Share2,
+  Sparkles,
+  Image,
+  Palette,
+  Type,
+  Layout,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const PosterStudio = () => {
-  const { user, profile, isAuthenticated } = useAuth();
+  const { profile, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate("/auth");
+      navigate("/auth", { replace: true });
     } else if (profile?.role !== "organizer") {
-      navigate("/become-organizer");
+      navigate("/become-organizer", { replace: true });
     }
   }, [isAuthenticated, profile, navigate]);
 
@@ -29,7 +37,11 @@ const PosterStudio = () => {
     { id: "vibrant", name: "Vibrant & Bold", preview: "/placeholder.svg" },
     { id: "elegant", name: "Elegant Classic", preview: "/placeholder.svg" },
     { id: "fun", name: "Fun & Playful", preview: "/placeholder.svg" },
-    { id: "corporate", name: "Corporate Professional", preview: "/placeholder.svg" },
+    {
+      id: "corporate",
+      name: "Corporate Professional",
+      preview: "/placeholder.svg",
+    },
     { id: "artistic", name: "Artistic Creative", preview: "/placeholder.svg" },
   ];
 
@@ -55,13 +67,13 @@ const PosterStudio = () => {
     setIsGenerating(true);
     try {
       // Simulate AI poster generation
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       toast({
         title: "Poster Generated! 🎨",
-        description: "Your AI-powered event poster has been created successfully.",
+        description:
+          "Your AI-powered event poster has been created successfully.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Generation Failed",
         description: "Failed to generate poster. Please try again.",
@@ -109,15 +121,17 @@ const PosterStudio = () => {
                       key={template.id}
                       className={`cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
                         selectedTemplate === template.id
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-purple-300'
+                          ? "border-purple-500 bg-purple-50"
+                          : "border-gray-200 hover:border-purple-300"
                       }`}
                       onClick={() => setSelectedTemplate(template.id)}
                     >
                       <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded mb-2 flex items-center justify-center">
                         <Image className="h-8 w-8 text-gray-400" />
                       </div>
-                      <div className="text-sm font-medium text-center">{template.name}</div>
+                      <div className="text-sm font-medium text-center">
+                        {template.name}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -139,7 +153,9 @@ const PosterStudio = () => {
                       className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                     >
                       <div className="text-2xl mb-1">{format.icon}</div>
-                      <div className="text-sm font-medium">{format.platform}</div>
+                      <div className="text-sm font-medium">
+                        {format.platform}
+                      </div>
                       <div className="text-xs text-gray-500">{format.size}</div>
                     </div>
                   ))}
@@ -156,16 +172,19 @@ const PosterStudio = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Custom Prompt</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Custom Prompt
+                  </label>
                   <textarea
                     placeholder="Describe your poster style: 'Modern tech conference with blue and white colors, minimalist design...'"
                     className="w-full h-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
-                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Primary Color</label>
+                    <label className="block text-sm font-medium mb-2">
+                      Primary Color
+                    </label>
                     <input
                       type="color"
                       className="w-full h-10 border border-gray-300 rounded-md"
@@ -173,7 +192,9 @@ const PosterStudio = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Secondary Color</label>
+                    <label className="block text-sm font-medium mb-2">
+                      Secondary Color
+                    </label>
                     <input
                       type="color"
                       className="w-full h-10 border border-gray-300 rounded-md"
@@ -196,7 +217,9 @@ const PosterStudio = () => {
                   {isGenerating ? (
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                      <p className="text-sm text-gray-600">Generating poster...</p>
+                      <p className="text-sm text-gray-600">
+                        Generating poster...
+                      </p>
                     </div>
                   ) : (
                     <div className="text-center text-gray-500">
@@ -205,7 +228,6 @@ const PosterStudio = () => {
                     </div>
                   )}
                 </div>
-                
                 <Button
                   onClick={handleGeneratePoster}
                   disabled={isGenerating || !selectedTemplate}
@@ -220,18 +242,17 @@ const PosterStudio = () => {
                     </>
                   )}
                 </Button>
-
                 <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     className="hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 transition-colors"
                   >
                     <Download className="h-4 w-4 mr-1" />
                     Download
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     className="hover:bg-green-50 focus:ring-2 focus:ring-green-500 transition-colors"
                   >
@@ -249,10 +270,15 @@ const PosterStudio = () => {
               <CardContent>
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded transition-colors">
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded transition-colors"
+                    >
                       <div className="w-12 h-12 bg-gray-200 rounded"></div>
                       <div className="flex-1">
-                        <div className="text-sm font-medium">Event Poster {i}</div>
+                        <div className="text-sm font-medium">
+                          Event Poster {i}
+                        </div>
                         <div className="text-xs text-gray-500">2 hours ago</div>
                       </div>
                     </div>
@@ -268,3 +294,6 @@ const PosterStudio = () => {
 };
 
 export default PosterStudio;
+// This code defines a PosterStudio page that allows organizers to create AI-generated event posters. It includes template selection, social media format options, AI customization features, and a preview section. The page is responsive and uses cards for layout, with loading states while generating posters. It also provides options to download or share the generated posters.
+// The component checks if the user is authenticated and has the organizer role before rendering the content.
+// The PosterStudio page is a great addition to the Eventory platform, empowering organizers to create professional and visually appealing event posters quickly and easily. It leverages AI technology to streamline the design process, making it accessible even for those without design skills. The focus on social media formats ensures that posters can be easily shared across various platforms, enhancing event visibility and engagement.

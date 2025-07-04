@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,14 +11,15 @@ const Community = () => {
   const { id } = useParams();
   const { user } = useAuth();
 
+  // Fetch community details
   const { data: community, isLoading } = useQuery({
     queryKey: ["community", id],
     queryFn: async () => {
       if (!id) throw new Error("Community ID is required");
-      
       const { data, error } = await supabase
         .from("communities")
-        .select(`
+        .select(
+          `
           *,
           community_members (
             id,
@@ -27,66 +27,59 @@ const Community = () => {
             role,
             joined_at
           )
-        `)
+        `
+        )
         .eq("id", id)
         .single();
-
       if (error) throw error;
       return data;
     },
     enabled: !!id,
   });
 
-  const { data: communityMembers } = useQuery({
+  // Fetch community members with profiles
+  const { data: communityMembers = [] } = useQuery({
     queryKey: ["community-members-with-profiles", id],
     queryFn: async () => {
       if (!id) return [];
-      
       const { data, error } = await supabase
         .from("community_members")
-        .select(`
+        .select(
+          `
           id,
           user_id,
           role,
           joined_at
-        `)
+        `
+        )
         .eq("community_id", id);
-
       if (error) throw error;
-
       // Get profile data for each member
-      const membersWithProfiles = await Promise.all(
-        data.map(async (member) => {
+      return Promise.all(
+        (data || []).map(async (member) => {
           const { data: profile } = await supabase
             .from("profiles")
             .select("first_name, last_name, username")
             .eq("id", member.user_id)
             .single();
-
-          return {
-            ...member,
-            profile
-          };
+          return { ...member, profile };
         })
       );
-
-      return membersWithProfiles;
     },
     enabled: !!id,
   });
 
+  // Check if current user is a member
   const { data: isMember } = useQuery({
     queryKey: ["community-membership", id, user?.id],
     queryFn: async () => {
       if (!id || !user?.id) return false;
-      
       const { data, error } = await supabase
         .from("community_members")
         .select("id")
         .eq("community_id", id)
         .eq("user_id", user.id)
         .maybeSingle();
-
       if (error) return false;
       return !!data;
     },
@@ -107,7 +100,9 @@ const Community = () => {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
             <h2 className="text-xl font-semibold mb-2">Community Not Found</h2>
-            <p className="text-gray-600 mb-4">The community you're looking for doesn't exist.</p>
+            <p className="text-gray-600 mb-4">
+              The community you're looking for doesn't exist.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -122,6 +117,7 @@ const Community = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Community Chat Placeholder */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -137,6 +133,7 @@ const Community = () => {
               </CardContent>
             </Card>
 
+            {/* Community Events Placeholder */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -163,17 +160,19 @@ const Community = () => {
               <CardContent>
                 {isMember ? (
                   <div className="text-center">
-                    <p className="text-green-600 mb-4">You are a member of this community</p>
+                    <p className="text-green-600 mb-4">
+                      You are a member of this community
+                    </p>
                     <Button variant="outline" className="w-full">
                       Leave Community
                     </Button>
                   </div>
                 ) : (
                   <div className="text-center">
-                    <p className="text-gray-600 mb-4">Join this community to participate</p>
-                    <Button className="w-full">
-                      Join Community
-                    </Button>
+                    <p className="text-gray-600 mb-4">
+                      Join this community to participate
+                    </p>
+                    <Button className="w-full">Join Community</Button>
                   </div>
                 )}
               </CardContent>
@@ -184,27 +183,29 @@ const Community = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Members ({communityMembers?.length || 0})
+                  Members ({communityMembers.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {communityMembers?.slice(0, 5).map((member) => (
-                    <div key={member.id} className="flex items-center justify-between">
+                  {communityMembers.slice(0, 5).map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between"
+                    >
                       <span className="text-sm">
                         {member.profile?.first_name && member.profile?.last_name
                           ? `${member.profile.first_name} ${member.profile.last_name}`
-                          : member.profile?.username || "Unknown User"
-                        }
+                          : member.profile?.username || "Unknown User"}
                       </span>
                       <span className="text-xs text-gray-500 capitalize">
                         {member.role}
                       </span>
                     </div>
                   ))}
-                  {(communityMembers?.length || 0) > 5 && (
+                  {communityMembers.length > 5 && (
                     <p className="text-xs text-gray-500 text-center mt-2">
-                      +{(communityMembers?.length || 0) - 5} more members
+                      +{communityMembers.length - 5} more members
                     </p>
                   )}
                 </div>
@@ -218,3 +219,4 @@ const Community = () => {
 };
 
 export default Community;
+// This code defines a Community page that displays community details, members, and allows users to join or leave the community.

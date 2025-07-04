@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,8 +36,8 @@ const MobileOptimizedYocoForm = ({
     setIsMobile(window.innerWidth < 768);
 
     // Load YOCO SDK with mobile optimization
-    const script = document.createElement('script');
-    script.src = 'https://js.yoco.com/sdk/v1/yoco-sdk-web.js';
+    const script = document.createElement("script");
+    script.src = "https://js.yoco.com/sdk/v1/yoco-sdk-web.js";
     script.async = true;
     script.onload = initializeYoco;
     document.head.appendChild(script);
@@ -47,34 +47,37 @@ const MobileOptimizedYocoForm = ({
       setIsMobile(window.innerWidth < 768);
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       if (script.parentNode) {
         document.head.removeChild(script);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const initializeYoco = () => {
     if (window.YocoSDK) {
       const yoco = new window.YocoSDK({
-        publicKey: import.meta.env.VITE_YOCO_PUBLIC_KEY || 'pk_test_ed3c54a6gOol69qa7f45',
+        publicKey:
+          import.meta.env.VITE_YOCO_PUBLIC_KEY ||
+          "pk_test_ed3c54a6gOol69qa7f45",
       });
 
       const inlineForm = yoco.inline({
-        containerSelector: '#yoco-card-frame',
+        containerSelector: "#yoco-card-frame",
         styling: {
           base: {
-            fontSize: isMobile ? '16px' : '14px', // Prevent zoom on iOS
-            color: '#424770',
-            fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
-            '::placeholder': {
-              color: '#aab7c4',
+            fontSize: isMobile ? "16px" : "14px", // Prevent zoom on iOS
+            color: "#424770",
+            fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+            "::placeholder": {
+              color: "#aab7c4",
             },
           },
           invalid: {
-            color: '#e53e3e',
+            color: "#e53e3e",
           },
         },
       });
@@ -90,13 +93,14 @@ const MobileOptimizedYocoForm = ({
     try {
       // Disable scroll on mobile during payment processing
       if (isMobile) {
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow = "hidden";
       }
 
       const { error, token } = await yocoInlineForm.createToken();
-      
+
       if (error) {
-        console.error('YOCO token creation failed:', error);
+        // Optionally, show user feedback here
+        console.error("YOCO token creation failed:", error);
         return;
       }
 
@@ -107,31 +111,34 @@ const MobileOptimizedYocoForm = ({
 
       if (result.success) {
         onSuccess?.();
+      } else {
+        // Optionally, show user feedback here
+        console.error("Payment failed:", result.error);
       }
     } catch (error) {
-      console.error('Payment processing error:', error);
+      console.error("Payment processing error:", error);
     } finally {
       // Re-enable scroll
       if (isMobile) {
-        document.body.style.overflow = 'auto';
+        document.body.style.overflow = "auto";
       }
     }
   };
 
   return (
-    <div className={`${isMobile ? 'px-2' : ''}`}>
+    <div className={isMobile ? "px-2" : ""}>
       <Card className="border-0 shadow-lg">
         <CardHeader className="text-center pb-4">
           <CardTitle className="flex items-center justify-center gap-2 text-lg">
-            <Shield className="h-5 w-5 text-green-600" />
+            <Shield className="h-5 w-5 text-green-600" aria-hidden="true" />
             Secure Payment
           </CardTitle>
           <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
-            <Lock className="h-3 w-3" />
+            <Lock className="h-3 w-3" aria-hidden="true" />
             256-bit SSL encryption
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {/* Amount Display - Mobile Optimized */}
           <div className="text-center p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
@@ -139,7 +146,7 @@ const MobileOptimizedYocoForm = ({
               R{totalPrice.toFixed(2)}
             </div>
             <div className="text-sm text-gray-600">
-              {quantity} ticket{quantity > 1 ? 's' : ''}
+              {quantity} ticket{quantity > 1 ? "s" : ""}
             </div>
           </div>
 
@@ -152,42 +159,56 @@ const MobileOptimizedYocoForm = ({
               id="yoco-card-frame"
               className={`
                 border border-gray-300 rounded-lg bg-white
-                ${isMobile ? 'min-h-[140px] p-4' : 'min-h-[120px] p-4'}
+                ${isMobile ? "min-h-[140px] p-4" : "min-h-[120px] p-4"}
                 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent
               `}
             >
               {!isSDKReady && (
                 <div className="flex items-center justify-center h-20">
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                  <span className="ml-2 text-sm text-gray-600">Loading secure form...</span>
+                  <Loader2
+                    className="h-6 w-6 animate-spin text-blue-600"
+                    aria-hidden="true"
+                  />
+                  <span className="ml-2 text-sm text-gray-600">
+                    Loading secure form...
+                  </span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Mobile-Optimized Buttons */}
-          <div className={`flex gap-3 ${isMobile ? 'flex-col' : ''}`}>
+          <div className={`flex gap-3 ${isMobile ? "flex-col" : ""}`}>
             <Button
               variant="outline"
               onClick={onCancel}
-              className={`${isMobile ? 'h-12 text-base' : 'flex-1'}`}
+              className={isMobile ? "h-12 text-base" : "flex-1"}
               disabled={isProcessing}
+              type="button"
+              aria-label="Cancel Payment"
             >
               Cancel
             </Button>
             <Button
               onClick={handlePayment}
               disabled={!isSDKReady || isProcessing}
-              className={`${isMobile ? 'h-12 text-base' : 'flex-1'} bg-green-600 hover:bg-green-700`}
+              className={`${
+                isMobile ? "h-12 text-base" : "flex-1"
+              } bg-green-600 hover:bg-green-700`}
+              type="button"
+              aria-label={`Pay R${totalPrice.toFixed(2)}`}
             >
               {isProcessing ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2
+                    className="h-4 w-4 mr-2 animate-spin"
+                    aria-hidden="true"
+                  />
                   Processing...
                 </>
               ) : (
                 <>
-                  <CreditCard className="h-4 w-4 mr-2" />
+                  <CreditCard className="h-4 w-4 mr-2" aria-hidden="true" />
                   Pay R{totalPrice.toFixed(2)}
                 </>
               )}
@@ -212,3 +233,6 @@ const MobileOptimizedYocoForm = ({
 };
 
 export default MobileOptimizedYocoForm;
+// This component provides a mobile-optimized payment form using the YOCO SDK.
+// It includes secure card input, payment processing, and responsive design for mobile devices.
+// The form displays the total price and quantity of tickets, and includes trust indicators for security.

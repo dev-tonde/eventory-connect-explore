@@ -1,46 +1,46 @@
-
 {
   "name": "Eventory - Connect & Explore",
   "short_name": "Eventory",
-  "description": "Discover and create amazing events in your community",
+  "description": "Discover and create amazing events in your community.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#9333ea",
   "orientation": "portrait-primary",
+  "lang": "en-US",
+  "categories": ["social", "entertainment", "lifestyle"],
   "icons": [
     {
-      "src": "/favicon.ico",
+      "src": "/icons/icon-48x48.png",
       "sizes": "48x48",
-      "type": "image/x-icon"
+      "type": "image/png"
     },
     {
-      "src": "/favicon.ico",
+      "src": "/icons/icon-72x72.png",
       "sizes": "72x72",
-      "type": "image/x-icon"
+      "type": "image/png"
     },
     {
-      "src": "/favicon.ico",
+      "src": "/icons/icon-96x96.png",
       "sizes": "96x96",
-      "type": "image/x-icon"
+      "type": "image/png"
     },
     {
-      "src": "/favicon.ico",
+      "src": "/icons/icon-144x144.png",
       "sizes": "144x144",
-      "type": "image/x-icon"
+      "type": "image/png"
     },
     {
-      "src": "/favicon.ico",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/x-icon"
+      "type": "image/png"
     },
     {
-      "src": "/favicon.ico",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/x-icon"
+      "type": "image/png"
     }
   ],
-  "categories": ["social", "entertainment", "lifestyle"],
-  "scope": "/",
-  "lang": "en-US"
+  "prefer_related_applications": false
 }

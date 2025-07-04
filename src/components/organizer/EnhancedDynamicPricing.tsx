@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,17 +7,21 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Clock, 
-  Users, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Clock,
+  Users,
   DollarSign,
   Settings,
   AlertCircle,
-  Info
+  Info,
 } from "lucide-react";
 import { useDynamicPricing } from "@/hooks/useDynamicPricing";
+
+// Sanitize text to prevent XSS
+const sanitizeText = (text: string) =>
+  typeof text === "string" ? text.replace(/[<>]/g, "").trim() : "";
 
 interface EnhancedDynamicPricingProps {
   eventId: string;
@@ -32,12 +35,19 @@ interface EnhancedDynamicPricingProps {
 
 interface PricingRule {
   id?: string;
-  rule_type: 'early_bird' | 'surge' | 'capacity' | 'time_decay';
+  rule_type: "early_bird" | "surge" | "capacity" | "time_decay";
   threshold_value: number;
   price_multiplier: number;
   description: string;
   is_active: boolean;
 }
+
+const ruleTypeLabels: Record<PricingRule["rule_type"], string> = {
+  early_bird: "Early Bird",
+  surge: "Surge Pricing",
+  capacity: "Capacity Based",
+  time_decay: "Time Decay",
+};
 
 const EnhancedDynamicPricing = ({
   eventId,
@@ -46,21 +56,27 @@ const EnhancedDynamicPricing = ({
   maxAttendees,
   eventDate,
   onPriceUpdate,
-  isEditable = false
+  isEditable = false,
 }: EnhancedDynamicPricingProps) => {
-  const { priceData, currentPrice, pricingRules, updatePricingRule, isLoading } = useDynamicPricing(eventId, basePrice);
-  
+  const {
+    priceData,
+    currentPrice,
+    pricingRules,
+    updatePricingRule,
+    isLoading,
+  } = useDynamicPricing(eventId, basePrice);
+
   const [isDynamicPricingEnabled, setIsDynamicPricingEnabled] = useState(false);
   const [minPrice, setMinPrice] = useState<number>(basePrice * 0.5);
   const [maxPrice, setMaxPrice] = useState<number>(basePrice * 2);
   const [showSettings, setShowSettings] = useState(false);
-  
+
   const [newRule, setNewRule] = useState<Partial<PricingRule>>({
-    rule_type: 'early_bird',
+    rule_type: "early_bird",
     threshold_value: 30,
     price_multiplier: 0.8,
-    description: 'Early bird discount',
-    is_active: true
+    description: "Early bird discount",
+    is_active: true,
   });
 
   useEffect(() => {
@@ -70,35 +86,41 @@ const EnhancedDynamicPricing = ({
   }, [priceData, onPriceUpdate]);
 
   const handleToggleDynamicPricing = () => {
-    setIsDynamicPricingEnabled(!isDynamicPricingEnabled);
+    setIsDynamicPricingEnabled((prev) => !prev);
   };
 
   const handleAddRule = () => {
-    if (newRule.rule_type && newRule.threshold_value && newRule.price_multiplier) {
+    if (
+      newRule.rule_type &&
+      typeof newRule.threshold_value === "number" &&
+      typeof newRule.price_multiplier === "number"
+    ) {
       updatePricingRule({
         event_id: eventId,
         rule_type: newRule.rule_type,
         threshold_value: newRule.threshold_value,
         price_multiplier: newRule.price_multiplier,
-        description: newRule.description || '',
-        is_active: newRule.is_active || true
+        description: sanitizeText(newRule.description || ""),
+        is_active: newRule.is_active ?? true,
       });
-      
+
       setNewRule({
-        rule_type: 'early_bird',
+        rule_type: "early_bird",
         threshold_value: 30,
         price_multiplier: 0.8,
-        description: 'Early bird discount',
-        is_active: true
+        description: "Early bird discount",
+        is_active: true,
       });
     }
   };
 
   const getPriceChangeIndicator = () => {
     if (currentPrice > basePrice) {
-      return <TrendingUp className="h-4 w-4 text-red-500" />;
+      return <TrendingUp className="h-4 w-4 text-red-500" aria-hidden="true" />;
     } else if (currentPrice < basePrice) {
-      return <TrendingDown className="h-4 w-4 text-green-500" />;
+      return (
+        <TrendingDown className="h-4 w-4 text-green-500" aria-hidden="true" />
+      );
     }
     return null;
   };
@@ -107,15 +129,9 @@ const EnhancedDynamicPricing = ({
     if (!priceData?.appliedRules || priceData.appliedRules.length === 0) {
       return null;
     }
-    
-    return priceData.appliedRules.map(rule => rule.description).join(' + ');
-  };
-
-  const ruleTypeLabels = {
-    early_bird: 'Early Bird',
-    surge: 'Surge Pricing',
-    capacity: 'Capacity Based',
-    time_decay: 'Time Decay'
+    return priceData.appliedRules
+      .map((rule) => sanitizeText(rule.description))
+      .join(" + ");
   };
 
   if (isLoading) {
@@ -137,7 +153,7 @@ const EnhancedDynamicPricing = ({
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <DollarSign className="h-5 w-5" aria-hidden="true" />
             Dynamic Pricing
           </span>
           {isEditable && (
@@ -145,13 +161,16 @@ const EnhancedDynamicPricing = ({
               <Switch
                 checked={isDynamicPricingEnabled}
                 onCheckedChange={handleToggleDynamicPricing}
+                aria-label="Toggle dynamic pricing"
               />
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowSettings(!showSettings)}
+                onClick={() => setShowSettings((prev) => !prev)}
+                type="button"
+                aria-label="Show pricing settings"
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           )}
@@ -174,7 +193,7 @@ const EnhancedDynamicPricing = ({
         {/* Active Price Rules */}
         {getActivePriceReason() && (
           <Badge variant="secondary" className="text-xs">
-            <Clock className="h-3 w-3 mr-1" />
+            <Clock className="h-3 w-3 mr-1" aria-hidden="true" />
             {getActivePriceReason()}
           </Badge>
         )}
@@ -192,6 +211,7 @@ const EnhancedDynamicPricing = ({
                 min="0"
                 step="0.01"
                 disabled={!isEditable}
+                aria-label="Minimum price"
               />
             </div>
             <div>
@@ -204,6 +224,7 @@ const EnhancedDynamicPricing = ({
                 min="0"
                 step="0.01"
                 disabled={!isEditable}
+                aria-label="Maximum price"
               />
             </div>
           </div>
@@ -212,12 +233,16 @@ const EnhancedDynamicPricing = ({
         {/* Price Predictions */}
         {priceData?.nextPriceChange && (
           <Alert className="border-blue-200 bg-blue-50">
-            <Info className="h-4 w-4 text-blue-600" />
+            <Info className="h-4 w-4 text-blue-600" aria-hidden="true" />
             <AlertDescription className="text-blue-800">
-              Next price change: ${priceData.nextPriceChange.newPrice} on{' '}
-              {new Date(priceData.nextPriceChange.changeTime).toLocaleDateString()}
+              Next price change: ${priceData.nextPriceChange.newPrice} on{" "}
+              {new Date(
+                priceData.nextPriceChange.changeTime
+              ).toLocaleDateString()}
               <br />
-              <span className="text-sm">{priceData.nextPriceChange.reason}</span>
+              <span className="text-sm">
+                {sanitizeText(priceData.nextPriceChange.reason)}
+              </span>
             </AlertDescription>
           </Alert>
         )}
@@ -227,12 +252,20 @@ const EnhancedDynamicPricing = ({
           <div className="space-y-2">
             <h4 className="font-medium">Active Pricing Rules</h4>
             {pricingRules.map((rule) => (
-              <div key={rule.id} className="flex items-center justify-between p-3 border rounded-lg">
+              <div
+                key={rule.id}
+                className="flex items-center justify-between p-3 border rounded-lg"
+              >
                 <div>
-                  <div className="font-medium">{ruleTypeLabels[rule.rule_type]}</div>
-                  <div className="text-sm text-gray-600">{rule.description}</div>
+                  <div className="font-medium">
+                    {ruleTypeLabels[rule.rule_type]}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {sanitizeText(rule.description)}
+                  </div>
                   <div className="text-xs text-gray-500">
-                    Multiplier: {rule.price_multiplier}x | Threshold: {rule.threshold_value}
+                    Multiplier: {rule.price_multiplier}x | Threshold:{" "}
+                    {rule.threshold_value}
                   </div>
                 </div>
                 <Badge variant={rule.is_active ? "default" : "secondary"}>
@@ -249,17 +282,18 @@ const EnhancedDynamicPricing = ({
             <Separator />
             <div className="space-y-4">
               <h4 className="font-medium">Add New Pricing Rule</h4>
-              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="ruleType">Rule Type</Label>
                   <select
                     id="ruleType"
                     value={newRule.rule_type}
-                    onChange={(e) => setNewRule({
-                      ...newRule,
-                      rule_type: e.target.value as PricingRule['rule_type']
-                    })}
+                    onChange={(e) =>
+                      setNewRule({
+                        ...newRule,
+                        rule_type: e.target.value as PricingRule["rule_type"],
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
                     <option value="early_bird">Early Bird</option>
@@ -268,22 +302,22 @@ const EnhancedDynamicPricing = ({
                     <option value="time_decay">Time Decay</option>
                   </select>
                 </div>
-                
                 <div>
                   <Label htmlFor="threshold">Threshold</Label>
                   <Input
                     id="threshold"
                     type="number"
                     value={newRule.threshold_value}
-                    onChange={(e) => setNewRule({
-                      ...newRule,
-                      threshold_value: Number(e.target.value)
-                    })}
+                    onChange={(e) =>
+                      setNewRule({
+                        ...newRule,
+                        threshold_value: Number(e.target.value),
+                      })
+                    }
                     placeholder="Days or percentage"
                   />
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="multiplier">Price Multiplier</Label>
@@ -292,30 +326,36 @@ const EnhancedDynamicPricing = ({
                     type="number"
                     step="0.1"
                     value={newRule.price_multiplier}
-                    onChange={(e) => setNewRule({
-                      ...newRule,
-                      price_multiplier: Number(e.target.value)
-                    })}
+                    onChange={(e) =>
+                      setNewRule({
+                        ...newRule,
+                        price_multiplier: Number(e.target.value),
+                      })
+                    }
                     placeholder="1.0 = no change"
                   />
                 </div>
-                
                 <div className="flex items-end">
-                  <Button onClick={handleAddRule} className="w-full">
+                  <Button
+                    onClick={handleAddRule}
+                    className="w-full"
+                    type="button"
+                  >
                     Add Rule
                   </Button>
                 </div>
               </div>
-
               <div>
                 <Label htmlFor="ruleDescription">Description</Label>
                 <Input
                   id="ruleDescription"
                   value={newRule.description}
-                  onChange={(e) => setNewRule({
-                    ...newRule,
-                    description: e.target.value
-                  })}
+                  onChange={(e) =>
+                    setNewRule({
+                      ...newRule,
+                      description: e.target.value,
+                    })
+                  }
                   placeholder="Brief description of the rule"
                 />
               </div>
@@ -325,13 +365,36 @@ const EnhancedDynamicPricing = ({
 
         {/* Pricing Warnings */}
         {currentPrice !== basePrice && (
-          <Alert className={currentPrice > basePrice ? "border-orange-200 bg-orange-50" : "border-green-200 bg-green-50"}>
-            <AlertCircle className={`h-4 w-4 ${currentPrice > basePrice ? "text-orange-600" : "text-green-600"}`} />
-            <AlertDescription className={currentPrice > basePrice ? "text-orange-800" : "text-green-800"}>
+          <Alert
+            className={
+              currentPrice > basePrice
+                ? "border-orange-200 bg-orange-50"
+                : "border-green-200 bg-green-50"
+            }
+          >
+            <AlertCircle
+              className={`h-4 w-4 ${
+                currentPrice > basePrice ? "text-orange-600" : "text-green-600"
+              }`}
+              aria-hidden="true"
+            />
+            <AlertDescription
+              className={
+                currentPrice > basePrice ? "text-orange-800" : "text-green-800"
+              }
+            >
               {currentPrice > basePrice ? (
-                <>Price has increased by ${(currentPrice - basePrice).toFixed(2)}. This may affect demand.</>
+                <>
+                  Price has increased by $
+                  {Math.abs(currentPrice - basePrice).toFixed(2)}. This may
+                  affect demand.
+                </>
               ) : (
-                <>Price has decreased by ${(basePrice - currentPrice).toFixed(2)}. Limited time discount active!</>
+                <>
+                  Price has decreased by $
+                  {Math.abs(basePrice - currentPrice).toFixed(2)}. Limited time
+                  discount active!
+                </>
               )}
             </AlertDescription>
           </Alert>
@@ -342,3 +405,4 @@ const EnhancedDynamicPricing = ({
 };
 
 export default EnhancedDynamicPricing;
+// This component provides an enhanced dynamic pricing feature for events, allowing organizers to set rules based on various criteria such as early bird discounts, surge pricing, capacity-based pricing, and time decay.

@@ -21,19 +21,33 @@ interface SplitPaymentData {
   splitId: string;
 }
 
-const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: SplitPaymentProps) => {
+// Sanitize email to prevent XSS
+const sanitizeEmail = (email: string) =>
+  typeof email === "string"
+    ? email.replace(/[<>]/g, "").trim().toLowerCase()
+    : "";
+
+const SplitPayment = ({
+  totalAmount,
+  eventTitle,
+  onSplitComplete,
+  onCancel,
+}: SplitPaymentProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [participants, setParticipants] = useState<string[]>([user?.email || ""]);
+  const [participants, setParticipants] = useState<string[]>([
+    user?.email || "",
+  ]);
   const [newParticipant, setNewParticipant] = useState("");
   const [isCreatingSplit, setIsCreatingSplit] = useState(false);
 
-  const amountPerPerson = participants.length > 0 ? totalAmount / participants.length : totalAmount;
+  const amountPerPerson =
+    participants.length > 0 ? totalAmount / participants.length : totalAmount;
 
   const addParticipant = () => {
-    if (!newParticipant.trim()) return;
-    
-    const email = newParticipant.trim().toLowerCase();
+    const email = sanitizeEmail(newParticipant);
+    if (!email) return;
+
     if (participants.includes(email)) {
       toast({
         title: "Duplicate email",
@@ -65,7 +79,7 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
       });
       return;
     }
-    setParticipants(participants.filter(p => p !== email));
+    setParticipants(participants.filter((p) => p !== email));
   };
 
   const createSplit = async () => {
@@ -89,8 +103,10 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
         splitId,
       };
 
-      // Store split payment request
-      const existingSplits = JSON.parse(localStorage.getItem("eventory_split_payments") || "[]");
+      // Store split payment request (localStorage for demo; replace with backend in production)
+      const existingSplits = JSON.parse(
+        localStorage.getItem("eventory_split_payments") || "[]"
+      );
       const newSplit = {
         id: splitId,
         eventTitle,
@@ -100,26 +116,36 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
         participants,
         status: "pending",
         createdAt: new Date().toISOString(),
-        payments: participants.map(email => ({
+        payments: participants.map((email) => ({
           email,
-          paid: email === user?.email, // Organizer is automatically marked as initiator
+          paid: email === user?.email,
           paidAt: email === user?.email ? new Date().toISOString() : null,
         })),
       };
 
       existingSplits.push(newSplit);
-      localStorage.setItem("eventory_split_payments", JSON.stringify(existingSplits));
+      localStorage.setItem(
+        "eventory_split_payments",
+        JSON.stringify(existingSplits)
+      );
 
-      // Send notifications (mock implementation)
-      participants.forEach(email => {
+      // Mock notifications
+      participants.forEach((email) => {
         if (email !== user?.email) {
-          console.log(`Sending split payment request to ${email} for $${amountPerPerson.toFixed(2)}`);
+          // Replace with real notification logic
+          console.log(
+            `Sending split payment request to ${email} for $${amountPerPerson.toFixed(
+              2
+            )}`
+          );
         }
       });
 
       toast({
         title: "Split payment created!",
-        description: `Split payment requests sent to ${participants.length - 1} people.`,
+        description: `Split payment requests sent to ${
+          participants.length - 1
+        } people.`,
       });
 
       onSplitComplete?.(splitData);
@@ -135,7 +161,9 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
   };
 
   const copyShareLink = () => {
-    const shareLink = `${window.location.origin}/split-payment/${Math.random().toString(36).substr(2, 9)}`;
+    const shareLink = `${window.location.origin}/split-payment/${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
     navigator.clipboard.writeText(shareLink);
     toast({
       title: "Link copied!",
@@ -147,7 +175,7 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
+          <Users className="h-5 w-5" aria-hidden="true" />
           Split Payment
         </CardTitle>
         <p className="text-sm text-gray-600">
@@ -169,7 +197,8 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
             ${amountPerPerson.toFixed(2)} per person
           </div>
           <div className="text-sm text-green-600">
-            Split between {participants.length} {participants.length === 1 ? 'person' : 'people'}
+            Split between {participants.length}{" "}
+            {participants.length === 1 ? "person" : "people"}
           </div>
         </div>
 
@@ -184,17 +213,26 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
               value={newParticipant}
               onChange={(e) => setNewParticipant(e.target.value)}
               placeholder="friend@example.com"
-              onKeyPress={(e) => e.key === 'Enter' && addParticipant()}
+              onKeyDown={(e) => e.key === "Enter" && addParticipant()}
+              aria-label="Add participant email"
             />
-            <Button onClick={addParticipant} variant="outline" size="sm">
-              <Plus className="h-4 w-4" />
+            <Button
+              onClick={addParticipant}
+              variant="outline"
+              size="sm"
+              type="button"
+              aria-label="Add participant"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </div>
 
         {/* Participants List */}
         <div>
-          <h4 className="font-medium mb-3">Participants ({participants.length})</h4>
+          <h4 className="font-medium mb-3">
+            Participants ({participants.length})
+          </h4>
           <div className="space-y-2">
             {participants.map((email, index) => (
               <div
@@ -202,10 +240,12 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
               >
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-500" />
+                  <Mail className="h-4 w-4 text-gray-500" aria-hidden="true" />
                   <span className="text-sm">{email}</span>
                   {email === user?.email && (
-                    <Badge variant="secondary" className="text-xs">You</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      You
+                    </Badge>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -217,8 +257,10 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
                       variant="ghost"
                       size="sm"
                       onClick={() => removeParticipant(email)}
+                      type="button"
+                      aria-label={`Remove ${email}`}
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   )}
                 </div>
@@ -233,8 +275,10 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
             variant="outline"
             className="w-full mb-3"
             onClick={copyShareLink}
+            type="button"
+            aria-label="Copy share link"
           >
-            <Share2 className="h-4 w-4 mr-2" />
+            <Share2 className="h-4 w-4 mr-2" aria-hidden="true" />
             Copy Share Link
           </Button>
           <p className="text-xs text-gray-500 text-center">
@@ -248,6 +292,8 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
             variant="outline"
             className="flex-1"
             onClick={onCancel}
+            type="button"
+            aria-label="Cancel split"
           >
             Cancel
           </Button>
@@ -255,12 +301,14 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
             className="flex-1"
             onClick={createSplit}
             disabled={isCreatingSplit || participants.length < 2}
+            type="button"
+            aria-label="Create split"
           >
             {isCreatingSplit ? (
               "Creating Split..."
             ) : (
               <>
-                <CreditCard className="h-4 w-4 mr-2" />
+                <CreditCard className="h-4 w-4 mr-2" aria-hidden="true" />
                 Create Split
               </>
             )}
@@ -276,3 +324,7 @@ const SplitPayment = ({ totalAmount, eventTitle, onSplitComplete, onCancel }: Sp
 };
 
 export default SplitPayment;
+// This component allows users to split a payment for an event with friends.
+// It includes functionality to add participants, calculate the amount per person, and create a split payment request.
+// Participants can be added by email, and the component handles duplicate emails and invalid formats.
+// It also provides a shareable link for others to join the split payment.

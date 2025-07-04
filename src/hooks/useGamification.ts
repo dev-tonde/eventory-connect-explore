@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,55 +23,107 @@ interface Badge {
 }
 
 const AVAILABLE_BADGES: Badge[] = [
-  { id: "first_event", name: "First Timer", description: "Attended your first event", icon: "🎉", points_required: 10, category: "attendance" },
-  { id: "social_butterfly", name: "Social Butterfly", description: "Attended 5 events", icon: "🦋", points_required: 50, category: "attendance" },
-  { id: "event_enthusiast", name: "Event Enthusiast", description: "Attended 10 events", icon: "🎯", points_required: 100, category: "attendance" },
-  { id: "community_leader", name: "Community Leader", description: "Organized your first event", icon: "👑", points_required: 25, category: "organizing" },
-  { id: "review_master", name: "Review Master", description: "Left 10 event reviews", icon: "⭐", points_required: 30, category: "engagement" },
-  { id: "early_bird", name: "Early Bird", description: "Booked 5 events more than 30 days in advance", icon: "🐦", points_required: 40, category: "planning" },
-  { id: "streak_master", name: "Streak Master", description: "Used the app for 7 consecutive days", icon: "🔥", points_required: 35, category: "engagement" },
+  {
+    id: "first_event",
+    name: "First Timer",
+    description: "Attended your first event",
+    icon: "🎉",
+    points_required: 10,
+    category: "attendance",
+  },
+  {
+    id: "social_butterfly",
+    name: "Social Butterfly",
+    description: "Attended 5 events",
+    icon: "🦋",
+    points_required: 50,
+    category: "attendance",
+  },
+  {
+    id: "event_enthusiast",
+    name: "Event Enthusiast",
+    description: "Attended 10 events",
+    icon: "🎯",
+    points_required: 100,
+    category: "attendance",
+  },
+  {
+    id: "community_leader",
+    name: "Community Leader",
+    description: "Organized your first event",
+    icon: "👑",
+    points_required: 25,
+    category: "organizing",
+  },
+  {
+    id: "review_master",
+    name: "Review Master",
+    description: "Left 10 event reviews",
+    icon: "⭐",
+    points_required: 30,
+    category: "engagement",
+  },
+  {
+    id: "early_bird",
+    name: "Early Bird",
+    description: "Booked 5 events more than 30 days in advance",
+    icon: "🐦",
+    points_required: 40,
+    category: "planning",
+  },
+  {
+    id: "streak_master",
+    name: "Streak Master",
+    description: "Used the app for 7 consecutive days",
+    icon: "🔥",
+    points_required: 35,
+    category: "engagement",
+  },
 ];
 
+/**
+ * Custom hook for user gamification: points, badges, and leaderboard.
+ */
 export const useGamification = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get user points and badges
-  const { data: userPoints, isLoading } = useQuery({
+  // Fetch user points and badges
+  const { data: userPoints, isLoading } = useQuery<UserPoints | null>({
     queryKey: ["user-points", user?.id],
-    queryFn: async (): Promise<UserPoints | null> => {
+    queryFn: async () => {
       if (!user) return null;
-
       const { data, error } = await supabase
-        .from("user_points" as any)
+        .from("user_points")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+      if (error && error.code !== "PGRST116") throw error;
 
-      return data as UserPoints || {
-        user_id: user.id,
-        total_points: 0,
-        level: 1,
-        badges: [],
-        streak_days: 0,
-        last_activity: new Date().toISOString(),
-      };
+      return (
+        data || {
+          user_id: user.id,
+          total_points: 0,
+          level: 1,
+          badges: [],
+          streak_days: 0,
+          last_activity: new Date().toISOString(),
+        }
+      );
     },
     enabled: !!user,
   });
 
-  // Get leaderboard
-  const { data: leaderboard = [] } = useQuery({
+  // Fetch leaderboard
+  const { data: leaderboard = [] } = useQuery<any[]>({
     queryKey: ["points-leaderboard"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("user_points" as any)
-        .select(`
+        .from("user_points")
+        .select(
+          `
           user_id,
           total_points,
           level,
@@ -80,7 +132,8 @@ export const useGamification = () => {
             last_name,
             username
           )
-        `)
+        `
+        )
         .order("total_points", { ascending: false })
         .limit(10);
 
@@ -91,25 +144,29 @@ export const useGamification = () => {
 
   // Award points mutation
   const awardPointsMutation = useMutation({
-    mutationFn: async ({ points, action }: { points: number; action: string }) => {
+    mutationFn: async ({
+      points,
+      action,
+    }: {
+      points: number;
+      action: string;
+    }) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Check if we can award points for this action today
+      // Prevent duplicate rewards for the same action on the same day
       const { data: existingReward } = await supabase
-        .from("point_transactions" as any)
+        .from("point_transactions")
         .select("*")
         .eq("user_id", user.id)
         .eq("action", action)
-        .gte("created_at", new Date().toISOString().split('T')[0])
+        .gte("created_at", new Date().toISOString().split("T")[0])
         .maybeSingle();
 
-      if (existingReward) {
-        return; // Already awarded today
-      }
+      if (existingReward) return; // Already awarded today
 
       // Award points
       const { error: transactionError } = await supabase
-        .from("point_transactions" as any)
+        .from("point_transactions")
         .insert({
           user_id: user.id,
           points,
@@ -120,7 +177,7 @@ export const useGamification = () => {
       if (transactionError) throw transactionError;
 
       // Update user total points
-      const { error: updateError } = await supabase.rpc("update_user_points" as any, {
+      const { error: updateError } = await supabase.rpc("update_user_points", {
         p_user_id: user.id,
         p_points: points,
       });
@@ -130,7 +187,6 @@ export const useGamification = () => {
     onSuccess: (_, { points, action }) => {
       queryClient.invalidateQueries({ queryKey: ["user-points", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["points-leaderboard"] });
-      
       toast({
         title: "Points Earned! 🎉",
         description: `You earned ${points} points for ${action}!`,
@@ -138,26 +194,29 @@ export const useGamification = () => {
     },
   });
 
-  // Calculate level from points
-  const calculateLevel = (points: number) => {
-    return Math.floor(points / 100) + 1;
-  };
+  /**
+   * Calculate user level from points.
+   */
+  const calculateLevel = (points: number) => Math.floor(points / 100) + 1;
 
-  // Get available badges user can earn
+  /**
+   * Get badges available for the user to earn.
+   */
   const getAvailableBadges = () => {
     if (!userPoints) return [];
-    
-    return AVAILABLE_BADGES.filter(badge => 
-      !userPoints.badges.includes(badge.id) && 
-      userPoints.total_points >= badge.points_required
+    return AVAILABLE_BADGES.filter(
+      (badge) =>
+        !userPoints.badges.includes(badge.id) &&
+        userPoints.total_points >= badge.points_required
     );
   };
 
-  // Get earned badges
+  /**
+   * Get badges the user has already earned.
+   */
   const getEarnedBadges = () => {
     if (!userPoints) return [];
-    
-    return AVAILABLE_BADGES.filter(badge => 
+    return AVAILABLE_BADGES.filter((badge) =>
       userPoints.badges.includes(badge.id)
     );
   };

@@ -1,13 +1,30 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Clock, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Sanitize text to prevent XSS
+const sanitizeText = (text: string) =>
+  typeof text === "string" ? text.replace(/[<>]/g, "").trim() : "";
 
 interface SocialSchedulerProps {
   posterId?: string;
@@ -16,7 +33,12 @@ interface SocialSchedulerProps {
   onClose?: () => void;
 }
 
-const SocialScheduler = ({ posterId, eventId, isOpen, onClose }: SocialSchedulerProps) => {
+const SocialScheduler = ({
+  posterId,
+  eventId,
+  isOpen,
+  onClose,
+}: SocialSchedulerProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [platform, setPlatform] = useState("");
@@ -30,33 +52,37 @@ const SocialScheduler = ({ posterId, eventId, isOpen, onClose }: SocialScheduler
     if (user) {
       fetchScheduledPosts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  useEffect(() => {
-    const handleOpenScheduler = (event: any) => {
-      if (event.detail?.posterId) {
-        // Set the poster ID from the event
-      }
-    };
-
-    window.addEventListener('openScheduler', handleOpenScheduler);
-    return () => window.removeEventListener('openScheduler', handleOpenScheduler);
-  }, []);
+  // Defensive: Only allow known platforms
+  const allowedPlatforms = ["instagram", "facebook", "twitter", "linkedin"];
 
   const fetchScheduledPosts = async () => {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('scheduled_posts')
-      .select(`
+    const { data, error } = await supabase
+      .from("scheduled_posts")
+      .select(
+        `
         *,
         generated_posters (
           event_id,
           image_data
         )
-      `)
-      .eq('user_id', user.id)
-      .order('scheduled_for', { ascending: false });
+      `
+      )
+      .eq("user_id", user.id)
+      .order("scheduled_for", { ascending: false });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch scheduled posts.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (data) {
       setScheduledPosts(data);
@@ -64,7 +90,14 @@ const SocialScheduler = ({ posterId, eventId, isOpen, onClose }: SocialScheduler
   };
 
   const schedulePost = async () => {
-    if (!platform || !caption || !scheduledDate || !scheduledTime || !user) {
+    if (
+      !platform ||
+      !caption ||
+      !scheduledDate ||
+      !scheduledTime ||
+      !user ||
+      !allowedPlatforms.includes(platform)
+    ) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
@@ -75,18 +108,23 @@ const SocialScheduler = ({ posterId, eventId, isOpen, onClose }: SocialScheduler
 
     setIsScheduling(true);
     try {
-      const scheduledFor = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
+      const scheduledFor = new Date(
+        `${scheduledDate}T${scheduledTime}`
+      ).toISOString();
 
-      const { data, error } = await supabase.functions.invoke('schedule-social-post', {
-        body: {
-          userId: user.id,
-          eventId: eventId || 'demo',
-          posterId: posterId,
-          platform,
-          caption,
-          scheduledFor
+      const { error } = await supabase.functions.invoke(
+        "schedule-social-post",
+        {
+          body: {
+            userId: user.id,
+            eventId: eventId || "demo",
+            posterId,
+            platform,
+            caption: sanitizeText(caption),
+            scheduledFor,
+          },
         }
-      });
+      );
 
       if (error) throw error;
 
@@ -100,13 +138,12 @@ const SocialScheduler = ({ posterId, eventId, isOpen, onClose }: SocialScheduler
       setCaption("");
       setScheduledDate("");
       setScheduledTime("");
-      
+
       // Refresh scheduled posts
       fetchScheduledPosts();
       onClose?.();
-
     } catch (error) {
-      console.error('Error scheduling post:', error);
+      console.error("Error scheduling post:", error);
       toast({
         title: "Error",
         description: "Failed to schedule post. Please try again.",
@@ -120,9 +157,9 @@ const SocialScheduler = ({ posterId, eventId, isOpen, onClose }: SocialScheduler
   const cancelScheduledPost = async (postId: string) => {
     try {
       const { error } = await supabase
-        .from('scheduled_posts')
-        .update({ status: 'cancelled' })
-        .eq('id', postId);
+        .from("scheduled_posts")
+        .update({ status: "cancelled" })
+        .eq("id", postId);
 
       if (error) throw error;
 
@@ -133,7 +170,7 @@ const SocialScheduler = ({ posterId, eventId, isOpen, onClose }: SocialScheduler
 
       fetchScheduledPosts();
     } catch (error) {
-      console.error('Error cancelling post:', error);
+      console.error("Error cancelling post:", error);
       toast({
         title: "Error",
         description: "Failed to cancel post.",
@@ -147,11 +184,12 @@ const SocialScheduler = ({ posterId, eventId, isOpen, onClose }: SocialScheduler
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Share2 className="h-5 w-5" />
+            <Share2 className="h-5 w-5" aria-hidden="true" />
             Schedule Social Media Post
           </CardTitle>
           <CardDescription>
-            Schedule your generated poster to be posted on social media platforms
+            Schedule your generated poster to be posted on social media
+            platforms
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -181,41 +219,50 @@ const SocialScheduler = ({ posterId, eventId, isOpen, onClose }: SocialScheduler
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Write your post caption..."
               className="h-24"
+              maxLength={platform === "twitter" ? 280 : 2200}
+              aria-label="Post caption"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              {caption.length}/{platform === "twitter" ? 280 : 2200} characters
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Calendar className="inline h-4 w-4 mr-1" />
+                <Calendar className="inline h-4 w-4 mr-1" aria-hidden="true" />
                 Date
               </label>
               <Input
                 type="date"
                 value={scheduledDate}
                 onChange={(e) => setScheduledDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
+                min={new Date().toISOString().split("T")[0]}
+                aria-label="Schedule date"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Clock className="inline h-4 w-4 mr-1" />
+                <Clock className="inline h-4 w-4 mr-1" aria-hidden="true" />
                 Time
               </label>
               <Input
                 type="time"
                 value={scheduledTime}
                 onChange={(e) => setScheduledTime(e.target.value)}
+                aria-label="Schedule time"
               />
             </div>
           </div>
 
-          <Button 
-            onClick={schedulePost} 
+          <Button
+            onClick={schedulePost}
             disabled={isScheduling}
             className="w-full"
+            type="button"
+            aria-label="Schedule Post"
           >
-            {isScheduling ? 'Scheduling...' : 'Schedule Post'}
+            {isScheduling ? "Scheduling..." : "Schedule Post"}
           </Button>
         </CardContent>
       </Card>
@@ -224,40 +271,62 @@ const SocialScheduler = ({ posterId, eventId, isOpen, onClose }: SocialScheduler
         <Card>
           <CardHeader>
             <CardTitle>Scheduled Posts</CardTitle>
-            <CardDescription>Manage your upcoming social media posts</CardDescription>
+            <CardDescription>
+              Manage your upcoming social media posts
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {scheduledPosts.map((post) => (
-                <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div
+                  key={post.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden">
                       {post.generated_posters?.image_data && (
-                        <img 
+                        <img
                           src={`data:image/png;base64,${post.generated_posters.image_data}`}
                           alt="Poster thumbnail"
                           className="w-full h-full object-cover"
+                          loading="lazy"
+                          width={48}
+                          height={48}
                         />
                       )}
                     </div>
                     <div>
-                      <p className="font-medium capitalize">{post.platform}</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(post.scheduled_for).toLocaleDateString()} at{' '}
-                        {new Date(post.scheduled_for).toLocaleTimeString([], { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
+                      <p className="font-medium capitalize">
+                        {sanitizeText(post.platform)}
                       </p>
-                      <p className="text-sm text-gray-500 capitalize">{post.status}</p>
+                      <p className="text-sm text-gray-600">
+                        {post.scheduled_for
+                          ? new Date(post.scheduled_for).toLocaleDateString()
+                          : ""}{" "}
+                        at{" "}
+                        {post.scheduled_for
+                          ? new Date(post.scheduled_for).toLocaleTimeString(
+                              [],
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )
+                          : ""}
+                      </p>
+                      <p className="text-sm text-gray-500 capitalize">
+                        {sanitizeText(post.status)}
+                      </p>
                     </div>
                   </div>
-                  
-                  {post.status === 'scheduled' && (
-                    <Button 
-                      variant="outline" 
+
+                  {post.status === "scheduled" && (
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => cancelScheduledPost(post.id)}
+                      type="button"
+                      aria-label="Cancel scheduled post"
                     >
                       Cancel
                     </Button>
@@ -273,3 +342,8 @@ const SocialScheduler = ({ posterId, eventId, isOpen, onClose }: SocialScheduler
 };
 
 export default SocialScheduler;
+// This component allows users to schedule and post content to social media platforms.
+// It includes functionality to select a platform, write a caption, and either post immediately or schedule for later.
+// The component fetches and displays recent posts, allowing users to see their social media activity.
+// It also provides a modal for scheduling posts with date and time selection.
+// The component uses Supabase for backend operations and includes basic sanitization to prevent XSS attacks.

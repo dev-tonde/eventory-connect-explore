@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,12 +11,15 @@ const EventCollections = () => {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        {[1, 2, 3].map(i => (
+        {[1, 2, 3].map((i) => (
           <div key={i} className="space-y-4">
             <div className="h-8 bg-gray-200 animate-pulse rounded w-1/3"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map(j => (
-                <div key={j} className="h-48 bg-gray-200 animate-pulse rounded-lg"></div>
+              {[1, 2, 3].map((j) => (
+                <div
+                  key={j}
+                  className="h-48 bg-gray-200 animate-pulse rounded-lg"
+                ></div>
               ))}
             </div>
           </div>
@@ -29,8 +31,12 @@ const EventCollections = () => {
   if (collections.length === 0) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Event Collections Available</h3>
-        <p className="text-gray-600">Check back soon for curated event collections!</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          No Event Collections Available
+        </h3>
+        <p className="text-gray-600">
+          Check back soon for curated event collections!
+        </p>
       </div>
     );
   }
@@ -40,14 +46,18 @@ const EventCollections = () => {
       {collections.map((collection) => (
         <div key={collection.id} className="space-y-6">
           {/* Collection Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{collection.name}</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {collection.name}
+              </h2>
               <p className="text-gray-600 mt-1">{collection.description}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-sm text-gray-500">Curated by {collection.curator}</span>
-                <div className="flex gap-1">
-                  {collection.tags.slice(0, 3).map((tag) => (
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <span className="text-sm text-gray-500">
+                  Curated by {collection.curator}
+                </span>
+                <div className="flex gap-1 flex-wrap">
+                  {collection.tags?.slice(0, 3).map((tag) => (
                     <Badge key={tag} variant="outline" className="text-xs">
                       {tag}
                     </Badge>
@@ -55,15 +65,26 @@ const EventCollections = () => {
                 </div>
               </div>
             </div>
-            <Button variant="outline" className="flex items-center gap-2">
-              View All <ArrowRight className="h-4 w-4" />
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              asChild
+              aria-label={`View all events in ${collection.name}`}
+            >
+              <Link to={`/collections/${collection.id}`}>
+                View All <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
           </div>
 
           {/* Collection Events */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {collection.events.map((event) => (
-              <Link key={event.id} to={`/events/${event.id}`}>
+              <Link
+                key={event.id}
+                to={`/events/${event.id}`}
+                aria-label={`View details for ${event.title}`}
+              >
                 <Card className="hover:shadow-lg transition-shadow group cursor-pointer h-full">
                   <div className="relative">
                     <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
@@ -74,6 +95,7 @@ const EventCollections = () => {
                         onError={(e) => {
                           e.currentTarget.src = "/placeholder.svg";
                         }}
+                        loading="lazy"
                       />
                     </div>
                     <Badge className="absolute top-2 right-2 bg-purple-600">
@@ -92,25 +114,37 @@ const EventCollections = () => {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3" />
                         <span className="text-xs">
-                          {new Date(event.date).toLocaleDateString()} at {event.time}
+                          {new Date(event.date).toLocaleDateString()} at{" "}
+                          {event.time}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-3 w-3" />
-                        <span className="line-clamp-1 text-xs">{event.location}</span>
+                        <span className="line-clamp-1 text-xs">
+                          {event.location}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Users className="h-3 w-3" />
-                        <span className="text-xs">{event.attendeeCount} attending</span>
+                        <span className="text-xs">
+                          {event.attendeeCount} attending
+                        </span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center pt-2">
                       <span className="font-bold text-purple-600">
-                        {Number(event.price) === 0 ? "Free" : `$${Number(event.price).toFixed(2)}`}
+                        {Number(event.price) === 0
+                          ? "Free"
+                          : `R${Number(event.price).toFixed(2)}`}
                       </span>
-                      <Button size="sm" variant="ghost" className="text-xs">
-                        View Details
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs"
+                        asChild
+                      >
+                        <Link to={`/events/${event.id}`}>View Details</Link>
                       </Button>
                     </div>
                   </CardContent>
@@ -125,3 +159,5 @@ const EventCollections = () => {
 };
 
 export default EventCollections;
+// This component displays event collections with their details and allows users to view individual events. It includes loading states, error handling, and responsive design for a better user experience.
+// The collections are fetched from a custom hook `useEventCollections`, which handles the data fetching logic. Each collection displays its name, description, curator, tags, and a list of events.

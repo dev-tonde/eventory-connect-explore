@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,30 +28,31 @@ const SecureAuthForm = () => {
     lastName: "",
   });
 
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
 
   const validateField = (field: string, value: string) => {
     try {
-      if (field === 'email') {
+      if (field === "email") {
         authSchema.shape.email.parse(value);
-      } else if (field === 'password') {
+      } else if (field === "password") {
         authSchema.shape.password.parse(value);
-      } else if (field === 'firstName') {
+      } else if (field === "firstName") {
         authSchema.shape.firstName.parse(value);
-      } else if (field === 'lastName') {
+      } else if (field === "lastName") {
         authSchema.shape.lastName.parse(value);
       }
-      
-      setValidationErrors(prev => {
+      setValidationErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
         return newErrors;
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        setValidationErrors(prev => ({
+        setValidationErrors((prev) => ({
           ...prev,
-          [field]: error.errors[0].message
+          [field]: error.errors[0].message,
         }));
       }
     }
@@ -60,22 +60,27 @@ const SecureAuthForm = () => {
 
   const handleInputChange = (field: string, value: string) => {
     const sanitizedValue = sanitizeInput(value);
-    setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
+    setFormData((prev) => ({ ...prev, [field]: sanitizedValue }));
     validateField(field, sanitizedValue);
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>, isSignup: boolean) => {
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+    isSignup: boolean
+  ) => {
     event.preventDefault();
     setError("");
     setSuccess("");
     setIsLoading(true);
 
     const formDataObj = new FormData(event.currentTarget);
-    const csrfToken = formDataObj.get('csrf_token') as string;
+    const csrfToken = formDataObj.get("csrf_token") as string;
 
     // Validate CSRF token
     if (!validateToken(csrfToken)) {
-      setError("Invalid security token. Please refresh the page and try again.");
+      setError(
+        "Invalid security token. Please refresh the page and try again."
+      );
       setIsLoading(false);
       return;
     }
@@ -89,22 +94,36 @@ const SecureAuthForm = () => {
       }
 
       const { error } = isSignup
-        ? await signup(formData.email, formData.password, formData.firstName, formData.lastName, "attendee")
+        ? await signup(
+            formData.email,
+            formData.password,
+            formData.firstName,
+            formData.lastName,
+            "attendee"
+          )
         : await login(formData.email, formData.password);
 
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
-          setError("Invalid email or password. Please check your credentials and try again.");
+          setError(
+            "Invalid email or password. Please check your credentials and try again."
+          );
         } else if (error.message.includes("User already registered")) {
-          setError("An account with this email already exists. Please try logging in instead.");
+          setError(
+            "An account with this email already exists. Please try logging in instead."
+          );
         } else if (error.message.includes("Email not confirmed")) {
-          setError("Please check your email and click the confirmation link before signing in.");
+          setError(
+            "Please check your email and click the confirmation link before signing in."
+          );
         } else {
           setError(error.message || "An error occurred. Please try again.");
         }
       } else {
         if (isSignup) {
-          setSuccess("Account created successfully! Please check your email for verification.");
+          setSuccess(
+            "Account created successfully! Please check your email for verification."
+          );
         } else {
           navigate("/");
         }
@@ -112,7 +131,7 @@ const SecureAuthForm = () => {
     } catch (validationError) {
       if (validationError instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
-        validationError.errors.forEach(error => {
+        validationError.errors.forEach((error) => {
           if (error.path[0]) {
             fieldErrors[error.path[0] as string] = error.message;
           }
@@ -132,9 +151,11 @@ const SecureAuthForm = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-2">
-            <Shield className="h-8 w-8 text-purple-600" />
+            <Shield className="h-8 w-8 text-purple-600" aria-hidden="true" />
           </div>
-          <CardTitle className="text-2xl font-bold">Secure Authentication</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            Secure Authentication
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
@@ -144,21 +165,28 @@ const SecureAuthForm = () => {
             </TabsList>
 
             <TabsContent value="login">
-              <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
+              <form
+                onSubmit={(e) => handleSubmit(e, false)}
+                className="space-y-4"
+                autoComplete="off"
+              >
                 <CSRFToken />
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
                   <Input
                     id="login-email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
                     className={validationErrors.email ? "border-red-500" : ""}
                     required
+                    autoComplete="username"
                   />
                   {validationErrors.email && (
-                    <p className="text-sm text-red-600">{validationErrors.email}</p>
+                    <p className="text-sm text-red-600">
+                      {validationErrors.email}
+                    </p>
                   )}
                 </div>
 
@@ -169,22 +197,39 @@ const SecureAuthForm = () => {
                       id="login-password"
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
-                      onChange={(e) => handleInputChange('password', e.target.value)}
-                      className={validationErrors.password ? "border-red-500 pr-10" : "pr-10"}
+                      onChange={(e) =>
+                        handleInputChange("password", e.target.value)
+                      }
+                      className={
+                        validationErrors.password
+                          ? "border-red-500 pr-10"
+                          : "pr-10"
+                      }
                       required
+                      autoComplete="current-password"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() => setShowPassword((v) => !v)}
+                      tabIndex={-1}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                   {validationErrors.password && (
-                    <p className="text-sm text-red-600">{validationErrors.password}</p>
+                    <p className="text-sm text-red-600">
+                      {validationErrors.password}
+                    </p>
                   )}
                 </div>
 
@@ -195,9 +240,13 @@ const SecureAuthForm = () => {
             </TabsContent>
 
             <TabsContent value="signup">
-              <form onSubmit={(e) => handleSubmit(e, true)} className="space-y-4">
+              <form
+                onSubmit={(e) => handleSubmit(e, true)}
+                className="space-y-4"
+                autoComplete="off"
+              >
                 <CSRFToken />
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-firstname">First Name</Label>
@@ -205,27 +254,41 @@ const SecureAuthForm = () => {
                       id="signup-firstname"
                       type="text"
                       value={formData.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      className={validationErrors.firstName ? "border-red-500" : ""}
+                      onChange={(e) =>
+                        handleInputChange("firstName", e.target.value)
+                      }
+                      className={
+                        validationErrors.firstName ? "border-red-500" : ""
+                      }
                       required
+                      autoComplete="given-name"
                     />
                     {validationErrors.firstName && (
-                      <p className="text-sm text-red-600">{validationErrors.firstName}</p>
+                      <p className="text-sm text-red-600">
+                        {validationErrors.firstName}
+                      </p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="signup-lastname">Last Name</Label>
                     <Input
                       id="signup-lastname"
                       type="text"
                       value={formData.lastName}
-                      onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      className={validationErrors.lastName ? "border-red-500" : ""}
+                      onChange={(e) =>
+                        handleInputChange("lastName", e.target.value)
+                      }
+                      className={
+                        validationErrors.lastName ? "border-red-500" : ""
+                      }
                       required
+                      autoComplete="family-name"
                     />
                     {validationErrors.lastName && (
-                      <p className="text-sm text-red-600">{validationErrors.lastName}</p>
+                      <p className="text-sm text-red-600">
+                        {validationErrors.lastName}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -236,12 +299,15 @@ const SecureAuthForm = () => {
                     id="signup-email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
                     className={validationErrors.email ? "border-red-500" : ""}
                     required
+                    autoComplete="username"
                   />
                   {validationErrors.email && (
-                    <p className="text-sm text-red-600">{validationErrors.email}</p>
+                    <p className="text-sm text-red-600">
+                      {validationErrors.email}
+                    </p>
                   )}
                 </div>
 
@@ -252,22 +318,39 @@ const SecureAuthForm = () => {
                       id="signup-password"
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
-                      onChange={(e) => handleInputChange('password', e.target.value)}
-                      className={validationErrors.password ? "border-red-500 pr-10" : "pr-10"}
+                      onChange={(e) =>
+                        handleInputChange("password", e.target.value)
+                      }
+                      className={
+                        validationErrors.password
+                          ? "border-red-500 pr-10"
+                          : "pr-10"
+                      }
                       required
+                      autoComplete="new-password"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() => setShowPassword((v) => !v)}
+                      tabIndex={-1}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                   {validationErrors.password && (
-                    <p className="text-sm text-red-600">{validationErrors.password}</p>
+                    <p className="text-sm text-red-600">
+                      {validationErrors.password}
+                    </p>
                   )}
                   <div className="text-xs text-gray-500 space-y-1">
                     <p>Password must contain:</p>
@@ -290,13 +373,17 @@ const SecureAuthForm = () => {
 
           {error && (
             <Alert className="mt-4 border-red-200 bg-red-50">
-              <AlertDescription className="text-red-800">{error}</AlertDescription>
+              <AlertDescription className="text-red-800">
+                {error}
+              </AlertDescription>
             </Alert>
           )}
 
           {success && (
             <Alert className="mt-4 border-green-200 bg-green-50">
-              <AlertDescription className="text-green-800">{success}</AlertDescription>
+              <AlertDescription className="text-green-800">
+                {success}
+              </AlertDescription>
             </Alert>
           )}
         </CardContent>
@@ -306,3 +393,4 @@ const SecureAuthForm = () => {
 };
 
 export default SecureAuthForm;
+// This component provides a secure authentication form with login and signup functionality.

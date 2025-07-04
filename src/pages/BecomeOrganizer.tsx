@@ -1,15 +1,22 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserPlus, Star, Calendar, Users, CheckCircle, Loader2 } from "lucide-react";
+import {
+  UserPlus,
+  Star,
+  Calendar,
+  Users,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 const BecomeOrganizer = () => {
-  const { user, profile, updateProfile, isAuthenticated, refreshProfile } = useAuth();
+  const { user, profile, updateProfile, isAuthenticated, refreshProfile } =
+    useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -20,39 +27,42 @@ const BecomeOrganizer = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    console.log('BecomeOrganizer: Auth state:', { isAuthenticated, profile });
-    
     if (!isAuthenticated) {
       navigate("/auth");
       return;
     }
-
     if (profile?.role === "organizer") {
       toast({
         title: "Already an Organizer",
         description: "You're already an organizer! Redirecting to dashboard.",
       });
       navigate("/dashboard");
-      return;
     }
   }, [isAuthenticated, profile, navigate, toast]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      console.log('BecomeOrganizer: Submitting organizer upgrade...');
-      
       const updates = {
         role: "organizer",
-        bio: formData.bio || "Event organizer passionate about creating amazing experiences.",
+        bio:
+          formData.bio ||
+          "Event organizer passionate about creating amazing experiences.",
+        organization_name: formData.organization_name,
+        experience: formData.experience,
       };
 
       const { error } = await updateProfile(updates);
 
       if (error) {
-        console.error('BecomeOrganizer: Update error:', error);
         toast({
           title: "Error",
           description: "Failed to update your role. Please try again.",
@@ -61,25 +71,19 @@ const BecomeOrganizer = () => {
         return;
       }
 
-      console.log('BecomeOrganizer: Success! Refreshing profile...');
-      
       // Wait a moment for the database to update, then refresh
       setTimeout(async () => {
         await refreshProfile();
-        
         toast({
           title: "🎉 Welcome to Eventory Organizers!",
-          description: "You can now create and manage events. Redirecting to your dashboard...",
+          description:
+            "You can now create and manage events. Redirecting to your dashboard...",
         });
-        
-        // Small delay to show the success message
         setTimeout(() => {
           navigate("/dashboard");
         }, 1500);
       }, 500);
-      
     } catch (error) {
-      console.error('BecomeOrganizer: Unexpected error:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
@@ -108,7 +112,8 @@ const BecomeOrganizer = () => {
               Become an Event Organizer
             </h1>
             <p className="text-gray-600">
-              Join thousands of organizers creating amazing experiences on Eventory
+              Join thousands of organizers creating amazing experiences on
+              Eventory
             </p>
           </div>
 
@@ -151,42 +156,51 @@ const BecomeOrganizer = () => {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="organization_name"
+                  >
                     Organization/Company Name (Optional)
                   </label>
                   <Input
+                    id="organization_name"
+                    name="organization_name"
                     value={formData.organization_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, organization_name: e.target.value })
-                    }
+                    onChange={handleChange}
                     placeholder="Your organization or company name"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="bio"
+                  >
                     About You *
                   </label>
                   <textarea
+                    id="bio"
+                    name="bio"
                     required
                     value={formData.bio}
-                    onChange={(e) =>
-                      setFormData({ ...formData, bio: e.target.value })
-                    }
+                    onChange={handleChange}
                     placeholder="Tell us about yourself and why you want to organize events..."
                     className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="experience"
+                  >
                     Event Experience (Optional)
                   </label>
                   <textarea
+                    id="experience"
+                    name="experience"
                     value={formData.experience}
-                    onChange={(e) =>
-                      setFormData({ ...formData, experience: e.target.value })
-                    }
+                    onChange={handleChange}
                     placeholder="Describe any previous event organizing experience..."
                     className="w-full h-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />

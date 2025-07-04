@@ -1,8 +1,11 @@
-
 import { useQueries } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * Custom hook to batch fetch user tickets, favorites, and notifications.
+ * Uses react-query's useQueries for parallel fetching and caching.
+ */
 export const useBatchUserData = () => {
   const { user } = useAuth();
 
@@ -14,7 +17,8 @@ export const useBatchUserData = () => {
           if (!user) return [];
           const { data, error } = await supabase
             .from("tickets")
-            .select(`
+            .select(
+              `
               id,
               quantity,
               total_price,
@@ -25,14 +29,15 @@ export const useBatchUserData = () => {
                 time,
                 venue
               )
-            `)
+            `
+            )
             .eq("user_id", user.id)
             .eq("status", "active")
             .order("purchase_date", { ascending: false })
             .limit(10);
 
           if (error) throw error;
-          return data;
+          return data || [];
         },
         enabled: !!user,
         staleTime: 5 * 60 * 1000, // 5 minutes
@@ -47,7 +52,7 @@ export const useBatchUserData = () => {
             .eq("user_id", user.id);
 
           if (error) throw error;
-          return data.map(fav => fav.event_id);
+          return (data || []).map((fav: { event_id: string }) => fav.event_id);
         },
         enabled: !!user,
         staleTime: 5 * 60 * 1000, // 5 minutes
@@ -65,7 +70,7 @@ export const useBatchUserData = () => {
             .limit(5);
 
           if (error) throw error;
-          return data;
+          return data || [];
         },
         enabled: !!user,
         staleTime: 1 * 60 * 1000, // 1 minute for notifications
@@ -74,12 +79,12 @@ export const useBatchUserData = () => {
   });
 
   return {
-    tickets: results[0].data || [],
-    ticketsLoading: results[0].isLoading,
-    favorites: results[1].data || [],
-    favoritesLoading: results[1].isLoading,
-    notifications: results[2].data || [],
-    notificationsLoading: results[2].isLoading,
-    isLoading: results.some(result => result.isLoading),
+    tickets: results[0]?.data || [],
+    ticketsLoading: results[0]?.isLoading || false,
+    favorites: results[1]?.data || [],
+    favoritesLoading: results[1]?.isLoading || false,
+    notifications: results[2]?.data || [],
+    notificationsLoading: results[2]?.isLoading || false,
+    isLoading: results.some((result) => result.isLoading),
   };
 };

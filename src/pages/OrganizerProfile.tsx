@@ -1,13 +1,26 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Calendar, MapPin, CheckCircle, UserPlus, UserCheck, Grid3X3 } from "lucide-react";
+import {
+  User,
+  Calendar,
+  MapPin,
+  CheckCircle,
+  UserPlus,
+  UserCheck,
+  Grid3X3,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Event } from "@/types/event";
 import { useToast } from "@/hooks/use-toast";
+
+interface Follow {
+  userId: string;
+  organizerName: string;
+  followedAt: string;
+}
 
 const OrganizerProfile = () => {
   const { organizerName } = useParams();
@@ -18,34 +31,45 @@ const OrganizerProfile = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
 
-  const decodedOrganizerName = decodeURIComponent(organizerName || '');
+  const decodedOrganizerName = decodeURIComponent(organizerName || "");
 
   useEffect(() => {
     if (!decodedOrganizerName) return;
-
     loadOrganizerData();
     checkFollowStatus();
-  }, [decodedOrganizerName, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decodedOrganizerName, user?.id]);
 
   const loadOrganizerData = () => {
-    const events = JSON.parse(localStorage.getItem('eventory_events') || '[]');
-    const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
-    
+    const events = JSON.parse(localStorage.getItem("eventory_events") || "[]");
+    const followerCounts = JSON.parse(
+      localStorage.getItem("eventory_follower_counts") || "{}"
+    );
+
     // Get organizer's events
-    const organizer_events = events.filter((e: Event) => e.organizer === decodedOrganizerName);
-    setOrganizerEvents(organizer_events.sort((a: Event, b: Event) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    
+    const organizer_events = events.filter(
+      (e: Event) => e.organizer === decodedOrganizerName
+    );
+    setOrganizerEvents(
+      organizer_events.sort(
+        (a: Event, b: Event) =>
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+      )
+    );
+
     // Get follower count and verification status
     const count = followerCounts[decodedOrganizerName] || 0;
     setFollowerCount(count);
     setIsVerified(count >= 10000);
   };
-
   const checkFollowStatus = () => {
-    if (!user) return;
-    
-    const follows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
-    const isFollowingOrganizer = follows.some((f: any) => f.userId === user.id && f.organizerName === decodedOrganizerName);
+    const follows = JSON.parse(
+      localStorage.getItem("eventory_follows") || "[]"
+    );
+    const isFollowingOrganizer = (follows as Follow[]).some(
+      (f: Follow) =>
+        f.userId === user?.id && f.organizerName === decodedOrganizerName
+    );
     setIsFollowing(isFollowingOrganizer);
   };
 
@@ -59,46 +83,60 @@ const OrganizerProfile = () => {
       return;
     }
 
-    const existingFollows = JSON.parse(localStorage.getItem('eventory_follows') || '[]');
-    const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
+    const existingFollows = JSON.parse(
+      localStorage.getItem("eventory_follows") || "[]"
+    );
+    const followerCounts = JSON.parse(
+      localStorage.getItem("eventory_follower_counts") || "{}"
+    );
 
     if (isFollowing) {
       // Unfollow
-      const updatedFollows = existingFollows.filter(
-        (f: any) => !(f.userId === user.id && f.organizerName === decodedOrganizerName)
+      const updatedFollows = (existingFollows as Follow[]).filter(
+        (f: Follow) =>
+          !(f.userId === user.id && f.organizerName === decodedOrganizerName)
       );
-      localStorage.setItem('eventory_follows', JSON.stringify(updatedFollows));
-      
-      const newCount = Math.max(0, (followerCounts[decodedOrganizerName] || 0) - 1);
+      localStorage.setItem("eventory_follows", JSON.stringify(updatedFollows));
+
+      const newCount = Math.max(
+        0,
+        (followerCounts[decodedOrganizerName] || 0) - 1
+      );
       followerCounts[decodedOrganizerName] = newCount;
-      localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
-      
+      localStorage.setItem(
+        "eventory_follower_counts",
+        JSON.stringify(followerCounts)
+      );
+
       setIsFollowing(false);
       setFollowerCount(newCount);
       setIsVerified(newCount >= 10000);
-      
+
       toast({
         title: "Unfollowed organizer",
         description: `You are no longer following ${decodedOrganizerName}.`,
       });
     } else {
       // Follow
-      const newFollow = { 
-        userId: user.id, 
-        organizerName: decodedOrganizerName, 
-        followedAt: new Date().toISOString() 
+      const newFollow = {
+        userId: user.id,
+        organizerName: decodedOrganizerName,
+        followedAt: new Date().toISOString(),
       };
       existingFollows.push(newFollow);
-      localStorage.setItem('eventory_follows', JSON.stringify(existingFollows));
-      
+      localStorage.setItem("eventory_follows", JSON.stringify(existingFollows));
+
       const newCount = (followerCounts[decodedOrganizerName] || 0) + 1;
       followerCounts[decodedOrganizerName] = newCount;
-      localStorage.setItem('eventory_follower_counts', JSON.stringify(followerCounts));
-      
+      localStorage.setItem(
+        "eventory_follower_counts",
+        JSON.stringify(followerCounts)
+      );
+
       setIsFollowing(true);
       setFollowerCount(newCount);
       setIsVerified(newCount >= 10000);
-      
+
       toast({
         title: "Following organizer",
         description: `You are now following ${decodedOrganizerName}.`,
@@ -123,7 +161,7 @@ const OrganizerProfile = () => {
             <div className="w-32 h-32 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
               <User className="h-16 w-16 text-white" />
             </div>
-            
+
             {/* Profile Info */}
             <div className="flex-1 text-center md:text-left">
               <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
@@ -133,12 +171,16 @@ const OrganizerProfile = () => {
                     <CheckCircle className="h-6 w-6 text-blue-500" />
                   )}
                 </div>
-                
+
                 {user && (
                   <Button
                     variant={isFollowing ? "outline" : "default"}
                     onClick={toggleFollow}
-                    className={isFollowing ? "text-gray-700" : "bg-blue-500 hover:bg-blue-600 text-white"}
+                    className={
+                      isFollowing
+                        ? "text-gray-700"
+                        : "bg-blue-500 hover:bg-blue-600 text-white"
+                    }
                   >
                     {isFollowing ? (
                       <>
@@ -154,19 +196,23 @@ const OrganizerProfile = () => {
                   </Button>
                 )}
               </div>
-              
+
               {/* Stats */}
               <div className="flex justify-center md:justify-start gap-8 mb-4">
                 <div className="text-center">
-                  <div className="font-bold text-lg">{organizerEvents.length}</div>
+                  <div className="font-bold text-lg">
+                    {organizerEvents.length}
+                  </div>
                   <div className="text-gray-600 text-sm">Events</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-lg">{followerCount.toLocaleString()}</div>
+                  <div className="font-bold text-lg">
+                    {followerCount.toLocaleString()}
+                  </div>
                   <div className="text-gray-600 text-sm">Followers</div>
                 </div>
               </div>
-              
+
               {/* Verification Badge */}
               {isVerified && (
                 <div className="mb-4">
@@ -176,11 +222,15 @@ const OrganizerProfile = () => {
                   </Badge>
                 </div>
               )}
-              
+
               {/* Bio */}
               <div className="text-gray-700">
-                <p>Professional event organizer creating memorable experiences. 
-                {isVerified ? " Verified organizer with premium event quality." : " Building amazing events for our community."}</p>
+                <p>
+                  Professional event organizer creating memorable experiences.
+                  {isVerified
+                    ? " Verified organizer with premium event quality."
+                    : " Building amazing events for our community."}
+                </p>
               </div>
             </div>
           </div>
@@ -196,8 +246,12 @@ const OrganizerProfile = () => {
         {organizerEvents.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No events yet</h3>
-            <p className="text-gray-500">This organizer hasn't created any events.</p>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              No events yet
+            </h3>
+            <p className="text-gray-500">
+              This organizer hasn't created any events.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -205,10 +259,13 @@ const OrganizerProfile = () => {
               <Link key={event.id} to={`/events/${event.id}`}>
                 <Card className="group hover:shadow-lg transition-all duration-200 overflow-hidden">
                   <div className="aspect-square bg-gray-200 overflow-hidden relative">
-                    <img 
-                      src={event.image} 
+                    <img
+                      src={event.image}
                       alt={event.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      onError={(e) => {
+                        e.currentTarget.src = "/placeholder.svg";
+                      }}
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-200" />
                   </div>
@@ -228,7 +285,7 @@ const OrganizerProfile = () => {
                     </div>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-sm font-bold text-purple-600">
-                        {event.price === 0 ? 'Free' : `$${event.price}`}
+                        {event.price === 0 ? "Free" : `R${event.price}`}
                       </span>
                       <span className="text-xs text-gray-500">
                         {event.attendeeCount} attending
@@ -246,3 +303,4 @@ const OrganizerProfile = () => {
 };
 
 export default OrganizerProfile;
+// This code defines an OrganizerProfile page that displays the profile of a specific event organizer, including their name, follower count, verification status, and a grid of events they have created. It allows users to follow or unfollow the organizer and shows a verification badge if they have at least 10,000 followers. The page is responsive and uses cards for event display.

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Event } from "@/types/event";
@@ -10,20 +9,27 @@ interface UseOptimizedEventsOptions {
   cacheTime?: number;
 }
 
+/**
+ * Custom hook to fetch and categorize optimized events.
+ */
 export const useOptimizedEvents = (options: UseOptimizedEventsOptions = {}) => {
-  const { 
-    enabled = true, 
+  const {
+    enabled = true,
     staleTime = 5 * 60 * 1000, // 5 minutes
-    cacheTime = 10 * 60 * 1000 // 10 minutes 
+    cacheTime = 10 * 60 * 1000, // 10 minutes
   } = options;
 
-  const { data: events = [], isLoading, error } = useQuery({
+  const {
+    data: events = [],
+    isLoading,
+    error,
+  } = useQuery<Event[]>({
     queryKey: ["optimized-events"],
     queryFn: async () => {
-      // Use a single optimized query with proper indexing
       const { data, error } = await supabase
         .from("events")
-        .select(`
+        .select(
+          `
           id,
           title,
           description,
@@ -41,16 +47,17 @@ export const useOptimizedEvents = (options: UseOptimizedEventsOptions = {}) => {
             first_name,
             last_name
           )
-        `)
+        `
+        )
         .eq("is_active", true)
-        .gte("date", new Date().toISOString().split('T')[0]) // Only future events
+        .gte("date", new Date().toISOString().split("T")[0])
         .order("date", { ascending: true })
         .order("created_at", { ascending: false })
-        .limit(50); // Reasonable limit
+        .limit(50);
 
       if (error) throw error;
-      
-      return data.map(event => ({
+
+      return (data || []).map((event) => ({
         id: event.id,
         title: event.title,
         description: event.description || "",
@@ -61,12 +68,12 @@ export const useOptimizedEvents = (options: UseOptimizedEventsOptions = {}) => {
         price: Number(event.price),
         category: event.category,
         image: event.image_url || "/placeholder.svg",
-        organizer: event.profiles 
+        organizer: event.profiles
           ? `${event.profiles.first_name} ${event.profiles.last_name}`.trim()
-          : 'Unknown Organizer',
+          : "Unknown Organizer",
         attendeeCount: event.current_attendees || 0,
         maxAttendees: event.max_attendees || 100,
-        tags: event.tags || []
+        tags: event.tags || [],
       })) as Event[];
     },
     enabled,
@@ -76,10 +83,10 @@ export const useOptimizedEvents = (options: UseOptimizedEventsOptions = {}) => {
     refetchOnMount: false,
   });
 
-  // Memoize derived data to avoid recalculations
+  // Memoize derived data to avoid unnecessary recalculations
   const categorizedEvents = useMemo(() => {
     const categories: Record<string, Event[]> = {};
-    events.forEach(event => {
+    events.forEach((event) => {
       if (!categories[event.category]) {
         categories[event.category] = [];
       }
@@ -89,8 +96,8 @@ export const useOptimizedEvents = (options: UseOptimizedEventsOptions = {}) => {
   }, [events]);
 
   const upcomingEvents = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return events.filter(event => event.date >= today);
+    const today = new Date().toISOString().split("T")[0];
+    return events.filter((event) => event.date >= today);
   }, [events]);
 
   return {

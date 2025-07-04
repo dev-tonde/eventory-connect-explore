@@ -3,17 +3,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Event } from "@/types/event";
 
+/**
+ * Custom hook to fetch, create, and upload images for events.
+ */
 export const useEvents = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Use optimized query with proper caching
-  const { data: events = [], isLoading } = useQuery({
+  // Fetch active, upcoming events
+  const { data: events = [], isLoading } = useQuery<Event[]>({
     queryKey: ["events"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
-        .select(`
+        .select(
+          `
           id,
           title,
           description,
@@ -31,15 +35,16 @@ export const useEvents = () => {
             first_name,
             last_name
           )
-        `)
+        `
+        )
         .eq("is_active", true)
-        .gte("date", new Date().toISOString().split('T')[0]) // Only future events
+        .gte("date", new Date().toISOString().split("T")[0])
         .order("date", { ascending: true })
-        .limit(50); // Reasonable limit
+        .limit(50);
 
       if (error) throw error;
-      
-      return data.map(event => ({
+
+      return (data || []).map((event) => ({
         id: event.id,
         title: event.title,
         description: event.description || "",
@@ -50,12 +55,12 @@ export const useEvents = () => {
         price: Number(event.price),
         category: event.category,
         image: event.image_url || "/placeholder.svg",
-        organizer: event.profiles 
+        organizer: event.profiles
           ? `${event.profiles.first_name} ${event.profiles.last_name}`.trim()
-          : 'Unknown Organizer',
+          : "Unknown Organizer",
         attendeeCount: event.current_attendees || 0,
         maxAttendees: event.max_attendees || 100,
-        tags: event.tags || []
+        tags: event.tags || [],
       })) as Event[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -63,27 +68,36 @@ export const useEvents = () => {
     refetchOnWindowFocus: false,
   });
 
+  /**
+   * Uploads an event image to Supabase Storage and returns the public URL.
+   */
   const uploadEventImage = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `${(await supabase.auth.getUser()).data.user?.id}/${fileName}`;
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) throw new Error("User not authenticated");
+    const filePath = `${userId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('event-images')
+      .from("event-images")
       .upload(filePath, file);
 
     if (uploadError) {
-      console.error('Upload error:', uploadError);
+      console.error("Upload error:", uploadError);
       throw uploadError;
     }
 
     const { data } = supabase.storage
-      .from('event-images')
+      .from("event-images")
       .getPublicUrl(filePath);
 
     return data.publicUrl;
   };
 
+  /**
+   * Mutation to create a new event.
+   */
   const createEventMutation = useMutation({
     mutationFn: async (eventData: Partial<Event> & { imageFile?: File }) => {
       const { imageFile, ...restEventData } = eventData;
@@ -94,8 +108,7 @@ export const useEvents = () => {
         try {
           imageUrl = await uploadEventImage(imageFile);
         } catch (error) {
-          console.error('Image upload failed:', error);
-          // Continue without image if upload fails
+          console.error("Image upload failed:", error);
           imageUrl = "/placeholder.svg";
         }
       }
@@ -105,20 +118,22 @@ export const useEvents = () => {
 
       const { data, error } = await supabase
         .from("events")
-        .insert([{
-          title: restEventData.title,
-          description: restEventData.description,
-          date: restEventData.date,
-          time: restEventData.time,
-          venue: restEventData.location,
-          address: restEventData.address,
-          price: restEventData.price,
-          category: restEventData.category,
-          image_url: imageUrl,
-          max_attendees: restEventData.maxAttendees,
-          tags: restEventData.tags,
-          organizer_id: user.user.id
-        }])
+        .insert([
+          {
+            title: restEventData.title,
+            description: restEventData.description,
+            date: restEventData.date,
+            time: restEventData.time,
+            venue: restEventData.location,
+            address: restEventData.address,
+            price: restEventData.price,
+            category: restEventData.category,
+            image_url: imageUrl,
+            max_attendees: restEventData.maxAttendees,
+            tags: restEventData.tags,
+            organizer_id: user.user.id,
+          },
+        ])
         .select()
         .single();
 
@@ -126,7 +141,6 @@ export const useEvents = () => {
       return data;
     },
     onSuccess: () => {
-      // Invalidate multiple related queries
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["optimized-events"] });
       toast({

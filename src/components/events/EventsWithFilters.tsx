@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,87 +8,141 @@ import { Calendar, MapPin, Users, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useOptimizedEvents } from "@/hooks/useOptimizedEvents";
 
+// Only allow trusted image URLs (must be https and from your trusted domain)
+const isTrustedImageUrl = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    // Replace with your actual trusted domain if needed
+    return (
+      parsed.protocol === "https:" &&
+      parsed.hostname === "your-supabase-project-id.supabase.co" // <-- Use your actual trusted domain here
+    );
+  } catch {
+    return false;
+  }
+};
+
 const EventsWithFilters = () => {
   const { events, isLoading } = useOptimizedEvents();
   const [activeTab, setActiveTab] = useState("all");
 
   const filterEventsByCategory = (category: string) => {
-    if (category === "all") return events.slice(0, 6); // Show 6 events for "all"
-    return events.filter(event => 
-      event.category.toLowerCase() === category.toLowerCase()
-    ).slice(0, 6); // Show 6 events per category
+    if (category === "all") return events.slice(0, 6);
+    return events
+      .filter(
+        (event) => event.category.toLowerCase() === category.toLowerCase()
+      )
+      .slice(0, 6);
   };
 
   // Calculate category counts based on actual events data
   const categories = [
     { id: "all", label: "All Events", count: events.length },
-    { id: "music", label: "Music", count: events.filter(e => e.category.toLowerCase() === "music").length },
-    { id: "technology", label: "Technology", count: events.filter(e => e.category.toLowerCase() === "technology").length },
-    { id: "sports", label: "Sports", count: events.filter(e => e.category.toLowerCase() === "sports").length },
-    { id: "food", label: "Food & Drink", count: events.filter(e => e.category.toLowerCase().includes("food")).length },
-    { id: "arts", label: "Arts & Culture", count: events.filter(e => e.category.toLowerCase().includes("arts")).length },
-    { id: "business", label: "Business", count: events.filter(e => e.category.toLowerCase() === "business").length },
+    {
+      id: "music",
+      label: "Music",
+      count: events.filter((e) => e.category.toLowerCase() === "music").length,
+    },
+    {
+      id: "technology",
+      label: "Technology",
+      count: events.filter((e) => e.category.toLowerCase() === "technology")
+        .length,
+    },
+    {
+      id: "sports",
+      label: "Sports",
+      count: events.filter((e) => e.category.toLowerCase() === "sports").length,
+    },
+    {
+      id: "food",
+      label: "Food & Drink",
+      count: events.filter((e) => e.category.toLowerCase().includes("food"))
+        .length,
+    },
+    {
+      id: "arts",
+      label: "Arts & Culture",
+      count: events.filter((e) => e.category.toLowerCase().includes("arts"))
+        .length,
+    },
+    {
+      id: "business",
+      label: "Business",
+      count: events.filter((e) => e.category.toLowerCase() === "business")
+        .length,
+    },
   ];
 
-  const EventCard = ({ event }: { event: any }) => (
-    <Card className="hover:shadow-lg transition-shadow group">
-      <div className="relative">
-        <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
-          <img
-            src={event.image}
-            alt={event.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              e.currentTarget.src = "/placeholder.svg";
-            }}
-          />
+  const EventCard = ({ event }: { event: any }) => {
+    const safeImageUrl =
+      event.image && isTrustedImageUrl(event.image)
+        ? event.image
+        : "/placeholder.svg";
+
+    return (
+      <Card className="hover:shadow-lg transition-shadow group">
+        <div className="relative">
+          <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
+            <img
+              src={safeImageUrl}
+              alt={event.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.src = "/placeholder.svg";
+              }}
+            />
+          </div>
+          <Badge className="absolute top-2 right-2 bg-purple-600">
+            {event.category}
+          </Badge>
         </div>
-        <Badge className="absolute top-2 right-2 bg-purple-600">
-          {event.category}
-        </Badge>
-      </div>
 
-      <Link to={`/events/${event.id}`}>
-        <CardHeader>
-          <CardTitle className="text-lg group-hover:text-purple-600 transition-colors line-clamp-2">
-            {event.title}
-          </CardTitle>
-          <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-sm text-gray-600 mb-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>
-                {new Date(event.date).toLocaleDateString()} at {event.time}
+        <Link to={`/events/${event.id}`}>
+          <CardHeader>
+            <CardTitle className="text-lg group-hover:text-purple-600 transition-colors line-clamp-2">
+              {event.title}
+            </CardTitle>
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {event.description}
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm text-gray-600 mb-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  {new Date(event.date).toLocaleDateString()} at {event.time}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span className="line-clamp-1">{event.location}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span>{event.attendeeCount} attending</span>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-bold text-purple-600">
+                {event.price === 0 ? "Free" : `R${event.price}`}
               </span>
+              <Button
+                size="sm"
+                className="group-hover:bg-purple-700 transition-colors"
+              >
+                View Details
+                <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <span className="line-clamp-1">{event.location}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span>{event.attendeeCount} attending</span>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-bold text-purple-600">
-              {event.price === 0 ? "Free" : `$${event.price}`}
-            </span>
-            <Button
-              size="sm"
-              className="group-hover:bg-purple-700 transition-colors"
-            >
-              View Details
-              <ArrowRight className="h-3 w-3 ml-1" />
-            </Button>
-          </div>
-        </CardContent>
-      </Link>
-    </Card>
-  );
+          </CardContent>
+        </Link>
+      </Card>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -108,7 +162,9 @@ const EventsWithFilters = () => {
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Discover Events</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Discover Events
+            </h2>
             <p className="text-gray-600">No events available at the moment.</p>
           </div>
         </div>
@@ -163,7 +219,9 @@ const EventsWithFilters = () => {
               </div>
               {filterEventsByCategory(category.id).length === 0 && (
                 <div className="text-center py-12">
-                  <p className="text-gray-600">No events found in this category.</p>
+                  <p className="text-gray-600">
+                    No events found in this category.
+                  </p>
                 </div>
               )}
             </TabsContent>
@@ -175,3 +233,5 @@ const EventsWithFilters = () => {
 };
 
 export default EventsWithFilters;
+// This component renders a section with event cards filtered by category.
+// It uses tabs to switch between categories and displays a loading state while fetching events.

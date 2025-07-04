@@ -1,7 +1,12 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, ArrowRight, CheckCircle } from "lucide-react";
 import { Event } from "@/types/event";
@@ -14,20 +19,37 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
+// Only allow trusted image URLs (must be https and from your trusted domain)
+const isTrustedImageUrl = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    // Replace with your actual trusted domain if needed
+    return (
+      parsed.protocol === "https:" && parsed.hostname.endsWith("supabase.co")
+    );
+  } catch {
+    return false;
+  }
+};
+
 interface FeaturedEventsSectionProps {
   events: Event[];
 }
 
 const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
   // Get follower counts from localStorage (for demo purposes)
-  const followerCounts = JSON.parse(localStorage.getItem('eventory_follower_counts') || '{}');
-  
+  const followerCounts = JSON.parse(
+    localStorage.getItem("eventory_follower_counts") || "{}"
+  );
+
   // Filter and sort events to get the best featured events
   const featuredEvents = events
-    .map(event => ({
+    .map((event) => ({
       ...event,
       isVerifiedOrganizer: (followerCounts[event.organizer] || 0) >= 10000,
-      followerCount: followerCounts[event.organizer] || Math.floor(Math.random() * 15000) + 1000 // Random demo data
+      followerCount:
+        followerCounts[event.organizer] ||
+        Math.floor(Math.random() * 15000) + 1000, // Random demo data
     }))
     .sort((a, b) => {
       // First sort by verified status, then by follower count, then by attendee count
@@ -47,8 +69,12 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Events</h2>
-            <p className="text-gray-600">No featured events available at the moment.</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Featured Events
+            </h2>
+            <p className="text-gray-600">
+              No featured events available at the moment.
+            </p>
           </div>
         </div>
       </section>
@@ -64,7 +90,8 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
               Featured Events
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl">
-              Hand-picked events and events from verified organizers that you won't want to miss
+              Hand-picked events and events from verified organizers that you
+              won't want to miss
             </p>
           </div>
           <Link to="/events">
@@ -83,78 +110,91 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
           className="w-full"
         >
           <CarouselContent className="-ml-2 md:-ml-4">
-            {featuredEvents.map((event) => (
-              <CarouselItem key={event.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
-                <Card className="hover:shadow-lg transition-shadow group h-full">
-                  <div className="relative">
-                    <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
-                      <img
-                        src={event.image}
-                        alt={event.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="absolute top-2 left-2 flex gap-2">
-                      <span className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium">
-                        Featured
-                      </span>
-                      {event.isVerifiedOrganizer && (
-                        <Badge className="bg-blue-600 text-white text-xs">
-                          Verified Organizer
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  <Link to={`/events/${event.id}`}>
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg group-hover:text-purple-600 transition-colors">
-                          {event.title}
-                        </CardTitle>
-                        <span className="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">
-                          {event.category}
-                        </span>
+            {featuredEvents.map((event) => {
+              const safeImageUrl =
+                event.image && isTrustedImageUrl(event.image)
+                  ? event.image
+                  : "/placeholder.svg";
+              return (
+                <CarouselItem
+                  key={event.id}
+                  className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3"
+                >
+                  <Card className="hover:shadow-lg transition-shadow group h-full">
+                    <div className="relative">
+                      <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
+                        <img
+                          src={safeImageUrl}
+                          alt={event.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder.svg";
+                          }}
+                        />
                       </div>
-                      <CardDescription className="line-clamp-2 flex items-center gap-2">
-                        <span>By {event.organizer}</span>
+                      <div className="absolute top-2 left-2 flex gap-2">
+                        <span className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium">
+                          Featured
+                        </span>
                         {event.isVerifiedOrganizer && (
-                          <CheckCircle className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                          <Badge className="bg-blue-600 text-white text-xs">
+                            Verified Organizer
+                          </Badge>
                         )}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm text-gray-600 mb-4">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          <span>
-                            {new Date(event.date).toLocaleDateString()} at{" "}
-                            {event.time}
+                      </div>
+                    </div>
+
+                    <Link to={`/events/${event.id}`}>
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-lg group-hover:text-purple-600 transition-colors">
+                            {event.title}
+                          </CardTitle>
+                          <span className="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                            {event.category}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          <span>{event.location}</span>
+                        <CardDescription className="line-clamp-2 flex items-center gap-2">
+                          <span>By {event.organizer}</span>
+                          {event.isVerifiedOrganizer && (
+                            <CheckCircle className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                          )}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2 text-sm text-gray-600 mb-4">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>
+                              {new Date(event.date).toLocaleDateString()} at{" "}
+                              {event.time}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            <span>{event.location}</span>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-purple-600">
-                          {event.price === 0 ? "Free" : `$${event.price}`}
-                        </span>
-                        <Button
-                          size="sm"
-                          className="group-hover:bg-purple-700 transition-colors"
-                        >
-                          View Details
-                          <ArrowRight className="h-3 w-3 ml-1" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Link>
-                </Card>
-              </CarouselItem>
-            ))}
+                        <div className="flex justify-between items-center">
+                          <span className="text-lg font-bold text-purple-600">
+                            {event.price === 0 ? "Free" : `R${event.price}`}
+                          </span>
+                          <Button
+                            size="sm"
+                            className="group-hover:bg-purple-700 transition-colors"
+                          >
+                            View Details
+                            <ArrowRight className="h-3 w-3 ml-1" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Link>
+                  </Card>
+                </CarouselItem>
+              );
+            })}
           </CarouselContent>
           <CarouselPrevious className="hidden md:flex" />
           <CarouselNext className="hidden md:flex" />
@@ -165,3 +205,7 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
 };
 
 export default FeaturedEventsSection;
+// This component renders a section with featured events, highlighting those from verified organizers.
+// It uses a carousel to display the events and includes details like title, date, time, location, and price. The component also shows a badge for verified organizers and handles image loading errors by using a placeholder image.
+// The events are sorted based on the organizer's follower count and attendee count, with a maximum of 8 events displayed.
+// The component uses a localStorage mock for follower counts, simulating a real-world scenario where this data would be fetched from a backend service.

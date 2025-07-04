@@ -1,22 +1,22 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Calendar, 
-  Clock, 
-  AlertTriangle, 
-  Star, 
-  Edit, 
-  Trash2, 
-  Users, 
+import {
+  Calendar,
+  Clock,
+  AlertTriangle,
+  Star,
+  Edit,
+  Trash2,
+  Users,
   DollarSign,
   Share2,
   BarChart3,
   MessageSquare,
   Wand2,
-  Crown
+  Crown,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -49,14 +49,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
+
+// Sanitize text to prevent XSS
+const sanitizeText = (text: string) =>
+  typeof text === "string" ? text.replace(/[<>]/g, "").trim() : "";
 
 interface EventManagementActionsProps {
-  event: any;
+  event: {
+    id: string;
+    title: string;
+    date: string;
+    current_attendees?: number;
+    max_attendees?: number;
+    price?: number;
+    is_featured?: boolean;
+    [key: string]: any;
+  };
   onEventUpdate?: () => void;
 }
 
-const EventManagementActions = ({ event, onEventUpdate }: EventManagementActionsProps) => {
+const EventManagementActions = ({
+  event,
+  onEventUpdate,
+}: EventManagementActionsProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isPostponeDialogOpen, setIsPostponeDialogOpen] = useState(false);
   const [isFeaturedDialogOpen, setIsFeaturedDialogOpen] = useState(false);
   const [postponeReason, setPostponeReason] = useState("");
@@ -68,10 +86,11 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
   const handleCancelEvent = async () => {
     setIsProcessing(true);
     try {
-      // Here you would implement the actual cancellation logic
+      // Implement actual cancellation logic here
       toast({
         title: "Event Cancelled",
-        description: "The event has been successfully cancelled. Attendees will be notified.",
+        description:
+          "The event has been successfully cancelled. Attendees will be notified.",
       });
       onEventUpdate?.();
     } catch (error) {
@@ -97,10 +116,11 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
 
     setIsProcessing(true);
     try {
-      // Here you would implement the actual postponement logic
+      // Implement actual postponement logic here
       toast({
         title: "Event Postponed",
-        description: "The event has been postponed. Attendees will be notified of the new date and time.",
+        description:
+          "The event has been postponed. Attendees will be notified of the new date and time.",
       });
       setIsPostponeDialogOpen(false);
       setPostponeReason("");
@@ -130,20 +150,20 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
 
     setIsProcessing(true);
     try {
-      // Here you would implement the payment processing for featured events
       const prices = {
         "1-2weeks": 500,
         "3-4weeks": 800,
-        "indefinite": 1200
+        indefinite: 1200,
       };
 
       // Check if organizer has 10k+ followers for free indefinite featuring
-      const hasLargeFollowing = false; // This would be checked from the database
+      const hasLargeFollowing = false; // Replace with real check
 
       if (featuredDuration === "indefinite" && hasLargeFollowing) {
         toast({
           title: "Featured Event Activated",
-          description: "Your event is now featured indefinitely due to your large following!",
+          description:
+            "Your event is now featured indefinitely due to your large following!",
         });
       } else {
         const price = prices[featuredDuration as keyof typeof prices];
@@ -151,7 +171,7 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
           title: "Payment Required",
           description: `Featured event package: R${price}. Redirecting to payment...`,
         });
-        // Here you would integrate with payment processing
+        // Integrate with payment processing here
       }
 
       setIsFeaturedDialogOpen(false);
@@ -160,7 +180,8 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to process featured event request. Please try again.",
+        description:
+          "Failed to process featured event request. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -172,7 +193,7 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
     const prices = {
       "1-2weeks": 500,
       "3-4weeks": 800,
-      "indefinite": 1200
+      indefinite: 1200,
     };
     return prices[duration as keyof typeof prices] || 0;
   };
@@ -181,112 +202,142 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Edit className="h-5 w-5 text-blue-600" />
+          <Edit className="h-5 w-5 text-blue-600" aria-hidden="true" />
           Event Management
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {/* Edit Event */}
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center gap-2 hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 transition-colors"
+            onClick={() => navigate(`/events/${event.id}/edit`)}
+            type="button"
+            aria-label="Edit Event"
           >
-            <Edit className="h-4 w-4" />
+            <Edit className="h-4 w-4" aria-hidden="true" />
             Edit
           </Button>
-
-          {/* Analytics */}
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center gap-2 hover:bg-green-50 focus:ring-2 focus:ring-green-500 transition-colors"
+            onClick={() => navigate(`/dashboard/analytics?event=${event.id}`)}
+            type="button"
+            aria-label="View Analytics"
           >
-            <BarChart3 className="h-4 w-4" />
+            <BarChart3 className="h-4 w-4" aria-hidden="true" />
             Analytics
           </Button>
-
-          {/* Manage Attendees */}
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center gap-2 hover:bg-purple-50 focus:ring-2 focus:ring-purple-500 transition-colors"
+            onClick={() => navigate(`/events/${event.id}/attendees`)}
+            type="button"
+            aria-label="Manage Attendees"
           >
-            <Users className="h-4 w-4" />
+            <Users className="h-4 w-4" aria-hidden="true" />
             Attendees
           </Button>
-
-          {/* Social Share */}
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center gap-2 hover:bg-indigo-50 focus:ring-2 focus:ring-indigo-500 transition-colors"
+            onClick={() =>
+              navigator.share
+                ? navigator.share({
+                    title: sanitizeText(event.title),
+                    url: window.location.href,
+                  })
+                : undefined
+            }
+            type="button"
+            aria-label="Share Event"
           >
-            <Share2 className="h-4 w-4" />
+            <Share2 className="h-4 w-4" aria-hidden="true" />
             Share
           </Button>
-
-          {/* Create Poster */}
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center gap-2 hover:bg-pink-50 focus:ring-2 focus:ring-pink-500 transition-colors"
+            onClick={() => navigate(`/poster-studio?event=${event.id}`)}
+            type="button"
+            aria-label="Create Poster"
           >
-            <Wand2 className="h-4 w-4" />
+            <Wand2 className="h-4 w-4" aria-hidden="true" />
             Poster
           </Button>
-
-          {/* Community Chat */}
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center gap-2 hover:bg-orange-50 focus:ring-2 focus:ring-orange-500 transition-colors"
+            onClick={() => navigate(`/dashboard/communities?event=${event.id}`)}
+            type="button"
+            aria-label="Community Chat"
           >
-            <MessageSquare className="h-4 w-4" />
+            <MessageSquare className="h-4 w-4" aria-hidden="true" />
             Chat
           </Button>
         </div>
 
         <div className="flex flex-wrap gap-2 pt-4 border-t">
           {/* Make Featured */}
-          <Dialog open={isFeaturedDialogOpen} onOpenChange={setIsFeaturedDialogOpen}>
+          <Dialog
+            open={isFeaturedDialogOpen}
+            onOpenChange={setIsFeaturedDialogOpen}
+          >
             <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="flex items-center gap-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-500 transition-colors"
+                type="button"
+                aria-label="Make Featured"
               >
-                <Crown className="h-4 w-4" />
+                <Crown className="h-4 w-4" aria-hidden="true" />
                 Make Featured
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Crown className="h-5 w-5 text-yellow-600" />
+                  <Crown
+                    className="h-5 w-5 text-yellow-600"
+                    aria-hidden="true"
+                  />
                   Feature Your Event
                 </DialogTitle>
                 <DialogDescription>
-                  Choose a featured duration to boost your event's visibility on the platform.
+                  Choose a featured duration to boost your event's visibility on
+                  the platform.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="duration">Featured Duration</Label>
-                  <Select value={featuredDuration} onValueChange={setFeaturedDuration}>
+                  <Select
+                    value={featuredDuration}
+                    onValueChange={setFeaturedDuration}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select duration" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="1-2weeks">1-2 Weeks - R500</SelectItem>
                       <SelectItem value="3-4weeks">3-4 Weeks - R800</SelectItem>
-                      <SelectItem value="indefinite">Until Event Date - R1,200</SelectItem>
+                      <SelectItem value="indefinite">
+                        Until Event Date - R1,200
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   {featuredDuration && (
                     <div className="mt-2 p-2 bg-yellow-50 rounded border text-sm">
-                      <strong>Price: R{getFeaturedPrice(featuredDuration)}</strong>
+                      <strong>
+                        Price: R{getFeaturedPrice(featuredDuration)}
+                      </strong>
                       {featuredDuration === "indefinite" && (
                         <p className="text-xs text-gray-600 mt-1">
                           Free for organizers with 10k+ followers
@@ -297,17 +348,19 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
                 </div>
               </div>
               <DialogFooter>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setIsFeaturedDialogOpen(false)}
                   className="hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 transition-colors"
+                  type="button"
                 >
                   Cancel
                 </Button>
-                <Button 
-                  onClick={handleMakeFeatured} 
+                <Button
+                  onClick={handleMakeFeatured}
                   disabled={isProcessing || !featuredDuration}
                   className="bg-yellow-600 hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 transition-colors"
+                  type="button"
                 >
                   {isProcessing ? "Processing..." : "Continue to Payment"}
                 </Button>
@@ -316,25 +369,34 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
           </Dialog>
 
           {/* Postpone Event */}
-          <Dialog open={isPostponeDialogOpen} onOpenChange={setIsPostponeDialogOpen}>
+          <Dialog
+            open={isPostponeDialogOpen}
+            onOpenChange={setIsPostponeDialogOpen}
+          >
             <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="flex items-center gap-2 border-orange-300 text-orange-700 hover:bg-orange-50 focus:ring-2 focus:ring-orange-500 transition-colors"
+                type="button"
+                aria-label="Postpone Event"
               >
-                <Clock className="h-4 w-4" />
+                <Clock className="h-4 w-4" aria-hidden="true" />
                 Postpone
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-orange-600" />
+                  <Clock
+                    className="h-5 w-5 text-orange-600"
+                    aria-hidden="true"
+                  />
                   Postpone Event
                 </DialogTitle>
                 <DialogDescription>
-                  Set a new date and time for your event. Attendees will be notified automatically.
+                  Set a new date and time for your event. Attendees will be
+                  notified automatically.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -345,7 +407,7 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
                     type="date"
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={new Date().toISOString().split("T")[0]}
                   />
                 </div>
                 <div>
@@ -368,17 +430,19 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
                 </div>
               </div>
               <DialogFooter>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setIsPostponeDialogOpen(false)}
                   className="hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 transition-colors"
+                  type="button"
                 >
                   Cancel
                 </Button>
-                <Button 
-                  onClick={handlePostponeEvent} 
+                <Button
+                  onClick={handlePostponeEvent}
                   disabled={isProcessing}
                   className="bg-orange-600 hover:bg-orange-700 focus:ring-2 focus:ring-orange-500 transition-colors"
+                  type="button"
                 >
                   {isProcessing ? "Postponing..." : "Postpone Event"}
                 </Button>
@@ -389,31 +453,37 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
           {/* Cancel Event */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="flex items-center gap-2 border-red-300 text-red-700 hover:bg-red-50 focus:ring-2 focus:ring-red-500 transition-colors"
+                type="button"
+                aria-label="Cancel Event"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
                 Cancel Event
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  <AlertTriangle
+                    className="h-5 w-5 text-red-600"
+                    aria-hidden="true"
+                  />
                   Cancel Event
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to cancel this event? This action cannot be undone. 
-                  All attendees will be notified and refunds will be processed automatically.
+                  Are you sure you want to cancel this event? This action cannot
+                  be undone. All attendees will be notified and refunds will be
+                  processed automatically.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel className="hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 transition-colors">
                   Keep Event
                 </AlertDialogCancel>
-                <AlertDialogAction 
+                <AlertDialogAction
                   onClick={handleCancelEvent}
                   disabled={isProcessing}
                   className="bg-red-600 hover:bg-red-700 focus:ring-2 focus:ring-red-500 transition-colors"
@@ -428,20 +498,22 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
         {/* Event Status Indicators */}
         <div className="flex flex-wrap gap-2 pt-4 border-t">
           <Badge variant="outline" className="text-xs">
-            <Calendar className="h-3 w-3 mr-1" />
-            {new Date(event.date).toLocaleDateString()}
+            <Calendar className="h-3 w-3 mr-1" aria-hidden="true" />
+            {event.date
+              ? new Date(event.date).toLocaleDateString()
+              : "Date TBA"}
           </Badge>
           <Badge variant="outline" className="text-xs">
-            <Users className="h-3 w-3 mr-1" />
-            {event.current_attendees || 0}/{event.max_attendees} attending
+            <Users className="h-3 w-3 mr-1" aria-hidden="true" />
+            {event.current_attendees || 0}/{event.max_attendees || 0} attending
           </Badge>
           <Badge variant="outline" className="text-xs">
-            <DollarSign className="h-3 w-3 mr-1" />
-            R{event.price}
+            <DollarSign className="h-3 w-3 mr-1" aria-hidden="true" />R
+            {event.price || 0}
           </Badge>
           {event.is_featured && (
             <Badge className="text-xs bg-yellow-100 text-yellow-800 border-yellow-300">
-              <Star className="h-3 w-3 mr-1" />
+              <Star className="h-3 w-3 mr-1" aria-hidden="true" />
               Featured
             </Badge>
           )}
@@ -452,3 +524,5 @@ const EventManagementActions = ({ event, onEventUpdate }: EventManagementActions
 };
 
 export default EventManagementActions;
+// This component provides a set of management actions for an event, including editing, viewing analytics, managing attendees, sharing, creating posters, community chat, making the event featured, postponing the event, and canceling the event.
+// It includes dialogs for postponing and making the event featured, with appropriate validation and processing states.

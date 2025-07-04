@@ -1,6 +1,11 @@
-
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wand2, BarChart3, MessageSquare } from "lucide-react";
 
@@ -9,10 +14,11 @@ const DashboardTools = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* AI Poster Generator */}
       <Card className="cursor-pointer hover:shadow-md transition-shadow">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Wand2 className="h-5 w-5 text-purple-600" />
+            <Wand2 className="h-5 w-5 text-purple-600" aria-hidden="true" />
             AI Poster Generator
           </CardTitle>
           <CardDescription>
@@ -20,16 +26,22 @@ const DashboardTools = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button className="w-full" onClick={() => navigate("/poster-studio")}>
+          <Button
+            className="w-full"
+            onClick={() => navigate("/poster-studio")}
+            type="button"
+            aria-label="Create Poster"
+          >
             Create Poster
           </Button>
         </CardContent>
       </Card>
 
+      {/* Advanced Analytics */}
       <Card className="cursor-pointer hover:shadow-md transition-shadow">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-blue-600" />
+            <BarChart3 className="h-5 w-5 text-blue-600" aria-hidden="true" />
             Advanced Analytics
           </CardTitle>
           <CardDescription>
@@ -37,24 +49,38 @@ const DashboardTools = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button className="w-full" variant="outline">
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={() => navigate("/dashboard/analytics")}
+            type="button"
+            aria-label="View Analytics"
+          >
             View Analytics
           </Button>
         </CardContent>
       </Card>
 
+      {/* Community Tools */}
       <Card className="cursor-pointer hover:shadow-md transition-shadow">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-green-600" />
+            <MessageSquare
+              className="h-5 w-5 text-green-600"
+              aria-hidden="true"
+            />
             Community Tools
           </CardTitle>
-          <CardDescription>
-            Manage event communities and chat
-          </CardDescription>
+          <CardDescription>Manage event communities and chat</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button className="w-full" variant="outline">
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={() => navigate("/dashboard/communities")}
+            type="button"
+            aria-label="Manage Communities"
+          >
             Manage Communities
           </Button>
         </CardContent>
@@ -64,3 +90,4 @@ const DashboardTools = () => {
 };
 
 export default DashboardTools;
+// This component provides a set of tools for the organizer's dashboard, including AI poster generation, advanced analytics, and community management.

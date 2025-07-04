@@ -1,11 +1,19 @@
-import { useState, useEffect } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Calendar, Sparkles, History, Target, DollarSign } from "lucide-react";
+import {
+  Plus,
+  Calendar,
+  Sparkles,
+  History,
+  Target,
+  DollarSign,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +25,10 @@ import AIInsightsTab from "./dashboard/AIInsightsTab";
 import DashboardTools from "./dashboard/DashboardTools";
 import RevenueAnalyticsDashboard from "@/components/analytics/RevenueAnalyticsDashboard";
 
+// Sanitize text to prevent XSS
+const sanitizeText = (text: string) =>
+  typeof text === "string" ? text.replace(/[<>]/g, "").trim() : "";
+
 const EnhancedOrganizerDashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -27,15 +39,16 @@ const EnhancedOrganizerDashboard = () => {
     queryKey: ["enhanced-organizer-events", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      
       const { data, error } = await supabase
         .from("events")
-        .select(`
+        .select(
+          `
           *,
           tickets:tickets(count),
           favorites:favorites(count),
           reviews:event_reviews(rating)
-        `)
+        `
+        )
         .eq("organizer_id", user.id)
         .eq("is_active", true)
         .order("date", { ascending: true });
@@ -47,85 +60,131 @@ const EnhancedOrganizerDashboard = () => {
   });
 
   // Separate upcoming and past events
-  const upcomingEvents = organizerEvents.filter(event => new Date(event.date) >= new Date());
-  const pastEvents = organizerEvents.filter(event => new Date(event.date) < new Date());
+  const now = new Date();
+  const upcomingEvents = organizerEvents.filter(
+    (event) => new Date(event.date) >= now
+  );
+  const pastEvents = organizerEvents.filter(
+    (event) => new Date(event.date) < now
+  );
 
-  // AI-powered event recommendations
+  // AI-powered event recommendations (mocked for now)
   const { data: aiRecommendations } = useQuery({
     queryKey: ["ai-recommendations", user?.id],
-    queryFn: async () => {
-      return [
-        {
-          type: "pricing",
-          title: "Optimize Pricing Strategy",
-          description: "Consider increasing prices for 'Summer Music Festival' by 15% based on high demand signals.",
-          confidence: 85,
-          actionable: true
-        },
-        {
-          type: "promotion",
-          title: "Promote on Social Media",
-          description: "Your 'Tech Conference 2024' could benefit from Instagram promotion targeting developers aged 25-35.",
-          confidence: 92,
-          actionable: true
-        },
-        {
-          type: "timing",
-          title: "Optimal Event Timing",
-          description: "Saturday evening events show 23% higher attendance in your area.",
-          confidence: 78,
-          actionable: false
-        }
-      ];
-    },
+    queryFn: async () => [
+      {
+        type: "pricing",
+        title: "Optimize Pricing Strategy",
+        description:
+          "Consider increasing prices for 'Summer Music Festival' by 15% based on high demand signals.",
+        confidence: 85,
+        actionable: true,
+      },
+      {
+        type: "promotion",
+        title: "Promote on Social Media",
+        description:
+          "Your 'Tech Conference 2024' could benefit from Instagram promotion targeting developers aged 25-35.",
+        confidence: 92,
+        actionable: true,
+      },
+      {
+        type: "timing",
+        title: "Optimal Event Timing",
+        description:
+          "Saturday evening events show 23% higher attendance in your area.",
+        confidence: 78,
+        actionable: false,
+      },
+    ],
     enabled: !!user && profile?.role === "organizer",
   });
 
   // Performance metrics
   const { data: performanceMetrics } = useQuery({
-    queryKey: ["performance-metrics", user?.id],
+    queryKey: ["performance-metrics", user?.id, organizerEvents],
     queryFn: async () => {
-      if (!user) return null;
-      
+      if (
+        !user ||
+        !Array.isArray(organizerEvents) ||
+        organizerEvents.length === 0
+      )
+        return {
+          totalViews: 0,
+          totalRevenue: 0,
+          totalAttendees: 0,
+          averageRating: 0,
+          conversionRate: 0,
+          events: 0,
+        };
+
       const { data: analytics } = await supabase
         .from("event_analytics")
         .select("*")
-        .in("event_id", organizerEvents.map(e => e.id))
+        .in(
+          "event_id",
+          organizerEvents.map((e) => e.id)
+        )
         .eq("metric_type", "view");
 
       const totalViews = analytics?.length || 0;
-      const totalRevenue = organizerEvents.reduce((sum, event) => 
-        sum + (Number(event.price) * (event.current_attendees || 0)), 0
+      const totalRevenue = organizerEvents.reduce(
+        (sum, event) =>
+          sum + Number(event.price) * (event.current_attendees || 0),
+        0
       );
-      const totalAttendees = organizerEvents.reduce((sum, event) => 
-        sum + (event.current_attendees || 0), 0
+      const totalAttendees = organizerEvents.reduce(
+        (sum, event) => sum + (event.current_attendees || 0),
+        0
       );
-      const averageRating = organizerEvents.reduce((sum, event) => {
-        const reviews = event.reviews || [];
-        const avgRating = reviews.length > 0 
-          ? reviews.reduce((rSum: number, r: any) => rSum + r.rating, 0) / reviews.length 
-          : 0;
-        return sum + avgRating;
-      }, 0) / organizerEvents.length;
+      const averageRating =
+        organizerEvents.reduce((sum, event) => {
+          const reviews = event.reviews || [];
+          const avgRating =
+            reviews.length > 0
+              ? reviews.reduce((rSum: number, r: any) => rSum + r.rating, 0) /
+                reviews.length
+              : 0;
+          return sum + avgRating;
+        }, 0) / (organizerEvents.length || 1);
 
       return {
         totalViews,
         totalRevenue,
         totalAttendees,
         averageRating: averageRating || 0,
-        conversionRate: totalViews > 0 ? (totalAttendees / totalViews) * 100 : 0,
-        events: organizerEvents.length
+        conversionRate:
+          totalViews > 0 ? (totalAttendees / totalViews) * 100 : 0,
+        events: organizerEvents.length,
       };
     },
-    enabled: !!user && organizerEvents.length > 0,
+    enabled:
+      !!user && Array.isArray(organizerEvents) && organizerEvents.length > 0,
   });
 
   const handleCreateEvent = () => {
     navigate("/create-event");
   };
 
-  const handlePriceUpdate = (eventId: string, newPrice: number) => {
-    console.log(`Price updated for event ${eventId}: $${newPrice}`);
+  const handlePriceUpdate = async (eventId: string, newPrice: number) => {
+    if (!eventId || typeof newPrice !== "number" || isNaN(newPrice)) return;
+
+    // Update the event price in the database using Supabase
+    const { error } = await supabase
+      .from("events")
+      .update({ price: newPrice })
+      .eq("id", eventId);
+
+    if (error) {
+      // Optionally, show a toast or notification here
+      console.error("Failed to update event price:", error.message);
+      // Example: toast({ title: "Error", description: "Failed to update price.", variant: "destructive" });
+    } else {
+      // Optionally, show a success toast or notification here
+      // Example: toast({ title: "Success", description: "Event price updated." });
+      // Optionally, refetch events or update local state if needed
+      console.log(`Price updated for event ${eventId}: $${newPrice}`);
+    }
   };
 
   return (
@@ -133,11 +192,19 @@ const EnhancedOrganizerDashboard = () => {
       {/* AI-Powered Insights Banner */}
       {aiRecommendations && aiRecommendations.length > 0 && (
         <Alert className="border-purple-200 bg-purple-50">
-          <Sparkles className="h-4 w-4 text-purple-600" />
+          <Sparkles className="h-4 w-4 text-purple-600" aria-hidden="true" />
           <AlertDescription className="text-purple-800">
             <div className="flex items-center justify-between">
-              <span>AI has {aiRecommendations.length} new recommendations for your events</span>
-              <Button variant="outline" size="sm" className="ml-4">
+              <span>
+                AI has {aiRecommendations.length} new recommendations for your
+                events
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-4"
+                type="button"
+              >
                 View All
               </Button>
             </div>
@@ -146,7 +213,10 @@ const EnhancedOrganizerDashboard = () => {
       )}
 
       {/* Enhanced Stats Cards */}
-      <DashboardStats organizerEvents={organizerEvents} performanceMetrics={performanceMetrics} />
+      <DashboardStats
+        organizerEvents={organizerEvents}
+        performanceMetrics={performanceMetrics}
+      />
 
       {/* Main Dashboard Tabs */}
       <Tabs defaultValue="events" className="space-y-6">
@@ -160,20 +230,26 @@ const EnhancedOrganizerDashboard = () => {
           <TabsTrigger value="tools">Tools</TabsTrigger>
         </TabsList>
 
+        {/* Upcoming Events */}
         <TabsContent value="events" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Upcoming Events</h2>
-            <Button onClick={handleCreateEvent} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
+            <Button
+              onClick={handleCreateEvent}
+              className="flex items-center gap-2"
+              type="button"
+              aria-label="Create New Event"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
               Create New Event
             </Button>
           </div>
 
           <div className="space-y-4">
             {upcomingEvents.map((event) => (
-              <EventCard 
-                key={event.id} 
-                event={event} 
+              <EventCard
+                key={event.id}
+                event={event}
                 onManagePricing={setSelectedEventId}
               />
             ))}
@@ -181,15 +257,19 @@ const EnhancedOrganizerDashboard = () => {
             {upcomingEvents.length === 0 && (
               <Card className="text-center py-12">
                 <CardContent>
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <Calendar
+                    className="h-12 w-12 text-gray-400 mx-auto mb-4"
+                    aria-hidden="true"
+                  />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     No upcoming events
                   </h3>
                   <p className="text-gray-600 mb-4">
-                    Create your first event to get started with advanced features
+                    Create your first event to get started with advanced
+                    features
                   </p>
-                  <Button onClick={handleCreateEvent}>
-                    <Plus className="h-4 w-4 mr-2" />
+                  <Button onClick={handleCreateEvent} type="button">
+                    <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
                     Create Event
                   </Button>
                 </CardContent>
@@ -198,11 +278,12 @@ const EnhancedOrganizerDashboard = () => {
           </div>
         </TabsContent>
 
+        {/* Past Events */}
         <TabsContent value="past-events" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Past Events</h2>
             <Badge variant="outline" className="flex items-center gap-1">
-              <History className="h-3 w-3" />
+              <History className="h-3 w-3" aria-hidden="true" />
               {pastEvents.length} completed
             </Badge>
           </div>
@@ -215,7 +296,10 @@ const EnhancedOrganizerDashboard = () => {
             {pastEvents.length === 0 && (
               <Card className="text-center py-12">
                 <CardContent>
-                  <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <History
+                    className="h-12 w-12 text-gray-400 mx-auto mb-4"
+                    aria-hidden="true"
+                  />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     No past events
                   </h3>
@@ -228,42 +312,63 @@ const EnhancedOrganizerDashboard = () => {
           </div>
         </TabsContent>
 
+        {/* Analytics */}
         <TabsContent value="analytics">
           <OrganizerAnalytics />
         </TabsContent>
 
+        {/* Revenue */}
         <TabsContent value="revenue" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Revenue Analytics</h2>
             <Badge variant="outline" className="flex items-center gap-1">
-              <DollarSign className="h-3 w-3" />
+              <DollarSign className="h-3 w-3" aria-hidden="true" />
               Advanced Analytics
             </Badge>
           </div>
           <RevenueAnalyticsDashboard />
         </TabsContent>
 
+        {/* Pricing */}
         <TabsContent value="pricing" className="space-y-6">
           <div className="grid gap-6">
             {selectedEventId ? (
               <EnhancedDynamicPricing
                 eventId={selectedEventId}
-                basePrice={organizerEvents.find(e => e.id === selectedEventId)?.price || 0}
-                attendeeCount={organizerEvents.find(e => e.id === selectedEventId)?.current_attendees || 0}
-                maxAttendees={organizerEvents.find(e => e.id === selectedEventId)?.max_attendees || 100}
-                eventDate={organizerEvents.find(e => e.id === selectedEventId)?.date || ''}
-                onPriceUpdate={(newPrice) => handlePriceUpdate(selectedEventId, newPrice)}
+                basePrice={
+                  organizerEvents.find((e) => e.id === selectedEventId)
+                    ?.price || 0
+                }
+                attendeeCount={
+                  organizerEvents.find((e) => e.id === selectedEventId)
+                    ?.current_attendees || 0
+                }
+                maxAttendees={
+                  organizerEvents.find((e) => e.id === selectedEventId)
+                    ?.max_attendees || 100
+                }
+                eventDate={
+                  organizerEvents.find((e) => e.id === selectedEventId)?.date ||
+                  ""
+                }
+                onPriceUpdate={(newPrice) =>
+                  handlePriceUpdate(selectedEventId, newPrice)
+                }
                 isEditable={true}
               />
             ) : (
               <Card>
                 <CardContent className="text-center py-12">
-                  <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <Target
+                    className="h-12 w-12 text-gray-400 mx-auto mb-4"
+                    aria-hidden="true"
+                  />
                   <h3 className="text-lg font-medium mb-2">Select an Event</h3>
                   <p className="text-gray-600 mb-4">
-                    Choose an event from the Events tab to manage its dynamic pricing
+                    Choose an event from the Events tab to manage its dynamic
+                    pricing
                   </p>
-                  <Button onClick={() => navigate('#events')}>
+                  <Button onClick={() => navigate("#events")} type="button">
                     Go to Events
                   </Button>
                 </CardContent>
@@ -272,10 +377,12 @@ const EnhancedOrganizerDashboard = () => {
           </div>
         </TabsContent>
 
+        {/* AI Insights */}
         <TabsContent value="ai-insights" className="space-y-6">
           <AIInsightsTab aiRecommendations={aiRecommendations || []} />
         </TabsContent>
 
+        {/* Tools */}
         <TabsContent value="tools" className="space-y-6">
           <DashboardTools />
         </TabsContent>
@@ -285,3 +392,6 @@ const EnhancedOrganizerDashboard = () => {
 };
 
 export default EnhancedOrganizerDashboard;
+// This component provides an enhanced organizer dashboard with features like event management, analytics, dynamic pricing, AI insights, and more.
+// It includes tabs for upcoming and past events, analytics, revenue, pricing, AI insights, and tools.
+// It uses React Query for data fetching and caching, ensuring efficient and responsive UI updates.

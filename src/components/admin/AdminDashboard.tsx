@@ -1,10 +1,17 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, Calendar, AlertTriangle, DollarSign, TrendingUp, Eye } from "lucide-react";
+import {
+  Users,
+  Calendar,
+  AlertTriangle,
+  DollarSign,
+  TrendingUp,
+  Eye,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,37 +35,49 @@ const AdminDashboard = () => {
     pendingRefunds: 0,
   });
 
-  const [pendingEvents, setPendingEvents] = useState([]);
-  const [recentReports, setRecentReports] = useState([]);
-  const [refundRequests, setRefundRequests] = useState([]);
+  const [pendingEvents, setPendingEvents] = useState<any[]>([]);
+  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [refundRequests, setRefundRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
   }, []);
 
   const loadDashboardData = async () => {
+    setLoading(true);
     try {
       // Load basic stats
-      const [usersResult, eventsResult, reportsResult, ticketsResult] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact' }),
-        supabase.from('events').select('id', { count: 'exact' }),
-        supabase.from('user_reports').select('id', { count: 'exact' }).eq('status', 'pending'),
-        supabase.from('tickets').select('total_price')
-      ]);
+      const [usersResult, eventsResult, reportsResult, ticketsResult] =
+        await Promise.all([
+          supabase
+            .from("profiles")
+            .select("id", { count: "exact", head: true }),
+          supabase.from("events").select("id", { count: "exact", head: true }),
+          supabase
+            .from("user_reports")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "pending"),
+          supabase.from("tickets").select("total_price"),
+        ]);
 
-      const totalRevenue = ticketsResult.data?.reduce((sum, ticket) => sum + Number(ticket.total_price), 0) || 0;
+      const totalRevenue =
+        ticketsResult.data?.reduce(
+          (sum: number, ticket: any) => sum + Number(ticket.total_price),
+          0
+        ) || 0;
 
       // Get pending approvals
       const { data: pendingApprovalsData } = await supabase
-        .from('event_approvals')
-        .select('*')
-        .eq('status', 'pending');
+        .from("event_approvals")
+        .select("*")
+        .eq("status", "pending");
 
       // Get pending refunds
       const { data: pendingRefundsData } = await supabase
-        .from('refund_requests')
-        .select('*')
-        .eq('status', 'pending');
+        .from("refund_requests")
+        .select("*")
+        .eq("status", "pending");
 
       setStats({
         totalUsers: usersResult.count || 0,
@@ -71,82 +90,109 @@ const AdminDashboard = () => {
 
       // Load detailed data for tables
       const { data: eventsData } = await supabase
-        .from('events')
-        .select(`
+        .from("events")
+        .select(
+          `
           *,
           event_approvals(status, created_at)
-        `)
+        `
+        )
+        .in(
+          "id",
+          (pendingApprovalsData || []).map((a: any) => a.event_id)
+        )
         .limit(10);
 
       const { data: reportsData } = await supabase
-        .from('user_reports')
-        .select(`
+        .from("user_reports")
+        .select(
+          `
           *,
           reporter:reporter_id(first_name, last_name),
           reported_user:reported_user_id(first_name, last_name)
-        `)
-        .eq('status', 'pending')
+        `
+        )
+        .eq("status", "pending")
         .limit(10);
 
       setPendingEvents(eventsData || []);
       setRecentReports(reportsData || []);
       setRefundRequests(pendingRefundsData || []);
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error("Error loading dashboard data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const approveEvent = async (eventId: string) => {
     try {
-      const { error } = await supabase
-        .from('event_approvals')
-        .upsert([{
+      const { error } = await supabase.from("event_approvals").upsert([
+        {
           event_id: eventId,
-          status: 'approved',
+          status: "approved",
           admin_id: user?.id,
-          reviewed_at: new Date().toISOString()
-        }]);
-
+          reviewed_at: new Date().toISOString(),
+        },
+      ]);
       if (error) throw error;
       loadDashboardData();
     } catch (error) {
-      console.error('Error approving event:', error);
+      console.error("Error approving event:", error);
     }
   };
 
   const rejectEvent = async (eventId: string) => {
     try {
-      const { error } = await supabase
-        .from('event_approvals')
-        .upsert([{
+      const { error } = await supabase.from("event_approvals").upsert([
+        {
           event_id: eventId,
-          status: 'rejected',
+          status: "rejected",
           admin_id: user?.id,
-          reviewed_at: new Date().toISOString()
-        }]);
-
+          reviewed_at: new Date().toISOString(),
+        },
+      ]);
       if (error) throw error;
       loadDashboardData();
     } catch (error) {
-      console.error('Error rejecting event:', error);
+      console.error("Error rejecting event:", error);
     }
   };
 
   const resolveReport = async (reportId: string, status: string) => {
     try {
       const { error } = await supabase
-        .from('user_reports')
+        .from("user_reports")
         .update({
           status,
           reviewed_by: user?.id,
-          reviewed_at: new Date().toISOString()
+          reviewed_at: new Date().toISOString(),
         })
-        .eq('id', reportId);
-
+        .eq("id", reportId);
       if (error) throw error;
       loadDashboardData();
     } catch (error) {
-      console.error('Error resolving report:', error);
+      console.error("Error resolving report:", error);
+    }
+  };
+
+  const handleRefundAction = async (
+    refundId: string,
+    action: "approve" | "reject"
+  ) => {
+    try {
+      const { error } = await supabase
+        .from("refund_requests")
+        .update({
+          status: action === "approve" ? "approved" : "rejected",
+          reviewed_by: user?.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", refundId);
+      if (error) throw error;
+      loadDashboardData();
+    } catch (error) {
+      console.error("Error processing refund:", error);
     }
   };
 
@@ -160,57 +206,70 @@ const AdminDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {stats.totalUsers.toLocaleString()}
+            </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Events</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalEvents.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {stats.totalEvents.toLocaleString()}
+            </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              R{stats.totalRevenue.toLocaleString()}
+            </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Reports</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pending Reports
+            </CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.totalReports}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {stats.totalReports}
+            </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pending Approvals
+            </CardTitle>
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pendingApprovals}</div>
+            <div className="text-2xl font-bold text-yellow-600">
+              {stats.pendingApprovals}
+            </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Refunds</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pending Refunds
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.pendingRefunds}</div>
+            <div className="text-2xl font-bold text-orange-600">
+              {stats.pendingRefunds}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -230,19 +289,27 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {pendingEvents.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No pending events to review</p>
+                {loading ? (
+                  <p className="text-center text-gray-500 py-8">Loading...</p>
+                ) : pendingEvents.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No pending events to review
+                  </p>
                 ) : (
                   pendingEvents.map((event: any) => (
                     <div key={event.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start">
                         <div className="space-y-2">
                           <h3 className="font-semibold">{event.title}</h3>
-                          <p className="text-sm text-gray-600">{event.description}</p>
+                          <p className="text-sm text-gray-600">
+                            {event.description}
+                          </p>
                           <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span>{new Date(event.date).toLocaleDateString()}</span>
+                            <span>
+                              {new Date(event.date).toLocaleDateString()}
+                            </span>
                             <span>{event.venue}</span>
-                            <span>${event.price}</span>
+                            <span>R{event.price}</span>
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -277,31 +344,43 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentReports.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No pending reports</p>
+                {loading ? (
+                  <p className="text-center text-gray-500 py-8">Loading...</p>
+                ) : recentReports.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No pending reports
+                  </p>
                 ) : (
                   recentReports.map((report: any) => (
                     <div key={report.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline">{report.report_type}</Badge>
+                            <Badge variant="outline">
+                              {report.report_type}
+                            </Badge>
                             <span className="text-sm text-gray-500">
                               {new Date(report.created_at).toLocaleDateString()}
                             </span>
                           </div>
                           <p className="text-sm">{report.description}</p>
                           <div className="text-xs text-gray-500">
-                            Reporter: {report.reporter?.first_name} {report.reporter?.last_name}
+                            Reporter: {report.reporter?.first_name}{" "}
+                            {report.reporter?.last_name}
                             {report.reported_user && (
-                              <span> | Reported User: {report.reported_user.first_name} {report.reported_user.last_name}</span>
+                              <span>
+                                {" "}
+                                | Reported User:{" "}
+                                {report.reported_user.first_name}{" "}
+                                {report.reported_user.last_name}
+                              </span>
                             )}
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            onClick={() => resolveReport(report.id, 'resolved')}
+                            onClick={() => resolveReport(report.id, "resolved")}
                             className="bg-green-600 hover:bg-green-700"
                           >
                             Resolve
@@ -309,7 +388,9 @@ const AdminDashboard = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => resolveReport(report.id, 'dismissed')}
+                            onClick={() =>
+                              resolveReport(report.id, "dismissed")
+                            }
                           >
                             Dismiss
                           </Button>
@@ -330,27 +411,46 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {refundRequests.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No pending refund requests</p>
+                {loading ? (
+                  <p className="text-center text-gray-500 py-8">Loading...</p>
+                ) : refundRequests.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">
+                    No pending refund requests
+                  </p>
                 ) : (
                   refundRequests.map((request: any) => (
                     <div key={request.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">${request.refund_amount}</span>
+                            <span className="font-medium">
+                              R{request.refund_amount}
+                            </span>
                             <Badge variant="outline">{request.status}</Badge>
                           </div>
                           <p className="text-sm">{request.reason}</p>
                           <div className="text-xs text-gray-500">
-                            Requested: {new Date(request.created_at).toLocaleDateString()}
+                            Requested:{" "}
+                            {new Date(request.created_at).toLocaleDateString()}
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() =>
+                              handleRefundAction(request.id, "approve")
+                            }
+                          >
                             Approve
                           </Button>
-                          <Button size="sm" variant="destructive">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() =>
+                              handleRefundAction(request.id, "reject")
+                            }
+                          >
                             Reject
                           </Button>
                         </div>
@@ -368,3 +468,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+// This component provides an admin dashboard with stats and management features for users, events, reports, and refunds. It includes cards for quick stats, tabs for detailed management, and actions to approve/reject events, resolve reports, and process refunds. The data is fetched from Supabase and displayed in a user-friendly manner with loading states and error handling.

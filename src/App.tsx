@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,9 +28,9 @@ function App() {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen bg-background flex flex-col">
               <Header />
-              <main>
+              <main className="flex-1">
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/events" element={<Events />} />
@@ -41,10 +40,16 @@ function App() {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/create-event" element={<CreateEvent />} />
-                  <Route path="/become-organizer" element={<BecomeOrganizer />} />
+                  <Route
+                    path="/become-organizer"
+                    element={<BecomeOrganizer />}
+                  />
                   <Route path="/gamification" element={<Gamification />} />
                   <Route path="/poster-studio" element={<PosterStudio />} />
-                  <Route path="/followed-organizers" element={<FollowedOrganizers />} />
+                  <Route
+                    path="/followed-organizers"
+                    element={<FollowedOrganizers />}
+                  />
                 </Routes>
               </main>
             </div>

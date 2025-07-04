@@ -1,40 +1,36 @@
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Eventory - Connect & Explore</title>
-    
+
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
-    
+
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#9333ea" />
-    <meta name="description" content="Discover and create amazing events in your community" />
-    
+    <meta
+      name="description"
+      content="Discover and create amazing events in your community"
+    />
+
     <!-- Apple Touch Icons -->
     <link rel="apple-touch-icon" href="/favicon.ico" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Eventory" />
-    
+
     <!-- Microsoft Tile -->
     <meta name="msapplication-TileColor" content="#9333ea" />
     <meta name="msapplication-TileImage" content="/favicon.ico" />
-    
-    <!-- Service Worker Registration -->
+
+    <!-- Service Worker Registration (safe, no user input) -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js").catch(() => {});
         });
       }
     </script>
@@ -44,3 +40,7 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+<!-- This HTML file serves as the entry point for the Eventory web application. It includes essential metadata, links to PWA resources, and a script to register the service worker for offline capabilities. The main application logic is loaded from 'src/main.tsx'. -->
+<!-- The file is structured to ensure compatibility with modern web standards and provides a solid foundation for the Eventory application, allowing users to discover and create events in their community. -->
+<!-- The PWA features enhance the user experience by enabling offline access and providing a native app-like feel. The service worker registration is done safely, ensuring that it does not interfere with user input or experience. -->
+<!-- The use of semantic HTML elements and appropriate meta tags ensures that the application is accessible and optimized for search engines. The inclusion of Apple Touch Icons and Microsoft Tile settings ensures that the application looks good on various devices and platforms. -->

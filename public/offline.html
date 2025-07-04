@@ -1,64 +1,169 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Offline - Eventory</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+          sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .container {
+        max-width: 400px;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.07);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        backdrop-filter: blur(4px);
+      }
+      .icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        animation: bounce 1.2s infinite alternate;
+      }
+      @keyframes bounce {
+        to {
+          transform: translateY(-10px);
         }
-        .container {
-            max-width: 400px;
-            padding: 2rem;
-        }
-        .icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-        h1 {
-            margin-bottom: 1rem;
-            font-weight: 600;
-        }
-        p {
-            margin-bottom: 2rem;
-            opacity: 0.9;
-            line-height: 1.6;
-        }
-        .retry-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        .retry-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
+      }
+      h1 {
+        margin-bottom: 1rem;
+        font-weight: 700;
+        font-size: 2rem;
+        letter-spacing: -1px;
+      }
+      p {
+        margin-bottom: 2rem;
+        opacity: 0.92;
+        line-height: 1.6;
+        font-size: 1.08rem;
+      }
+      .retry-btn {
+        background: rgba(255, 255, 255, 0.18);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: #fff;
+        padding: 12px 28px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.1);
+        outline: none;
+      }
+      .retry-btn:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+      .retry-btn:hover,
+      .retry-btn:focus {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px) scale(1.03);
+      }
+      .tips {
+        margin-top: 2rem;
+        font-size: 0.97rem;
+        color: #e0e0e0;
+        opacity: 0.85;
+      }
+      .tips ul {
+        padding-left: 1.2em;
+        text-align: left;
+        margin: 0 auto;
+        display: inline-block;
+      }
+      .tips li {
+        margin-bottom: 0.4em;
+      }
+      .network-status {
+        margin-top: 1.5rem;
+        font-size: 0.95rem;
+        color: #ffd700;
+        font-weight: 500;
+        display: none;
+      }
+      .network-status.online {
+        color: #38e38e;
+        display: block;
+      }
+      .network-status.offline {
+        color: #ffd700;
+        display: block;
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <div class="icon">📱</div>
-        <h1>You're Offline</h1>
-        <p>It looks like you're not connected to the internet. Check your connection and try again.</p>
-        <button class="retry-btn" onclick="window.location.reload()">
-            Try Again
-        </button>
+  </head>
+  <body>
+    <div class="container" role="main" aria-labelledby="offline-title">
+      <div class="icon" aria-hidden="true">📱</div>
+      <h1 id="offline-title">You're Offline</h1>
+      <p>
+        It looks like you're not connected to the internet.<br />
+        Please check your connection and try again.
+      </p>
+      <button
+        class="retry-btn"
+        id="retryBtn"
+        type="button"
+        aria-label="Try to reload the page"
+      >
+        Try Again
+      </button>
+      <div class="network-status offline" id="networkStatus">
+        Status: Offline
+      </div>
+      <div class="tips">
+        <strong>Tips:</strong>
+        <ul>
+          <li>Check your Wi-Fi or mobile data connection.</li>
+          <li>Try reloading the page after reconnecting.</li>
+          <li>If the issue persists, check your browser settings.</li>
+        </ul>
+      </div>
     </div>
-</body>
+    <script>
+      // Accessibility: Focus the retry button on load
+      window.onload = function () {
+        document.getElementById("retryBtn").focus();
+      };
+
+      // Show network status and update interactively
+      function updateNetworkStatus() {
+        const statusDiv = document.getElementById("networkStatus");
+        if (navigator.onLine) {
+          statusDiv.textContent = "Status: Online! You can try reloading.";
+          statusDiv.className = "network-status online";
+        } else {
+          statusDiv.textContent = "Status: Offline";
+          statusDiv.className = "network-status offline";
+        }
+      }
+      window.addEventListener("online", updateNetworkStatus);
+      window.addEventListener("offline", updateNetworkStatus);
+      updateNetworkStatus();
+
+      // Retry button handler
+      document
+        .getElementById("retryBtn")
+        .addEventListener("click", function () {
+          if (navigator.onLine) {
+            window.location.reload();
+          } else {
+            updateNetworkStatus();
+          }
+        });
+    </script>
+  </body>
 </html>
+<!-- This is an offline page that informs users they are not connected to the internet. -->
+<!-- It provides a retry button to reload the page and tips for troubleshooting. -->
+<!-- The page also includes a network status indicator that updates dynamically based on the user's connection. -->

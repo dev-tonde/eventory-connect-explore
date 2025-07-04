@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,12 +24,15 @@ interface RevenueData {
   }>;
 }
 
+/**
+ * Custom hook to fetch and calculate revenue analytics for organizers.
+ */
 export const useRevenueAnalytics = () => {
   const { user, profile } = useAuth();
 
-  return useQuery({
+  return useQuery<RevenueData>({
     queryKey: ["revenue-analytics", user?.id],
-    queryFn: async (): Promise<RevenueData> => {
+    queryFn: async () => {
       if (!user || profile?.role !== "organizer") {
         return {
           totalRevenue: 0,
@@ -44,25 +46,17 @@ export const useRevenueAnalytics = () => {
       }
 
       // Get organizer's events
-      const { data: organizerEvents } = await supabase
+      const { data: organizerEvents, error: eventsError } = await supabase
         .from("events")
         .select("id, title, category, price")
         .eq("organizer_id", user.id);
 
-      if (!organizerEvents) {
+      if (eventsError || !organizerEvents) {
         throw new Error("Failed to fetch events");
       }
 
-      const eventIds = organizerEvents.map(event => event.id);
-
-      // Get tickets for organizer's events
-      const { data: tickets } = await supabase
-        .from("tickets")
-        .select("event_id, total_price, quantity, purchase_date")
-        .in("event_id", eventIds)
-        .eq("payment_status", "completed");
-
-      if (!tickets) {
+      const eventIds = organizerEvents.map((event) => event.id);
+      if (eventIds.length === 0) {
         return {
           totalRevenue: 0,
           monthlyRevenue: 0,
@@ -74,31 +68,67 @@ export const useRevenueAnalytics = () => {
         };
       }
 
-      // Calculate total revenue
-      const totalRevenue = tickets.reduce((sum, ticket) => sum + Number(ticket.total_price), 0);
-      const ticketsSold = tickets.reduce((sum, ticket) => sum + ticket.quantity, 0);
-      const averageTicketPrice = ticketsSold > 0 ? totalRevenue / ticketsSold : 0;
+      // Get tickets for organizer's events
+      const { data: tickets, error: ticketsError } = await supabase
+        .from("tickets")
+        .select("event_id, total_price, quantity, purchase_date")
+        .in("event_id", eventIds)
+        .eq("payment_status", "completed");
+
+      if (ticketsError || !tickets) {
+        return {
+          totalRevenue: 0,
+          monthlyRevenue: 0,
+          ticketsSold: 0,
+          averageTicketPrice: 0,
+          topEvents: [],
+          monthlyTrend: [],
+          revenueByCategory: [],
+        };
+      }
+
+      // Calculate total revenue and tickets sold
+      const totalRevenue = tickets.reduce(
+        (sum, ticket) => sum + Number(ticket.total_price),
+        0
+      );
+      const ticketsSold = tickets.reduce(
+        (sum, ticket) => sum + Number(ticket.quantity),
+        0
+      );
+      const averageTicketPrice =
+        ticketsSold > 0 ? totalRevenue / ticketsSold : 0;
 
       // Calculate monthly revenue (current month)
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
       const monthlyRevenue = tickets
-        .filter(ticket => {
+        .filter((ticket) => {
           const ticketDate = new Date(ticket.purchase_date);
-          return ticketDate.getMonth() === currentMonth && ticketDate.getFullYear() === currentYear;
+          return (
+            ticketDate.getMonth() === currentMonth &&
+            ticketDate.getFullYear() === currentYear
+          );
         })
         .reduce((sum, ticket) => sum + Number(ticket.total_price), 0);
 
       // Calculate top events by revenue
-      const eventRevenue = new Map<string, { revenue: number; tickets: number; title: string }>();
-      
-      tickets.forEach(ticket => {
-        const event = organizerEvents.find(e => e.id === ticket.event_id);
+      const eventRevenue = new Map<
+        string,
+        { revenue: number; tickets: number; title: string }
+      >();
+      tickets.forEach((ticket) => {
+        const event = organizerEvents.find((e) => e.id === ticket.event_id);
         if (event) {
-          const current = eventRevenue.get(ticket.event_id) || { revenue: 0, tickets: 0, title: event.title };
+          const current = eventRevenue.get(ticket.event_id) || {
+            revenue: 0,
+            tickets: 0,
+            title: event.title,
+          };
           eventRevenue.set(ticket.event_id, {
             revenue: current.revenue + Number(ticket.total_price),
-            tickets: current.tickets + ticket.quantity,
+            tickets: current.tickets + Number(ticket.quantity),
             title: event.title,
           });
         }
@@ -119,28 +149,42 @@ export const useRevenueAnalytics = () => {
       for (let i = 5; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
-        const month = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        
-        const monthTickets = tickets.filter(ticket => {
+        const month = date.toLocaleDateString("en-US", {
+          month: "short",
+          year: "numeric",
+        });
+
+        const monthTickets = tickets.filter((ticket) => {
           const ticketDate = new Date(ticket.purchase_date);
-          return ticketDate.getMonth() === date.getMonth() && 
-                 ticketDate.getFullYear() === date.getFullYear();
+          return (
+            ticketDate.getMonth() === date.getMonth() &&
+            ticketDate.getFullYear() === date.getFullYear()
+          );
         });
 
         monthlyTrend.push({
           month,
-          revenue: monthTickets.reduce((sum, ticket) => sum + Number(ticket.total_price), 0),
-          tickets: monthTickets.reduce((sum, ticket) => sum + ticket.quantity, 0),
+          revenue: monthTickets.reduce(
+            (sum, ticket) => sum + Number(ticket.total_price),
+            0
+          ),
+          tickets: monthTickets.reduce(
+            (sum, ticket) => sum + Number(ticket.quantity),
+            0
+          ),
         });
       }
 
       // Calculate revenue by category
       const categoryRevenue = new Map<string, number>();
-      tickets.forEach(ticket => {
-        const event = organizerEvents.find(e => e.id === ticket.event_id);
+      tickets.forEach((ticket) => {
+        const event = organizerEvents.find((e) => e.id === ticket.event_id);
         if (event) {
           const current = categoryRevenue.get(event.category) || 0;
-          categoryRevenue.set(event.category, current + Number(ticket.total_price));
+          categoryRevenue.set(
+            event.category,
+            current + Number(ticket.total_price)
+          );
         }
       });
 

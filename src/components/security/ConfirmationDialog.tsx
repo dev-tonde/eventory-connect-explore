@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   AlertDialog,
@@ -10,14 +9,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertTriangle } from "lucide-react";
 
 interface ConfirmationDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void;
   title: string;
   description: string;
   confirmText?: string;
@@ -35,22 +33,20 @@ export const ConfirmationDialog = ({
   confirmText = "Confirm",
   requiresTextConfirmation = false,
   confirmationText = "DELETE",
-  variant = "default"
+  variant = "default",
 }: ConfirmationDialogProps) => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleConfirm = async () => {
-    if (requiresTextConfirmation && inputValue !== confirmationText) {
-      return;
-    }
-
+    if (requiresTextConfirmation && inputValue !== confirmationText) return;
     setIsLoading(true);
     try {
       await onConfirm();
-      onClose();
+      handleClose();
     } catch (error) {
-      console.error('Confirmation action failed:', error);
+      // Optionally show a toast or error message here
+      // console.error('Confirmation action failed:', error);
     } finally {
       setIsLoading(false);
       setInputValue("");
@@ -62,7 +58,8 @@ export const ConfirmationDialog = ({
     onClose();
   };
 
-  const canConfirm = !requiresTextConfirmation || inputValue === confirmationText;
+  const canConfirm =
+    !requiresTextConfirmation || inputValue === confirmationText;
 
   return (
     <AlertDialog open={isOpen} onOpenChange={handleClose}>
@@ -70,7 +67,10 @@ export const ConfirmationDialog = ({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             {variant === "destructive" && (
-              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <AlertTriangle
+                className="h-5 w-5 text-red-500"
+                aria-hidden="true"
+              />
             )}
             {title}
           </AlertDialogTitle>
@@ -87,16 +87,25 @@ export const ConfirmationDialog = ({
               onChange={(e) => setInputValue(e.target.value)}
               placeholder={confirmationText}
               className="font-mono"
+              autoFocus
+              aria-label={`Type ${confirmationText} to confirm`}
+              maxLength={confirmationText.length}
             />
           </div>
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleClose}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={handleClose} type="button">
+            Cancel
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={!canConfirm || isLoading}
-            className={variant === "destructive" ? "bg-red-600 hover:bg-red-700" : ""}
+            className={
+              variant === "destructive" ? "bg-red-600 hover:bg-red-700" : ""
+            }
+            type="button"
+            aria-label={confirmText}
           >
             {isLoading ? "Processing..." : confirmText}
           </AlertDialogAction>
@@ -105,3 +114,5 @@ export const ConfirmationDialog = ({
     </AlertDialog>
   );
 };
+// This component provides a confirmation dialog with optional text input for additional confirmation.
+// It can be used for destructive actions like deleting items or confirming critical operations.

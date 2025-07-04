@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,31 +9,27 @@ import { UserPlus, Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Dashboard = () => {
-  const { user, profile, isAuthenticated, isLoading, refreshProfile } = useAuth();
+  const { user, profile, isAuthenticated, isLoading, refreshProfile } =
+    useAuth();
   const navigate = useNavigate();
   const [isDashboardLoading, setIsDashboardLoading] = useState(true);
 
+  // Simulate dashboard loading for smoother UX
   useEffect(() => {
-    console.log('Dashboard: Auth state:', { user: user?.id, profile: profile?.role, isAuthenticated, isLoading });
-    
-    const timer = setTimeout(() => {
-      setIsDashboardLoading(false);
-    }, 1000);
-
+    const timer = setTimeout(() => setIsDashboardLoading(false), 1000);
     return () => clearTimeout(timer);
-  }, [user, profile, isAuthenticated, isLoading]);
+  }, []);
 
+  // Redirect to auth if not authenticated
   useEffect(() => {
     if (!isDashboardLoading && !isLoading && !isAuthenticated) {
-      console.log('Dashboard: Redirecting to auth - not authenticated');
-      navigate("/auth");
+      navigate("/auth", { replace: true });
     }
   }, [isAuthenticated, isLoading, isDashboardLoading, navigate]);
 
-  // Force profile refresh if we have a user but no profile
+  // Refresh profile if user exists but profile is missing
   useEffect(() => {
     if (user && !profile && !isLoading) {
-      console.log('Dashboard: User exists but no profile, refreshing...');
       refreshProfile();
     }
   }, [user, profile, isLoading, refreshProfile]);
@@ -72,7 +67,8 @@ const Dashboard = () => {
               <CardContent className="space-y-4">
                 <Alert>
                   <AlertDescription>
-                    We're having trouble loading your profile. This might be because your account is still being set up.
+                    We're having trouble loading your profile. This might be
+                    because your account is still being set up.
                   </AlertDescription>
                 </Alert>
                 <div className="flex gap-2">
@@ -80,7 +76,10 @@ const Dashboard = () => {
                     <Loader2 className="h-4 w-4 mr-2" />
                     Retry Loading Profile
                   </Button>
-                  <Button variant="outline" onClick={() => navigate("/profile")}>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/profile")}
+                  >
                     Go to Profile
                   </Button>
                 </div>
@@ -105,15 +104,22 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-gray-600">
-                  You need to be an organizer to access the dashboard. Upgrade your account to start creating and managing events.
+                  You need to be an organizer to access the dashboard. Upgrade
+                  your account to start creating and managing events.
                 </p>
                 <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Current Status: {profile?.role || 'Unknown'}</h4>
+                  <h4 className="font-medium text-blue-900 mb-2">
+                    Current Status: {profile?.role || "Unknown"}
+                  </h4>
                   <p className="text-sm text-blue-800">
-                    Upgrade to organizer to unlock event creation, analytics, and management tools.
+                    Upgrade to organizer to unlock event creation, analytics,
+                    and management tools.
                   </p>
                 </div>
-                <Button onClick={() => navigate("/become-organizer")} className="flex items-center gap-2">
+                <Button
+                  onClick={() => navigate("/become-organizer")}
+                  className="flex items-center gap-2"
+                >
                   <UserPlus className="h-4 w-4" />
                   Become an Organizer
                 </Button>
@@ -134,10 +140,11 @@ const Dashboard = () => {
               Organizer Dashboard
             </h1>
             <p className="text-gray-600 mt-2">
-              Welcome back, {profile?.first_name || profile?.username || 'Organizer'}! Manage your events with AI-powered insights and advanced tools
+              Welcome back,{" "}
+              {profile?.first_name || profile?.username || "Organizer"}! Manage
+              your events with AI-powered insights and advanced tools.
             </p>
           </div>
-
           <EnhancedOrganizerDashboard />
         </div>
       </div>
@@ -146,3 +153,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+// This code defines a Dashboard page for organizers, checking authentication and profile status, and displaying the organizer dashboard with enhanced features.

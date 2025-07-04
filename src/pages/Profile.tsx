@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,21 +13,16 @@ const Profile = () => {
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    console.log('Profile page: Current user:', user?.id);
-    console.log('Profile page: Current profile:', profile);
-  }, [user, profile]);
-
   const handleRefreshProfile = async () => {
     setIsRefreshing(true);
     try {
       await refreshProfile();
       toast({
         title: "Profile Refreshed",
-        description: "Your profile has been updated with the latest information.",
+        description:
+          "Your profile has been updated with the latest information.",
       });
     } catch (error) {
-      console.error('Error refreshing profile:', error);
       toast({
         title: "Error",
         description: "Failed to refresh profile",
@@ -57,7 +51,9 @@ const Profile = () => {
           <CardContent className="pt-6 text-center">
             <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Not Logged In</h2>
-            <p className="text-gray-600 mb-4">Please log in to view your profile</p>
+            <p className="text-gray-600 mb-4">
+              Please log in to view your profile
+            </p>
             <Link to="/auth">
               <Button>Log In</Button>
             </Link>
@@ -73,16 +69,22 @@ const Profile = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
-              <p className="text-gray-600">Manage your account and view your events</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                My Profile
+              </h1>
+              <p className="text-gray-600">
+                Manage your account and view your events
+              </p>
             </div>
-            <Button 
+            <Button
               onClick={handleRefreshProfile}
               disabled={isRefreshing}
               variant="outline"
               size="sm"
             >
-              {isRefreshing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {isRefreshing && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
               Refresh Profile
             </Button>
           </div>
@@ -98,28 +100,41 @@ const Profile = () => {
                 <User className="h-12 w-12 text-purple-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">
-                {profile?.first_name && profile?.last_name 
+                {profile?.first_name && profile?.last_name
                   ? `${profile.first_name} ${profile.last_name}`
-                  : profile?.username || profile?.email?.split('@')[0] || "User"
-                }
+                  : profile?.username ||
+                    profile?.email?.split("@")[0] ||
+                    "User"}
               </h3>
-              <p className="text-gray-600 mb-2">{profile?.email || user.email}</p>
+              <p className="text-gray-600 mb-2">
+                {profile?.email || user.email}
+              </p>
               <div className="mb-4">
-                <Badge 
-                  variant={profile?.role === "organizer" ? "default" : "secondary"}
-                  className={profile?.role === "organizer" ? "bg-purple-600" : ""}
+                <Badge
+                  variant={
+                    profile?.role === "organizer" ? "default" : "secondary"
+                  }
+                  className={
+                    profile?.role === "organizer" ? "bg-purple-600" : ""
+                  }
                 >
-                  {profile?.role === "organizer" ? "Event Organizer" : "Event Attendee"}
+                  {profile?.role === "organizer"
+                    ? "Event Organizer"
+                    : "Event Attendee"}
                 </Badge>
               </div>
               {profile?.bio && (
                 <p className="text-sm text-gray-600 mt-2">{profile.bio}</p>
               )}
-              
+
               {profile?.role === "organizer" && (
                 <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-purple-800 font-medium">🎉 Organizer Features Active!</p>
-                  <p className="text-xs text-purple-600 mt-1">You can now create and manage events</p>
+                  <p className="text-sm text-purple-800 font-medium">
+                    🎉 Organizer Features Active!
+                  </p>
+                  <p className="text-xs text-purple-600 mt-1">
+                    You can now create and manage events
+                  </p>
                   <Link to="/dashboard">
                     <Button size="sm" className="mt-2 w-full">
                       Go to Dashboard
@@ -127,7 +142,7 @@ const Profile = () => {
                   </Link>
                 </div>
               )}
-              
+
               {profile?.role === "attendee" && (
                 <div className="mt-4">
                   <Link to="/become-organizer">
@@ -150,3 +165,5 @@ const Profile = () => {
 };
 
 export default Profile;
+// This code defines a Profile page that allows users to view and manage their profile information. It includes features like refreshing the profile, displaying user details, and showing different content based on the user's role (organizer or attendee). The page is responsive and uses cards for layout, with loading states while fetching data. It also provides options to navigate to the dashboard or become an organizer if the user is an attendee.
+// The Profile page enhances the user experience by providing a clear overview of the user's account, allowing them to manage their profile easily. It also encourages engagement by offering options to become an organizer if the user is currently an attendee. The use of badges and conditional rendering based on the user's role adds clarity to the profile, making it easy for users to understand their current status within the platform.
