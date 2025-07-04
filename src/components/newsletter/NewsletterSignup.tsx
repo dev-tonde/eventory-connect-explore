@@ -39,8 +39,8 @@ const genres = [
   "All Categories",
 ];
 
-// Replace this with your actual API endpoint
-const NEWSLETTER_API_ENDPOINT = "/api/newsletter/subscribe";
+// Supabase newsletter subscription endpoint
+const NEWSLETTER_API_ENDPOINT = "https://yaihbkgojeuewdacmtje.supabase.co/functions/v1/newsletter-subscribe";
 
 const NewsletterSignup = () => {
   const [email, setEmail] = useState("");
