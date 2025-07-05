@@ -7,6 +7,7 @@ import { Event } from "@/types/event";
 import LocationSearch from "@/components/location/LocationSearch";
 import EventMap from "@/components/map/EventMap";
 import LocationPermissionModal from "@/components/location/LocationPermissionModal";
+import { supabase } from "@/integrations/supabase/client";
 
 // Only allow trusted image URLs (must be https and from your trusted domain)
 const isTrustedImageUrl = (url: string) => {
@@ -84,131 +85,64 @@ const NearbyEventsSection = () => {
     );
   };
 
-  const loadNearbyEvents = () => {
+  const loadNearbyEvents = async () => {
     if (!userLocation) return;
 
-    // Enhanced mock events with more realistic data and different organizers
-    const mockEvents: Event[] = [
-      {
-        id: "1",
-        title: "Summer Music Festival 2024",
-        description:
-          "Join us for an incredible day of live music featuring chart-topping artists, local bands, and emerging talent. Experience multiple stages, gourmet food trucks, craft beer gardens, and interactive art installations in a beautiful outdoor setting.",
-        date: "2024-07-15",
-        time: "14:00",
-        location: "Central Park Amphitheater",
-        address: "123 Park Avenue, New York, NY 10001",
-        price: 75,
-        category: "Music",
-        image: "/placeholder.svg",
-        organizer: "Harmony Events Co.",
-        attendeeCount: 342,
-        maxAttendees: 500,
-        tags: ["outdoor", "festival", "music", "family-friendly"],
-      },
-      {
-        id: "2",
-        title: "AI & Machine Learning Summit",
-        description:
-          "Dive deep into the future of artificial intelligence with industry pioneers, researchers, and innovators. Network with leading AI professionals, attend hands-on workshops, and discover the latest breakthroughs in machine learning, neural networks, and automation.",
-        date: "2024-07-20",
-        time: "09:00",
-        location: "Innovation Tech Hub",
-        address: "456 Innovation Street, San Francisco, CA 94105",
-        price: 125,
-        category: "Technology",
-        image: "/placeholder.svg",
-        organizer: "TechVision Institute",
-        attendeeCount: 89,
-        maxAttendees: 150,
-        tags: ["workshop", "technology", "AI", "networking", "professional"],
-      },
-      {
-        id: "3",
-        title: "Urban Food & Wine Experience",
-        description:
-          "Savor culinary masterpieces from award-winning chefs paired with premium wines from renowned vineyards around the world. Enjoy live cooking demonstrations, wine tastings, and exclusive access to limited-edition bottles in an elegant rooftop setting.",
-        date: "2024-07-25",
-        time: "18:30",
-        location: "Skyline Rooftop Venue",
-        address: "789 Luxury Lane, Los Angeles, CA 90210",
-        price: 95,
-        category: "Food",
-        image: "/placeholder.svg",
-        organizer: "Culinary Masters Guild",
-        attendeeCount: 67,
-        maxAttendees: 100,
-        tags: ["food", "wine", "tasting", "luxury", "rooftop"],
-      },
-      {
-        id: "4",
-        title: "Startup Pitch Battle 2024",
-        description:
-          "Watch the next generation of entrepreneurs pitch their groundbreaking ideas to top-tier investors and venture capitalists. Network with founders, investors, and industry experts while witnessing the birth of tomorrow's unicorn companies.",
-        date: "2024-08-02",
-        time: "10:00",
-        location: "Entrepreneur Hub",
-        address: "321 Startup Street, Austin, TX 78701",
-        price: 35,
-        category: "Business",
-        image: "/placeholder.svg",
-        organizer: "Venture Connect",
-        attendeeCount: 156,
-        maxAttendees: 200,
-        tags: ["startup", "business", "networking", "competition", "investors"],
-      },
-      {
-        id: "5",
-        title: "Contemporary Art Showcase",
-        description:
-          "Discover cutting-edge contemporary art from emerging and established artists from around the globe. Meet the artists, participate in guided tours, and enjoy an exclusive wine reception while exploring thought-provoking installations and paintings.",
-        date: "2024-08-10",
-        time: "19:00",
-        location: "Modern Art Gallery District",
-        address: "654 Arts District, Chicago, IL 60601",
-        price: 0,
-        category: "Arts",
-        image: "/placeholder.svg",
-        organizer: "Metropolitan Arts Foundation",
-        attendeeCount: 43,
-        maxAttendees: 120,
-        tags: ["art", "gallery", "culture", "free", "wine-reception"],
-      },
-      {
-        id: "6",
-        title: "Wellness & Mindfulness Retreat",
-        description:
-          "Rejuvenate your mind, body, and spirit with expert-led yoga sessions, guided meditation, sound healing workshops, and holistic wellness practices. Includes healthy gourmet meals, spa treatments, and take-home wellness kits.",
-        date: "2024-08-18",
-        time: "08:00",
-        location: "Serenity Wellness Sanctuary",
-        address: "987 Peaceful Path, Sedona, AZ 86336",
-        price: 180,
-        category: "Health",
-        image: "/placeholder.svg",
-        organizer: "Zen Wellness Collective",
-        attendeeCount: 28,
-        maxAttendees: 40,
-        tags: ["yoga", "wellness", "meditation", "retreat", "spa"],
-      },
-    ];
+    try {
+      // Fetch real events from database
+      const { data: events, error } = await supabase
+        .from("events")
+        .select(`
+          *,
+          profiles!events_organizer_id_fkey (
+            first_name,
+            last_name
+          )
+        `)
+        .eq("is_active", true)
+        .gte("date", new Date().toISOString().split("T")[0])
+        .order("date", { ascending: true })
+        .limit(20);
 
-    // Get events from localStorage and combine with mock events
-    const storedEvents = JSON.parse(
-      localStorage.getItem("eventory_events") || "[]"
-    );
-    const allEvents = [...mockEvents, ...storedEvents];
+      if (error) {
+        console.error("Error fetching events:", error);
+        setNearbyEvents([]);
+        return;
+      }
 
-    // Mock distance calculation - in real app would use geospatial queries
-    const eventsWithDistance = allEvents
-      .map((event) => ({
-        ...event,
-        distance: Math.random() * 50, // Random distance up to 50km
+      if (!events || events.length === 0) {
+        setNearbyEvents([]);
+        return;
+      }
+
+      // Transform database events to Event type and calculate mock distances
+      const transformedEvents = events.map((event) => ({
+        id: event.id,
+        title: event.title,
+        description: event.description || "",
+        date: event.date,
+        time: event.time,
+        location: event.venue,
+        address: event.address || "",
+        price: Number(event.price),
+        category: event.category,
+        image: event.image_url || "/placeholder.svg",
+        organizer: event.profiles
+          ? `${event.profiles.first_name} ${event.profiles.last_name}`.trim()
+          : "Unknown Organizer",
+        attendeeCount: event.current_attendees || 0,
+        maxAttendees: event.max_attendees || 100,
+        tags: event.tags || [],
+        distance: Math.random() * 50, // Mock distance calculation
       }))
       .filter((event) => event.distance <= 25) // Show events within 25km
       .sort((a, b) => a.distance - b.distance);
 
-    setNearbyEvents(eventsWithDistance.slice(0, 6));
+      setNearbyEvents(transformedEvents.slice(0, 6));
+    } catch (error) {
+      console.error("Error loading nearby events:", error);
+      setNearbyEvents([]);
+    }
   };
 
   return (
@@ -241,7 +175,7 @@ const NearbyEventsSection = () => {
               <div className="text-center mb-6">
                 <Button
                   onClick={() => setShowLocationModal(true)}
-                  className="bg-purple-600 hover:bg-purple-700"
+                  variant="default"
                 >
                   <MapPin className="h-4 w-4 mr-2" />
                   Enable Location Access
@@ -307,7 +241,7 @@ const NearbyEventsSection = () => {
                           {event.price === 0 ? "Free" : `R${event.price}`}
                         </span>
                         <Link to={eventLink}>
-                          <Button size="sm" disabled={!isValidEventId}>
+                          <Button size="sm" disabled={!isValidEventId} variant="default">
                             View Details
                           </Button>
                         </Link>

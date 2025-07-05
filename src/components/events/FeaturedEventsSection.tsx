@@ -37,29 +37,15 @@ interface FeaturedEventsSectionProps {
 }
 
 const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
-  // Get follower counts from localStorage (for demo purposes)
-  const followerCounts = JSON.parse(
-    localStorage.getItem("eventory_follower_counts") || "{}"
-  );
-
-  // Filter and sort events to get the best featured events
+  // Filter and sort events to get real featured events from database
   const featuredEvents = events
-    .map((event) => ({
-      ...event,
-      isVerifiedOrganizer: (followerCounts[event.organizer] || 0) >= 10000,
-      followerCount:
-        followerCounts[event.organizer] ||
-        Math.floor(Math.random() * 15000) + 1000, // Random demo data
-    }))
+    .filter((event) => event.attendeeCount > 0 || event.price > 0) // Show events with activity or paid events
     .sort((a, b) => {
-      // First sort by verified status, then by follower count, then by attendee count
-      if (a.isVerifiedOrganizer !== b.isVerifiedOrganizer) {
-        return b.isVerifiedOrganizer ? 1 : -1;
+      // Sort by attendee count and recency
+      if (a.attendeeCount !== b.attendeeCount) {
+        return b.attendeeCount - a.attendeeCount;
       }
-      if (a.followerCount !== b.followerCount) {
-        return b.followerCount - a.followerCount;
-      }
-      return b.attendeeCount - a.attendeeCount;
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
     })
     .slice(0, 8); // Get top 8 featured events
 
@@ -137,9 +123,9 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
                         <span className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium">
                           Featured
                         </span>
-                        {event.isVerifiedOrganizer && (
+                        {event.attendeeCount > 50 && (
                           <Badge className="bg-blue-600 text-white text-xs">
-                            Verified Organizer
+                            Popular Event
                           </Badge>
                         )}
                       </div>
@@ -155,11 +141,8 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
                             {event.category}
                           </span>
                         </div>
-                        <CardDescription className="line-clamp-2 flex items-center gap-2">
+                        <CardDescription className="line-clamp-2">
                           <span>By {event.organizer}</span>
-                          {event.isVerifiedOrganizer && (
-                            <CheckCircle className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                          )}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -183,7 +166,7 @@ const FeaturedEventsSection = ({ events }: FeaturedEventsSectionProps) => {
                           </span>
                           <Button
                             size="sm"
-                            className="group-hover:bg-purple-700 transition-colors"
+                            variant="default"
                           >
                             View Details
                             <ArrowRight className="h-3 w-3 ml-1" />

@@ -18,14 +18,10 @@ const GoogleSignInModal = () => {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
+  // Disable automatic modal opening - let users choose when to sign in
   useEffect(() => {
-    if (isAuthenticated) return;
-
-    const hasSeenModal = localStorage.getItem("hasSeenGoogleSignInModal");
-    if (!hasSeenModal) {
-      const timer = setTimeout(() => setIsOpen(true), 2000);
-      return () => clearTimeout(timer);
-    }
+    // Modal will only open if manually triggered
+    return;
   }, [isAuthenticated]);
 
   useEffect(() => {

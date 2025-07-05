@@ -42,7 +42,7 @@ const Header = () => {
                     </Button>
                   </Link>
                   <Link to="/auth" aria-label="Sign up for an account">
-                    <Button type="button">Sign Up</Button>
+                    <Button variant="default" type="button">Sign Up</Button>
                   </Link>
                 </div>
               )}

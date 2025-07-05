@@ -1090,6 +1090,58 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_scan_logs: {
+        Row: {
+          device_info: Json | null
+          event_id: string
+          id: string
+          scan_location: string | null
+          scanned_at: string
+          scanned_by: string
+          ticket_id: string
+        }
+        Insert: {
+          device_info?: Json | null
+          event_id: string
+          id?: string
+          scan_location?: string | null
+          scanned_at?: string
+          scanned_by: string
+          ticket_id: string
+        }
+        Update: {
+          device_info?: Json | null
+          event_id?: string
+          id?: string
+          scan_location?: string | null
+          scanned_at?: string
+          scanned_by?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_scan_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_scan_logs_scanned_by_fkey"
+            columns: ["scanned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_scan_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           action: string
@@ -1365,7 +1417,9 @@ export type Database = {
           payment_status: string | null
           purchase_date: string | null
           qr_code: string | null
+          qr_scanned_at: string | null
           quantity: number
+          scanned_by: string | null
           status: string | null
           ticket_number: string | null
           total_price: number
@@ -1379,7 +1433,9 @@ export type Database = {
           payment_status?: string | null
           purchase_date?: string | null
           qr_code?: string | null
+          qr_scanned_at?: string | null
           quantity?: number
+          scanned_by?: string | null
           status?: string | null
           ticket_number?: string | null
           total_price: number
@@ -1393,7 +1449,9 @@ export type Database = {
           payment_status?: string | null
           purchase_date?: string | null
           qr_code?: string | null
+          qr_scanned_at?: string | null
           quantity?: number
+          scanned_by?: string | null
           status?: string | null
           ticket_number?: string | null
           total_price?: number
@@ -1405,6 +1463,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_scanned_by_fkey"
+            columns: ["scanned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1708,6 +1773,15 @@ export type Database = {
           details_val?: Json
         }
         Returns: string
+      }
+      process_qr_scan: {
+        Args: {
+          p_ticket_id: string
+          p_scanner_id: string
+          p_scan_location?: string
+          p_device_info?: Json
+        }
+        Returns: Json
       }
       process_split_payment_contribution: {
         Args: {

@@ -13,7 +13,9 @@ import {
   History,
   Target,
   DollarSign,
+  QrCode,
 } from "lucide-react";
+import QRCodeScanner from "./QRCodeScanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -220,13 +222,14 @@ const EnhancedOrganizerDashboard = () => {
 
       {/* Main Dashboard Tabs */}
       <Tabs defaultValue="events" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="past-events">Past Events</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="revenue">Revenue</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
           <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
+          <TabsTrigger value="scanner">QR Scanner</TabsTrigger>
           <TabsTrigger value="tools">Tools</TabsTrigger>
         </TabsList>
 
@@ -380,6 +383,37 @@ const EnhancedOrganizerDashboard = () => {
         {/* AI Insights */}
         <TabsContent value="ai-insights" className="space-y-6">
           <AIInsightsTab aiRecommendations={aiRecommendations || []} />
+        </TabsContent>
+
+        {/* QR Scanner */}
+        <TabsContent value="scanner" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">QR Code Scanner</h2>
+            <Badge variant="outline" className="flex items-center gap-1">
+              <QrCode className="h-3 w-3" />
+              Event Access Control
+            </Badge>
+          </div>
+          
+          {selectedEventId ? (
+            <QRCodeScanner 
+              eventId={selectedEventId}
+              eventTitle={organizerEvents.find(e => e.id === selectedEventId)?.title || "Unknown Event"}
+            />
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12">
+                <QrCode className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Select an Event</h3>
+                <p className="text-gray-600 mb-4">
+                  Choose an event from the Events tab to scan tickets for entry
+                </p>
+                <Button onClick={() => window.location.hash = "events"}>
+                  Go to Events
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Tools */}

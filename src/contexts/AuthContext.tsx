@@ -180,18 +180,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const redirectUrl = `${window.location.origin}/`;
 
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: redirectUrl,
-            data: {
-              first_name: firstName,
-              last_name: lastName,
-              role: role,
-            },
-          },
-        });
+  // Update profile fields to store phone number for SMS notifications
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: redirectUrl,
+      data: {
+        first_name: firstName,
+        last_name: lastName, 
+        role: role,
+        phone: profile?.phone || "" // Store phone number if available
+      },
+    },
+  });
 
         if (!error) {
           toast({
