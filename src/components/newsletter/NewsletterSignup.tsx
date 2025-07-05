@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Mail, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { trackNewsletterSignup, trackFormSubmission } from "@/lib/analytics";
 
 // Basic email validation
 const isValidEmail = (email: string) =>
@@ -93,12 +94,20 @@ const NewsletterSignup = () => {
       }
 
       setIsSubscribed(true);
+      
+      // Track successful newsletter signup
+      trackNewsletterSignup(sanitizedGenre);
+      trackFormSubmission('newsletter_signup', true);
+      
       toast({
         title: "Successfully subscribed!",
         description:
           "You'll receive our weekly newsletter with events in your preferred genre.",
       });
     } catch (error: any) {
+      // Track failed newsletter signup
+      trackFormSubmission('newsletter_signup', false);
+      
       toast({
         title: "Subscription failed",
         description: error.message || "An error occurred. Please try again.",
