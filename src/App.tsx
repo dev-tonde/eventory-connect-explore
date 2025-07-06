@@ -18,6 +18,9 @@ import BecomeOrganizer from "./pages/BecomeOrganizer";
 import Gamification from "./pages/Gamification";
 import PosterStudio from "./pages/PosterStudio";
 import FollowedOrganizers from "./pages/FollowedOrganizers";
+import SupportWidget from "./components/support/SupportWidget";
+import PrivacyBanner from "./components/legal/PrivacyBanner";
+import ErrorBoundaryWithSentry from "./components/error/ErrorBoundaryWithSentry";
 import { analytics, trackPageView } from "@/lib/analytics";
 import { useEffect } from "react";
 
@@ -79,7 +82,11 @@ function App() {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <AppContent />
+            <ErrorBoundaryWithSentry>
+              <AppContent />
+              <SupportWidget />
+              <PrivacyBanner />
+            </ErrorBoundaryWithSentry>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
