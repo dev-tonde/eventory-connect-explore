@@ -26,6 +26,7 @@ interface Profile {
   bio?: string;
   social_links: SocialLinks;
   name?: string;
+  phone?: string;
   created_at?: string;
   updated_at?: string;
 }
