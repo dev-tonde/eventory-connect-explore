@@ -2,12 +2,12 @@ import * as Sentry from "@sentry/react";
 
 export const initSentry = () => {
   Sentry.init({
-    dsn: "https://your-sentry-dsn@sentry.io/project-id", // Replace with your actual DSN
+    dsn: "https://a43022a2068cfd6931f3f5d89ff65560@o4509621706162176.ingest.de.sentry.io/4509621743321168",
     environment: import.meta.env.MODE,
     beforeSend(event) {
       // Filter out development errors
-      if (import.meta.env.MODE === 'development') {
-        console.log('Sentry Event:', event);
+      if (import.meta.env.MODE === "development") {
+        console.log("Sentry Event:", event);
         return null; // Don't send in development
       }
       return event;

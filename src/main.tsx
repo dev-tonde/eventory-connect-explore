@@ -15,10 +15,12 @@ initSentry();
 setupPerformanceMonitoring();
 
 // Initialize customer support
-initIntercom("your-intercom-app-id"); // Replace with your actual Intercom App ID
+initIntercom("fd6757a9-8dfe-4a84-96e3-a2d45dabad58"); // Replace with your actual Intercom App ID
 
 // Initialize legal compliance
-initTermly("your-termly-embed-id"); // Replace with your actual Termly Embed ID
+initTermly(
+  "YOUR_TERMELY_EMBED_ID" // Replace with your actual Termly Embed ID
+);
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
