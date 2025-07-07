@@ -1,21 +1,21 @@
 import { MapPin, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGeolocation } from "@/hooks/useGeolocation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 // Sanitize city name to prevent XSS
 const sanitizeText = (text: string) => text.replace(/[<>]/g, "").trim();
 
 const LocationIndicator = () => {
   const { location, loading, error, requestLocation } = useGeolocation();
+  const [userDeniedLocation, setUserDeniedLocation] = useState(false);
 
   useEffect(() => {
     // Auto-request location on first load if not already available and user hasn't denied
-    const locationDenied = localStorage.getItem("location_permission_denied");
-    if (!location && !error && !loading && !locationDenied) {
+    if (!location && !error && !loading && !userDeniedLocation) {
       requestLocation();
     }
-  }, [location, error, loading, requestLocation]);
+  }, [location, error, loading, userDeniedLocation, requestLocation]);
 
   if (loading) {
     return (
@@ -34,7 +34,10 @@ const LocationIndicator = () => {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => requestLocation()}
+        onClick={() => {
+          setUserDeniedLocation(false);
+          requestLocation();
+        }}
         className="text-sm text-gray-600 hover:text-gray-800"
         aria-label="Retry location"
       >
@@ -49,7 +52,10 @@ const LocationIndicator = () => {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => requestLocation()}
+        onClick={() => {
+          setUserDeniedLocation(false);
+          requestLocation();
+        }}
         className="text-sm text-gray-600 hover:text-gray-800"
         aria-label="Enable location"
       >

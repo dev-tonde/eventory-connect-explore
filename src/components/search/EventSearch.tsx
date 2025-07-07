@@ -92,7 +92,7 @@ const EventSearch = () => {
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
@@ -106,7 +106,7 @@ const EventSearch = () => {
               <SelectValue placeholder="All Locations" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Locations</SelectItem>
+              <SelectItem value="all">All Locations</SelectItem>
               {locations.map((location) => (
                 <SelectItem key={location} value={location}>
                   {location}
@@ -118,8 +118,8 @@ const EventSearch = () => {
           <Button
             onClick={() => {
               setSearchTerm("");
-              setSelectedCategory("");
-              setSelectedLocation("");
+              setSelectedCategory("all");
+              setSelectedLocation("all");
               setPriceRange({ min: 0, max: 1000 });
             }}
             variant="outline"

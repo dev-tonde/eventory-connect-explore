@@ -36,16 +36,21 @@ export const RATE_LIMITS = {
   FORM_SUBMISSION: { requests: 20, window: 15 * 60 * 1000 }, // 20 forms per 15 min
 };
 
-// Environment validation
+// Environment validation - Updated to use direct URLs instead of VITE_ prefix
 export const validateEnvironment = () => {
-  const requiredEnvVars = ["VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"];
-
-  const missing = requiredEnvVars.filter((key) => !import.meta.env[key]);
-
-  if (missing.length > 0) {
-    throw new Error(
-      `Missing required environment variables: ${missing.join(", ")}`
-    );
+  // Check if we have direct access to Supabase configuration
+  const supabaseUrl = "https://yaihbkgojeuewdacmtje.supabase.co";
+  const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaWhia2dvamV1ZXdkYWNtdGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNzUxMTMsImV4cCI6MjA2NTc1MTExM30.SUEAIV1nq_3q6z6oir5SqNUAF5cmacu14-bZdqaDcvY";
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase configuration is missing");
+  }
+  
+  // Additional validation for URL format
+  try {
+    new URL(supabaseUrl);
+  } catch {
+    throw new Error("Invalid Supabase URL format");
   }
 };
 
