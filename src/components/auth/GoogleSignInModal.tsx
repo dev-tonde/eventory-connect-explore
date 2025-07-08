@@ -33,7 +33,7 @@ const GoogleSignInModal = () => {
 
   const handleClose = () => {
     setIsOpen(false);
-    localStorage.setItem("hasSeenGoogleSignInModal", "true");
+    sessionStorage.setItem("hasSeenGoogleSignInModal", "true");
   };
 
   const handleGoogleSignIn = async () => {

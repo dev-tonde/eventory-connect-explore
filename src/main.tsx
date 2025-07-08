@@ -14,13 +14,11 @@ initSentry();
 // Initialize performance monitoring
 setupPerformanceMonitoring();
 
-// Initialize customer support
-initIntercom("fd6757a9-8dfe-4a84-96e3-a2d45dabad58"); // Replace with your actual Intercom App ID
+// Initialize customer support - TODO: Add INTERCOM_APP_ID to Supabase secrets
+// initIntercom("PLACEHOLDER"); // Will be replaced with actual ID from Supabase secrets
 
-// Initialize legal compliance
-initTermly(
-  "YOUR_TERMELY_EMBED_ID" // Replace with your actual Termly Embed ID
-);
+// Initialize legal compliance - TODO: Add TERMLY_EMBED_ID to Supabase secrets  
+// initTermly("PLACEHOLDER"); // Will be replaced with actual ID from Supabase secrets
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {

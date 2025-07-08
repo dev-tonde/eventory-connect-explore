@@ -8,8 +8,8 @@ const PrivacyBanner = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Check if user has already made a privacy choice
-    const hasConsented = localStorage.getItem('privacy-consent');
+    // Check if user has already made a privacy choice (using sessionStorage)
+    const hasConsented = sessionStorage.getItem('privacy-consent');
     if (!hasConsented) {
       // Show banner after a short delay
       const timer = setTimeout(() => setIsVisible(true), 1000);
@@ -18,7 +18,7 @@ const PrivacyBanner = () => {
   }, []);
 
   const handleAcceptAll = () => {
-    localStorage.setItem('privacy-consent', 'accepted');
+    sessionStorage.setItem('privacy-consent', 'accepted');
     setIsVisible(false);
     // Enable all tracking
     window.gtag?.('consent', 'update', {
@@ -30,7 +30,7 @@ const PrivacyBanner = () => {
   };
 
   const handleRejectAll = () => {
-    localStorage.setItem('privacy-consent', 'rejected');
+    sessionStorage.setItem('privacy-consent', 'rejected');
     setIsVisible(false);
     // Disable all non-essential tracking
     window.gtag?.('consent', 'update', {
