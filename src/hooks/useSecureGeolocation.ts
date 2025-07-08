@@ -42,7 +42,7 @@ export const useSecureGeolocation = () => {
       setLoading(true);
       setError(null);
 
-      const watchId = navigator.geolocation.getCurrentPosition(
+      navigator.geolocation.getCurrentPosition(
         async (position) => {
           if (abortControllerRef.current?.signal.aborted) {
             reject(new Error("Request aborted"));
@@ -99,7 +99,6 @@ export const useSecureGeolocation = () => {
 
       // Set up abort handling
       abortControllerRef.current.signal.addEventListener('abort', () => {
-        navigator.geolocation.clearWatch && navigator.geolocation.clearWatch(watchId);
         setLoading(false);
       });
     });

@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           bio: data.bio,
           social_links: (data.social_links as Record<string, string>) || {},
           name: data.name,
-          phone: data.phone || "",
+          phone: "",
           created_at: data.created_at,
           updated_at: data.updated_at,
         });
