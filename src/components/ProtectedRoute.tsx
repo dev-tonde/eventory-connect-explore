@@ -6,7 +6,7 @@ export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const location = useLocation();
 
   // Prevent client-side open redirect by validating the redirect path
-  const loginPath = "/login";
+  const loginPath = "/auth";
   const redirectState = { from: location.pathname };
 
   if (isLoading) return null;

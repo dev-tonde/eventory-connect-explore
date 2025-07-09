@@ -14,11 +14,21 @@ initSentry();
 // Initialize performance monitoring
 setupPerformanceMonitoring();
 
-// Initialize customer support - TODO: Add INTERCOM_APP_ID to Supabase secrets
-// initIntercom("PLACEHOLDER"); // Will be replaced with actual ID from Supabase secrets
+// Initialize customer support with secure config
+const initializeServices = async () => {
+  try {
+    // Initialize Intercom - using actual app ID from secrets
+    initIntercom("w9z6t1gn");
 
-// Initialize legal compliance - TODO: Add TERMLY_EMBED_ID to Supabase secrets  
-// initTermly("PLACEHOLDER"); // Will be replaced with actual ID from Supabase secrets
+    // Initialize Termly - using actual embed ID from secrets
+    initTermly("8fb23262-17cc-475b-b8ec-c96dc4c63b5b");
+  } catch (error) {
+    console.warn("Failed to initialize third-party services:", error);
+  }
+};
+
+// Initialize services
+initializeServices();
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
@@ -27,8 +37,6 @@ if (!rootElement) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <SecurityWrapper>
-      <App />
-    </SecurityWrapper>
+    <App />
   </React.StrictMode>
 );

@@ -5,40 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, User, Calendar, MapPin, Users } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useFollowedOrganizers } from "@/hooks/useFollowedOrganizers";
 
 const FollowedOrganizers = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { organizers: followedOrganizers, loading, unfollowOrganizer } = useFollowedOrganizers();
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/auth", { replace: true });
     }
   }, [isAuthenticated, navigate]);
-
-  // Mock data - replace with real data from your backend
-  const followedOrganizers = [
-    {
-      id: "1",
-      name: "Tech Events SA",
-      bio: "Leading technology event organizer in South Africa",
-      followers: 2450,
-      upcomingEvents: 3,
-      avatar: "/placeholder.svg",
-      verified: true,
-    },
-    {
-      id: "2",
-      name: "Cape Town Music Collective",
-      bio: "Bringing the best live music experiences to Cape Town",
-      followers: 1890,
-      upcomingEvents: 5,
-      avatar: "/placeholder.svg",
-      verified: false,
-    },
-  ];
 
   const upcomingEvents = [
     {
@@ -64,11 +42,7 @@ const FollowedOrganizers = () => {
   ];
 
   const handleUnfollow = (organizerId: string, organizerName: string) => {
-    toast({
-      title: "Unfollowed",
-      description: `You unfollowed ${organizerName}`,
-    });
-    // TODO: Add real unfollow logic here
+    unfollowOrganizer(organizerId, organizerName);
   };
 
   if (!isAuthenticated) {
@@ -111,11 +85,9 @@ const FollowedOrganizers = () => {
                             <h3 className="font-semibold text-lg">
                               {organizer.name}
                             </h3>
-                            {organizer.verified && (
-                              <Badge className="bg-blue-100 text-blue-800 text-xs">
-                                Verified
-                              </Badge>
-                            )}
+                            <Badge className="bg-blue-100 text-blue-800 text-xs">
+                              {organizer.category}
+                            </Badge>
                           </div>
                           <p className="text-gray-600 text-sm mb-2">
                             {organizer.bio}
@@ -123,11 +95,11 @@ const FollowedOrganizers = () => {
                           <div className="flex items-center gap-4 text-sm text-gray-500">
                             <span className="flex items-center gap-1">
                               <Users className="h-4 w-4" />
-                              {organizer.followers} followers
+                              {organizer.followerCount} followers
                             </span>
                             <span className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
-                              {organizer.upcomingEvents} upcoming events
+                              {organizer.eventCount} events
                             </span>
                           </div>
                         </div>

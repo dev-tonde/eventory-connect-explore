@@ -22,6 +22,8 @@ import FollowedOrganizers from "./pages/FollowedOrganizers";
 import SupportWidget from "./components/support/SupportWidget";
 import PrivacyBanner from "./components/legal/PrivacyBanner";
 import ErrorBoundaryWithSentry from "./components/error/ErrorBoundaryWithSentry";
+import { SecurityWrapper } from "./components/security/SecurityWrapper";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { analytics, trackPageView } from "@/lib/analytics";
 import { useEffect } from "react";
 
@@ -55,18 +57,61 @@ function AppContent() {
           <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/communities" element={<Communities />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/create-event" element={<CreateEvent />} />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/create-event" 
+            element={
+              <ProtectedRoute>
+                <CreateEvent />
+              </ProtectedRoute>
+            } 
+          />
           <Route
             path="/become-organizer"
-            element={<BecomeOrganizer />}
+            element={
+              <ProtectedRoute>
+                <BecomeOrganizer />
+              </ProtectedRoute>
+            }
           />
-          <Route path="/gamification" element={<Gamification />} />
-          <Route path="/poster-studio" element={<PosterStudio />} />
+          <Route 
+            path="/gamification" 
+            element={
+              <ProtectedRoute>
+                <Gamification />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/poster-studio" 
+            element={
+              <ProtectedRoute>
+                <PosterStudio />
+              </ProtectedRoute>
+            } 
+          />
           <Route
             path="/followed-organizers"
-            element={<FollowedOrganizers />}
+            element={
+              <ProtectedRoute>
+                <FollowedOrganizers />
+              </ProtectedRoute>
+            }
           />
         </Routes>
       </main>
@@ -89,11 +134,13 @@ function App() {
         >
           <AuthProvider>
             <LanguageProvider>
-              <ErrorBoundaryWithSentry>
-                <AppContent />
-                <SupportWidget />
-                <PrivacyBanner />
-              </ErrorBoundaryWithSentry>
+              <SecurityWrapper>
+                <ErrorBoundaryWithSentry>
+                  <AppContent />
+                  <SupportWidget />
+                  <PrivacyBanner />
+                </ErrorBoundaryWithSentry>
+              </SecurityWrapper>
             </LanguageProvider>
           </AuthProvider>
         </BrowserRouter>
