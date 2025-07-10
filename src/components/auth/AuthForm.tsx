@@ -171,7 +171,7 @@ const AuthForm = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            Welcome to EventPlatform
+            Welcome to Eventory
           </CardTitle>
         </CardHeader>
         <CardContent>

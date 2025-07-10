@@ -19,6 +19,7 @@ import BecomeOrganizer from "./pages/BecomeOrganizer";
 import Gamification from "./pages/Gamification";
 import PosterStudio from "./pages/PosterStudio";
 import FollowedOrganizers from "./pages/FollowedOrganizers";
+import NotFound from "./pages/NotFound";
 import SupportWidget from "./components/support/SupportWidget";
 import PrivacyBanner from "./components/legal/PrivacyBanner";
 import ErrorBoundaryWithSentry from "./components/error/ErrorBoundaryWithSentry";
@@ -113,6 +114,8 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          {/* 404 Not Found Route */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />

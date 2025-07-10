@@ -191,7 +191,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         first_name: firstName,
         last_name: lastName, 
         role: role,
-        phone: profile?.phone || "" // Store phone number if available
+        phone: "" // Phone number handled separately
       },
     },
   });
