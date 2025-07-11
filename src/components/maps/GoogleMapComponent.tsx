@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 
 declare global {
   interface Window {
@@ -43,9 +44,10 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({
           return;
         }
 
-        // Get API key from edge function or environment
-        const response = await fetch('/api/google-maps-config');
-        const { apiKey } = await response.json();
+        // Get API key from Supabase edge function
+        const { data: configData, error: configError } = await supabase.functions.invoke('google-maps-config');
+        if (configError) throw configError;
+        const { apiKey } = configData;
 
         if (!apiKey) {
           throw new Error('Google Maps API key not configured');

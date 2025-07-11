@@ -17,16 +17,25 @@ export function useSMSNotification() {
     setError(null);
 
     try {
+      console.log('Sending SMS via Twilio:', smsData.to);
+      
       const { data, error } = await supabase.functions.invoke('twilio-sms', {
         body: smsData,
       });
 
       if (error) {
+        console.error('SMS function error:', error);
         throw error;
       }
 
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to send SMS');
+      }
+
+      console.log('SMS sent successfully');
       return { success: true, data };
     } catch (err: any) {
+      console.error('SMS sending error:', err);
       const errorMessage = err.message || 'Failed to send SMS';
       setError(errorMessage);
       throw new Error(errorMessage);
