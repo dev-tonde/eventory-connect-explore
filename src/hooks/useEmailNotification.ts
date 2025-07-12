@@ -18,16 +18,25 @@ export function useEmailNotification() {
     setError(null);
 
     try {
+      console.log('Sending email via SendGrid:', emailData.to);
+      
       const { data, error } = await supabase.functions.invoke('sendgrid-email', {
         body: emailData,
       });
 
       if (error) {
+        console.error('SendGrid function error:', error);
         throw error;
       }
 
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to send email');
+      }
+
+      console.log('Email sent successfully via SendGrid');
       return { success: true, data };
     } catch (err: any) {
+      console.error('Email sending error:', err);
       const errorMessage = err.message || 'Failed to send email';
       setError(errorMessage);
       throw new Error(errorMessage);
@@ -39,7 +48,7 @@ export function useEmailNotification() {
   const sendWelcomeEmail = async (to: string, name: string) => {
     return sendEmail({
       to,
-      subject: `Welcome to EventPlatform, ${name}!`,
+      subject: `Welcome to Eventory, ${name}!`,
       content: '',
       template: 'welcome',
       template_data: { name }

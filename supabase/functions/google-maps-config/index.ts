@@ -25,12 +25,21 @@ const handler = async (req: Request): Promise<Response> => {
     const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
     
     if (!apiKey) {
-      throw new Error('Google Maps API key not configured');
+      console.error('Google Maps API key not configured');
+      return new Response(
+        JSON.stringify({ error: 'Google Maps API key not configured' }),
+        { 
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
     }
+
+    console.log('Providing Google Maps API key for client');
 
     return new Response(
       JSON.stringify({ 
-        apiKey: apiKey,
+        apiKey,
         success: true 
       }),
       {

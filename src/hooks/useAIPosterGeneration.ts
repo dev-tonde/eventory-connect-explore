@@ -59,20 +59,40 @@ export const useAIPosterGeneration = () => {
     enabled: !!user,
   });
 
-  // Generate new poster
+  // Generate new poster using real OpenAI integration
   const generatePosterMutation = useMutation({
     mutationFn: async (request: GeneratePosterRequest) => {
       if (!user) throw new Error("User not authenticated");
+      
+      console.log('Generating AI poster with OpenAI:', request);
+      
+      // Enhanced prompt for better poster generation
+      const enhancedPrompt = `Create a stunning, professional event poster. Style: ${request.style || 'modern'}. Additional requirements: ${request.prompt}. Make it eye-catching with vibrant colors, clear typography, and engaging visual elements suitable for social media sharing.`;
+      
       const { data, error } = await supabase.functions.invoke(
-        "generate-ai-poster",
+        "openai-image-generation",
         {
-          body: request,
-          headers: {
-            "user-id": user.id,
+          body: {
+            prompt: enhancedPrompt,
+            size: `${request.dimensions.width}x${request.dimensions.height}`,
+            quality: 'high',
+            style: 'vivid',
+            output_format: 'png',
+            event_id: request.eventId,
+            user_id: user.id
           },
         }
       );
-      if (error) throw error;
+      
+      if (error) {
+        console.error('OpenAI poster generation error:', error);
+        throw error;
+      }
+      
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to generate poster');
+      }
+      
       return data;
     },
     onSuccess: () => {
@@ -80,11 +100,12 @@ export const useAIPosterGeneration = () => {
         queryKey: ["generated-posters", user?.id],
       });
       toast({
-        title: "Poster Generated!",
-        description: "Your AI-generated poster is ready for download.",
+        title: "AI Poster Generated! 🎨",
+        description: "Your stunning AI-generated poster is ready for download and sharing.",
       });
     },
     onError: (error: any) => {
+      console.error('Poster generation failed:', error);
       toast({
         title: "Generation Failed",
         description:

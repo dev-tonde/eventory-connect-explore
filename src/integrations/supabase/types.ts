@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          achievement_id: string
+          achievement_name: string
+          created_at: string
+          id: string
+          points_awarded: number
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          achievement_name: string
+          created_at?: string
+          id?: string
+          points_awarded: number
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          achievement_name?: string
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_audit_logs: {
         Row: {
           action: string
@@ -57,6 +87,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      analytics_config: {
+        Row: {
+          config_key: string
+          config_value: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          config_key: string
+          config_value: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          config_key?: string
+          config_value?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       calendar_sync: {
         Row: {
@@ -241,6 +298,48 @@ export type Database = {
           },
         ]
       }
+      content_moderation_logs: {
+        Row: {
+          confidence: number | null
+          content_id: string | null
+          content_text: string | null
+          content_type: string
+          created_at: string
+          flags: string[] | null
+          id: string
+          is_approved: boolean
+          moderation_result: Json
+          reviewed_by: string | null
+          user_id: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          content_id?: string | null
+          content_text?: string | null
+          content_type: string
+          created_at?: string
+          flags?: string[] | null
+          id?: string
+          is_approved: boolean
+          moderation_result: Json
+          reviewed_by?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          content_id?: string | null
+          content_text?: string | null
+          content_type?: string
+          created_at?: string
+          flags?: string[] | null
+          id?: string
+          is_approved?: boolean
+          moderation_result?: Json
+          reviewed_by?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       email_notifications: {
         Row: {
           content: string
@@ -411,6 +510,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      event_interactions: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          interaction_data: Json | null
+          interaction_type: string
+          ip_address: unknown | null
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          interaction_data?: Json | null
+          interaction_type: string
+          ip_address?: unknown | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          interaction_data?: Json | null
+          interaction_type?: string
+          ip_address?: unknown | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       event_reviews: {
         Row: {
@@ -1567,37 +1705,79 @@ export type Database = {
       }
       user_points: {
         Row: {
+          achievements_unlocked_count: number | null
           badges: string[] | null
           created_at: string | null
+          favorite_category: string | null
           id: string
           last_activity: string | null
           level: number | null
+          referral_count: number | null
           streak_days: number | null
           total_points: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          achievements_unlocked_count?: number | null
           badges?: string[] | null
           created_at?: string | null
+          favorite_category?: string | null
           id?: string
           last_activity?: string | null
           level?: number | null
+          referral_count?: number | null
           streak_days?: number | null
           total_points?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          achievements_unlocked_count?: number | null
           badges?: string[] | null
           created_at?: string | null
+          favorite_category?: string | null
           id?: string
           last_activity?: string | null
           level?: number | null
+          referral_count?: number | null
           streak_days?: number | null
           total_points?: number | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          points_awarded: number | null
+          referral_code: string
+          referred_user_id: string
+          referrer_id: string
+          status: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          points_awarded?: number | null
+          referral_code: string
+          referred_user_id: string
+          referrer_id: string
+          status?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          points_awarded?: number | null
+          referral_code?: string
+          referred_user_id?: string
+          referrer_id?: string
+          status?: string | null
         }
         Relationships: []
       }

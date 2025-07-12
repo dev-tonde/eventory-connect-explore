@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,20 +22,49 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Get Google Analytics configuration from environment
-    const measurementId = Deno.env.get('GOOGLE_ANALYTICS_ID');
-    const streamId = Deno.env.get('GOOGLE_ANALYTICS_STREAM_ID');
-    
-    if (!measurementId) {
-      throw new Error('Google Analytics measurement ID not configured');
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get analytics configuration from database
+    const { data: config, error } = await supabase
+      .from('analytics_config')
+      .select('config_key, config_value')
+      .eq('is_active', true);
+
+    if (error) {
+      console.warn('Error fetching analytics config from database:', error);
     }
 
+    // Convert to key-value object
+    const configObject: Record<string, string> = {};
+    config?.forEach(item => {
+      configObject[item.config_key] = item.config_value;
+    });
+
+    // Get configuration from database or fallback to environment variables
+    const trackingId = configObject.google_analytics_tracking_id || Deno.env.get('GOOGLE_ANALYTICS_ID');
+    const measurementId = configObject.google_analytics_measurement_id || Deno.env.get('GOOGLE_ANALYTICS_STREAM_ID');
+    
+    if (!trackingId && !measurementId) {
+      throw new Error('Google Analytics configuration not found');
+    }
+
+    const analyticsConfig = {
+      trackingId,
+      measurementId,
+      streamId: measurementId, // Legacy compatibility
+      facebookPixelId: configObject.facebook_pixel_id,
+      hotjarSiteId: configObject.hotjar_site_id,
+      success: true 
+    };
+
+    console.log('Providing Google Analytics configuration');
+
     return new Response(
-      JSON.stringify({ 
-        measurementId: measurementId,
-        streamId: streamId,
-        success: true 
-      }),
+      JSON.stringify(analyticsConfig),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders }
