@@ -127,26 +127,26 @@ function App() {
   return (
     <ErrorBoundaryWithSentry>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <AuthProvider>
-            <LanguageProvider>
-              <SecurityWrapper>
-                <TooltipProvider>
+        <TooltipProvider>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <AuthProvider>
+              <LanguageProvider>
+                <SecurityWrapper>
                   <AppContent />
                   <SupportWidget />
                   <PrivacyBanner />
                   <Toaster />
                   <Sonner />
-                </TooltipProvider>
-              </SecurityWrapper>
-            </LanguageProvider>
-          </AuthProvider>
-        </BrowserRouter>
+                </SecurityWrapper>
+              </LanguageProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundaryWithSentry>
   );
