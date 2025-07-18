@@ -125,10 +125,8 @@ function AppContent() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
+    <ErrorBoundaryWithSentry>
+      <QueryClientProvider client={queryClient}>
         <BrowserRouter
           future={{
             v7_startTransition: true,
@@ -138,17 +136,19 @@ function App() {
           <AuthProvider>
             <LanguageProvider>
               <SecurityWrapper>
-                <ErrorBoundaryWithSentry>
+                <TooltipProvider>
                   <AppContent />
                   <SupportWidget />
                   <PrivacyBanner />
-                </ErrorBoundaryWithSentry>
+                  <Toaster />
+                  <Sonner />
+                </TooltipProvider>
               </SecurityWrapper>
             </LanguageProvider>
           </AuthProvider>
         </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ErrorBoundaryWithSentry>
   );
 }
 
