@@ -17,8 +17,8 @@ setupPerformanceMonitoring();
 // Initialize customer support with secure config
 const initializeServices = async () => {
   try {
-    // Initialize Intercom - using correct app ID
-    initIntercom("w9z6t1gn");
+    // Initialize Intercom - using production app ID
+    initIntercom("oyvy9c86");
 
     // Initialize Termly - using actual embed ID from secrets
     initTermly("8fb23262-17cc-475b-b8ec-c96dc4c63b5b");
