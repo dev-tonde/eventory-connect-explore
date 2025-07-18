@@ -127,15 +127,15 @@ function App() {
   return (
     <ErrorBoundaryWithSentry>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <AuthProvider>
-              <LanguageProvider>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <AuthProvider>
+            <LanguageProvider>
+              <TooltipProvider>
                 <SecurityWrapper>
                   <AppContent />
                   <SupportWidget />
@@ -143,10 +143,10 @@ function App() {
                   <Toaster />
                   <Sonner />
                 </SecurityWrapper>
-              </LanguageProvider>
-            </AuthProvider>
-          </BrowserRouter>
-        </TooltipProvider>
+              </TooltipProvider>
+            </LanguageProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundaryWithSentry>
   );
