@@ -57,10 +57,23 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 );
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  console.log("AuthProvider: Starting initialization");
+  
+  // Test if React is properly available
+  if (typeof React === 'undefined') {
+    console.error("React is undefined in AuthProvider");
+    return <div>React initialization error</div>;
+  }
+  
+  if (typeof React.useState === 'undefined') {
+    console.error("React.useState is undefined in AuthProvider");
+    return <div>React hooks initialization error</div>;
+  }
+  
+  const [user, setUser] = React.useState<User | null>(null);
+  const [profile, setProfile] = React.useState<Profile | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   const { toast } = useToast();
 
   const fetchProfile = useCallback(async (userId: string) => {
