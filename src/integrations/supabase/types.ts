@@ -1275,6 +1275,47 @@ export type Database = {
         }
         Relationships: []
       }
+      mood_checkins: {
+        Row: {
+          comment: string | null
+          created_at: string
+          event_id: string | null
+          id: string
+          ip_address: unknown | null
+          mood_score: number
+          session_token: string | null
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          mood_score: number
+          session_token?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          mood_score?: number
+          session_token?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mood_checkins_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_subscriptions: {
         Row: {
           created_at: string
@@ -2139,6 +2180,62 @@ export type Database = {
           },
         ]
       }
+      snaploop_uploads: {
+        Row: {
+          approved: boolean | null
+          approved_at: string | null
+          approved_by: string | null
+          caption: string | null
+          created_at: string
+          event_id: string | null
+          file_size: number | null
+          id: string
+          image_url: string
+          mime_type: string | null
+          session_token: string | null
+          thumbnail_url: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          caption?: string | null
+          created_at?: string
+          event_id?: string | null
+          file_size?: number | null
+          id?: string
+          image_url: string
+          mime_type?: string | null
+          session_token?: string | null
+          thumbnail_url?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          caption?: string | null
+          created_at?: string
+          event_id?: string | null
+          file_size?: number | null
+          id?: string
+          image_url?: string
+          mime_type?: string | null
+          session_token?: string | null
+          thumbnail_url?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snaploop_uploads_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_posts: {
         Row: {
           caption: string
@@ -2890,6 +2987,10 @@ export type Database = {
       get_event_rating: {
         Args: { event_uuid: string }
         Returns: number
+      }
+      get_mood_summary: {
+        Args: { event_uuid: string }
+        Returns: Json
       }
       increment_likes: {
         Args: { photo_id: string }
