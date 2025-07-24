@@ -20,6 +20,10 @@ import { useToast } from "@/hooks/use-toast";
 import WaitlistButton from "@/components/waitlist/WaitlistButton";
 import TicketPurchase from "@/components/tickets/TicketPurchase";
 import { Event } from "@/types/event";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SnapLoopGallery } from "@/components/snaploop/SnapLoopGallery";
+import { MoodPulseChart } from "@/components/moodmap/MoodPulseChart";
+import { MoodCheckinWidget } from "@/components/moodmap/MoodCheckinWidget";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -156,7 +160,7 @@ const EventDetail = () => {
               />
             </div>
 
-            {/* Event Details Card */}
+            {/* Event Details Tabs */}
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -188,77 +192,121 @@ const EventDetail = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <span>
-                      {new Date(event.date).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}{" "}
-                      at {event.time}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <span>{event.venue}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-gray-500" />
-                    <span>
-                      {event.current_attendees || 0} /{" "}
-                      {event.max_attendees || 100} attending
-                    </span>
-                  </div>
-                </div>
+              <CardContent>
+                <Tabs defaultValue="details" className="space-y-6">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="details">Details</TabsTrigger>
+                    <TabsTrigger value="tickets">Tickets</TabsTrigger>
+                    <TabsTrigger value="photos">Photos</TabsTrigger>
+                    <TabsTrigger value="mood">Mood Pulse</TabsTrigger>
+                  </TabsList>
 
-                {event.address && (
-                  <div className="pt-2 border-t">
-                    <p className="text-sm text-gray-600">{event.address}</p>
-                  </div>
-                )}
-
-                <div className="pt-4 border-t">
-                  <h3 className="font-semibold mb-2">About This Event</h3>
-                  <p className="text-gray-700 whitespace-pre-line">
-                    {event.description || "No description available."}
-                  </p>
-                </div>
-
-                {event.tags && event.tags.length > 0 && (
-                  <div className="pt-4 border-t">
-                    <h3 className="font-semibold mb-2">Tags</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {event.tags.map((tag: string, index: number) => (
-                        <Badge key={index} variant="outline">
-                          {tag}
-                        </Badge>
-                      ))}
+                  <TabsContent value="details" className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        <span>
+                          {new Date(event.date).toLocaleDateString("en-US", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}{" "}
+                          at {event.time}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-gray-500" />
+                        <span>{event.venue}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-gray-500" />
+                        <span>
+                          {event.current_attendees || 0} /{" "}
+                          {event.max_attendees || 100} attending
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                )}
 
-                <div className="pt-4 border-t">
-                  <h3 className="font-semibold mb-2">Organized by</h3>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-purple-600" />
+                    {event.address && (
+                      <div className="pt-2 border-t">
+                        <p className="text-sm text-gray-600">{event.address}</p>
+                      </div>
+                    )}
+
+                    <div className="pt-4 border-t">
+                      <h3 className="font-semibold mb-2">About This Event</h3>
+                      <p className="text-gray-700 whitespace-pre-line">
+                        {event.description || "No description available."}
+                      </p>
                     </div>
-                    <div>
-                      <p className="font-medium">{organizerName}</p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 p-0 h-auto font-normal"
-                      >
-                        Follow Organizer
-                      </Button>
+
+                    {event.tags && event.tags.length > 0 && (
+                      <div className="pt-4 border-t">
+                        <h3 className="font-semibold mb-2">Tags</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {event.tags.map((tag: string, index: number) => (
+                            <Badge key={index} variant="outline">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-4 border-t">
+                      <h3 className="font-semibold mb-2">Organized by</h3>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                          <User className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{organizerName}</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 p-0 h-auto font-normal"
+                          >
+                            Follow Organizer
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </TabsContent>
+
+                  <TabsContent value="tickets">
+                    {isEventFull ? (
+                      <WaitlistButton eventId={event.id} isEventFull={true} />
+                    ) : (
+                      transformedEvent && (
+                        <TicketPurchase
+                          event={transformedEvent}
+                          onPurchaseComplete={() => {
+                            queryClient.invalidateQueries({
+                              queryKey: ["event", id],
+                            });
+                          }}
+                        />
+                      )
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="photos">
+                    <SnapLoopGallery eventId={event.id} />
+                  </TabsContent>
+
+                  <TabsContent value="mood" className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <MoodCheckinWidget 
+                        eventId={event.id}
+                        onCheckinComplete={() => {
+                          // Refresh mood data
+                        }}
+                      />
+                      <MoodPulseChart eventId={event.id} />
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
 
@@ -313,23 +361,17 @@ const EventDetail = () => {
                 </CardContent>
               </Card>
 
-              {/* Ticket Purchase / Waitlist */}
+              {/* Event Actions */}
               <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  {isEventFull ? (
-                    <WaitlistButton eventId={event.id} isEventFull={true} />
-                  ) : (
-                    transformedEvent && (
-                      <TicketPurchase
-                        event={transformedEvent}
-                        onPurchaseComplete={() => {
-                          queryClient.invalidateQueries({
-                            queryKey: ["event", id],
-                          });
-                        }}
-                      />
-                    )
-                  )}
+                <CardHeader>
+                  <CardTitle>Event Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Use the "Tickets" tab above to purchase tickets or join the waitlist.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 

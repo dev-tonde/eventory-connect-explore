@@ -123,7 +123,7 @@ const EventCard = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/events/${event.id}`)}
+              onClick={() => navigate(`/event/${event.id}`)}
               type="button"
               aria-label="View Details"
             >

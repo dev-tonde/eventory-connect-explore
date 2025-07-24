@@ -169,7 +169,7 @@ const Events = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEvents.length > 0 ? (
             filteredEvents.map((event) => (
-              <Link key={event.id} to={`/events/${event.id}`}>
+              <Link key={event.id} to={`/event/${event.id}`}>
                 <Card className="hover:shadow-lg transition-shadow group cursor-pointer">
                   <div className="relative">
                     <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">

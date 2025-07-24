@@ -20,6 +20,7 @@ import Gamification from "./pages/Gamification";
 import PosterStudio from "./pages/PosterStudio";
 import FollowedOrganizers from "./pages/FollowedOrganizers";
 import NotFound from "./pages/NotFound";
+import SnapLoopUpload from "./pages/SnapLoopUpload";
 import SupportWidget from "./components/support/SupportWidget";
 import PrivacyBanner from "./components/legal/PrivacyBanner";
 import ErrorBoundaryWithSentry from "./components/error/ErrorBoundaryWithSentry";
@@ -55,8 +56,9 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/events" element={<Events />} />
-          <Route path="/events/:id" element={<EventDetail />} />
+          <Route path="/event/:id" element={<EventDetail />} />
           <Route path="/communities" element={<Communities />} />
+          <Route path="/snaploop/upload" element={<SnapLoopUpload />} />
           <Route path="/auth" element={<Auth />} />
           <Route 
             path="/profile" 
