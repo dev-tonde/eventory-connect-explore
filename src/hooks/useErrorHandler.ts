@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface ErrorInfo {
   errorType: string;
@@ -15,156 +12,153 @@ interface ErrorInfo {
 }
 
 /**
- * Custom hook for consistent error handling, logging, and user feedback.
+ * Custom hook for centralized error handling and logging
  */
 export const useErrorHandler = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
 
-  const logError = useCallback(
-    async (errorInfo: ErrorInfo) => {
-      try {
-        // Sanitize error fields to prevent log injection and XSS
-        const sanitize = (str?: string) =>
-          typeof str === "string"
-            ? str.replace(/[\r\n<>]/g, "").slice(0, 1000)
-            : undefined;
+  const logError = async (errorInfo: ErrorInfo) => {
+    try {
+      // Sanitize sensitive data before logging
+      const sanitizedErrorInfo = {
+        ...errorInfo,
+        errorMessage: errorInfo.errorMessage.replace(/password|token|key|secret/gi, '[REDACTED]'),
+        metadata: errorInfo.metadata ? 
+          Object.fromEntries(
+            Object.entries(errorInfo.metadata).map(([key, value]) => [
+              key,
+              typeof value === 'string' && /password|token|key|secret/i.test(key) 
+                ? '[REDACTED]' 
+                : value
+            ])
+          ) : undefined
+      };
 
-        // Redact sensitive info in metadata before logging to DB
-        const redactSensitive = (meta?: Record<string, any>) =>
-          meta
-            ? Object.fromEntries(
-                Object.entries(meta).map(([key, value]) =>
-                  /pass(word)?|token|secret|key/i.test(key)
-                    ? [key, "***REDACTED***"]
-                    : [key, value]
-                )
-              )
-            : undefined;
+      await supabase
+        .from('error_logs')
+        .insert([{
+          error_type: sanitizedErrorInfo.errorType,
+          error_message: sanitizedErrorInfo.errorMessage,
+          stack_trace: sanitizedErrorInfo.stackTrace,
+          url: sanitizedErrorInfo.url,
+          user_agent: sanitizedErrorInfo.userAgent,
+          user_id: sanitizedErrorInfo.userId,
+        }]);
+    } catch (logError) {
+      // Silently fail logging to prevent error loops
+      console.warn('Failed to log error:', logError);
+    }
+  };
 
-        await supabase.from("error_logs").insert({
-          error_type: sanitize(errorInfo.errorType),
-          error_message: sanitize(errorInfo.errorMessage),
-          stack_trace: sanitize(errorInfo.stackTrace),
-          url: sanitize(errorInfo.url || window.location.href),
-          user_agent: sanitize(errorInfo.userAgent || navigator.userAgent),
-          user_id: sanitize(errorInfo.userId || user?.id),
-          metadata: errorInfo.metadata
-            ? JSON.stringify(redactSensitive(errorInfo.metadata))
-            : null,
-        });
-      } catch (logError) {
-        console.error("Failed to log error:", logError);
+  const handleError = (
+    error: Error | string, 
+    context?: string, 
+    showToast: boolean = true,
+    metadata?: Record<string, any>
+  ) => {
+    const errorMessage = typeof error === 'string' ? error : error.message;
+    const stackTrace = typeof error === 'object' ? error.stack : undefined;
+
+    // Log error details
+    logError({
+      errorType: typeof error === 'string' ? 'CustomError' : error.constructor.name,
+      errorMessage,
+      stackTrace,
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      metadata: {
+        context,
+        timestamp: new Date().toISOString(),
+        ...metadata
       }
-    },
-    [user?.id]
-  );
+    });
 
-  const handleError = useCallback(
-    (
-      error: Error | string,
-      context?: string,
-      showToast: boolean = true,
-      metadata?: Record<string, any>
-    ) => {
-      const errorMessage = typeof error === "string" ? error : error.message;
-      const stackTrace = typeof error === "object" ? error.stack : undefined;
+    // Redact sensitive information from console
+    const redactedMessage = errorMessage.replace(/password|token|key|secret/gi, '[REDACTED]');
+    console.error(`Error in ${context || 'unknown context'}:`, redactedMessage);
 
-      // Log to database
-      logError({
-        errorType: context || "unknown_error",
-        errorMessage,
-        stackTrace,
-        metadata,
+    if (showToast) {
+      const userFriendlyMessage = getUserFriendlyMessage(errorMessage, context);
+      toast({
+        title: "Something went wrong",
+        description: userFriendlyMessage,
+        variant: "destructive",
       });
+    }
+  };
 
-      // Prevent logging sensitive info (e.g., passwords, tokens) in console
-      const safeMetadata = metadata
-        ? Object.fromEntries(
-            Object.entries(metadata).map(([key, value]) =>
-              /pass(word)?|token|secret|key/i.test(key)
-                ? [key, "***REDACTED***"]
-                : [key, value]
-            )
-          )
-        : undefined;
-
-      console.error(
-        `[${context || "Error"}]:`,
-        typeof error === "string" ? errorMessage : error,
-        safeMetadata
+  const handleAsyncError = async <T>(
+    asyncFn: () => Promise<T>,
+    context?: string,
+    errorMessage?: string
+  ): Promise<T> => {
+    try {
+      return await asyncFn();
+    } catch (error) {
+      handleError(
+        error as Error, 
+        context, 
+        true, 
+        { customErrorMessage: errorMessage }
       );
-
-      // Show user-friendly toast
-      if (showToast) {
-        const userMessage = getUserFriendlyMessage(errorMessage, context);
-        toast({
-          title: "Something went wrong",
-          description: userMessage,
-          variant: "destructive",
-        });
-      }
-    },
-    [logError, toast]
-  );
-
-  const handleAsyncError = useCallback(
-    async (
-      asyncFn: () => Promise<any>,
-      context?: string,
-      errorMessage?: string
-    ) => {
-      try {
-        return await asyncFn();
-      } catch (error) {
-        handleError(error as Error, context, true);
-        throw error; // Re-throw for component-level handling
-      }
-    },
-    [handleError]
-  );
+      throw error; // Re-throw to allow caller to handle if needed
+    }
+  };
 
   return {
     handleError,
     handleAsyncError,
-    logError,
+    logError
   };
 };
 
 /**
- * Maps technical errors to user-friendly messages.
- * Ensures no sensitive or technical details are leaked to the user.
+ * Convert technical errors to user-friendly messages
  */
-function getUserFriendlyMessage(
-  errorMessage: string,
-  context?: string
-): string {
-  const errorMappings: Record<string, string> = {
-    network_error: "Please check your internet connection and try again.",
-    payment_error:
-      "Payment processing failed. Please try again or use a different payment method.",
-    auth_error: "Authentication failed. Please log in again.",
-    validation_error: "Please check your input and try again.",
-    server_error:
-      "Our servers are experiencing issues. Please try again in a few minutes.",
-  };
+const getUserFriendlyMessage = (errorMessage: string, context?: string): string => {
+  const message = errorMessage.toLowerCase();
 
-  if (context && errorMappings[context]) {
-    return errorMappings[context];
+  // Network errors
+  if (message.includes('fetch') || message.includes('network')) {
+    return "Please check your internet connection and try again.";
   }
 
-  // Generic fallbacks based on error message content
-  const lowerMsg = errorMessage.toLowerCase();
-  if (lowerMsg.includes("network")) {
-    return "Connection issue. Please check your internet and try again.";
-  }
-  if (lowerMsg.includes("payment")) {
-    return "Payment failed. Please try again or contact support.";
-  }
-  if (lowerMsg.includes("auth")) {
-    return "Please log in again to continue.";
+  // Database errors
+  if (message.includes('unique constraint') || message.includes('23505')) {
+    return "This item already exists. Please try with different information.";
   }
 
-  // Never leak raw error details to the user
+  if (message.includes('foreign key') || message.includes('23503')) {
+    return "Unable to complete this action due to data dependencies.";
+  }
+
+  if (message.includes('not null') || message.includes('23502')) {
+    return "Please fill in all required fields.";
+  }
+
+  // Authentication errors
+  if (message.includes('unauthorized') || message.includes('401')) {
+    return "Please log in to continue.";
+  }
+
+  if (message.includes('forbidden') || message.includes('403')) {
+    return "You don't have permission to perform this action.";
+  }
+
+  // File upload errors
+  if (message.includes('file size') || message.includes('too large')) {
+    return "The file is too large. Please select a smaller file.";
+  }
+
+  if (message.includes('file type') || message.includes('not allowed')) {
+    return "This file type is not supported. Please select a different file.";
+  }
+
+  // Payment errors
+  if (context?.includes('payment') || context?.includes('ticket')) {
+    return "There was an issue processing your payment. Please try again or contact support.";
+  }
+
+  // Generic fallback
   return "An unexpected error occurred. Please try again.";
-}
+};

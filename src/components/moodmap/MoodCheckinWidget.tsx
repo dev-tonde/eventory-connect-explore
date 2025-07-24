@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/EnhancedAuthContext";
+import { validateStringLength, sanitizeText } from "@/utils/validation";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 interface MoodCheckinWidgetProps {
   eventId: string;
@@ -23,6 +25,7 @@ const MOOD_OPTIONS = [
 export function MoodCheckinWidget({ eventId, onCheckinComplete }: MoodCheckinWidgetProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { handleAsyncError } = useErrorHandler();
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,10 +35,40 @@ export function MoodCheckinWidget({ eventId, onCheckinComplete }: MoodCheckinWid
   };
 
   const handleSubmit = async () => {
+    // Input validation
+    if (!eventId) {
+      toast({
+        title: "Error",
+        description: "Event ID is missing. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (selectedMood === null) {
       toast({
         title: "Please select a mood",
         description: "Choose how you're feeling right now",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedMood < 1 || selectedMood > 5) {
+      toast({
+        title: "Invalid mood selection",
+        description: "Please select a valid mood option.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate comment using utility
+    const commentValidation = validateStringLength(comment, 0, 150, 'Comment');
+    if (!commentValidation.isValid) {
+      toast({
+        title: "Invalid comment",
+        description: commentValidation.error,
         variant: "destructive",
       });
       return;
@@ -51,12 +84,26 @@ export function MoodCheckinWidget({ eventId, onCheckinComplete }: MoodCheckinWid
         .insert({
           event_id: eventId,
           mood_score: selectedMood,
-          comment: comment.trim() || null,
+          comment: sanitizeText(comment) || null,
           user_id: user?.id || null,
           session_token: sessionToken,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        
+        // Handle specific database errors
+        if (error.code === '23505') {
+          toast({
+            title: "Already checked in",
+            description: "You've already shared your mood for this event recently.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        throw error;
+      }
 
       toast({
         title: "Mood shared!",
@@ -73,11 +120,21 @@ export function MoodCheckinWidget({ eventId, onCheckinComplete }: MoodCheckinWid
 
     } catch (error) {
       console.error("Mood checkin error:", error);
-      toast({
-        title: "Check-in failed",
-        description: "There was an error recording your mood. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Network error handling
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        toast({
+          title: "Connection error",
+          description: "Please check your internet connection and try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Check-in failed",
+          description: "There was an error recording your mood. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

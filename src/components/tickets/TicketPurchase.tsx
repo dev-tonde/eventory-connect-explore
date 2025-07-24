@@ -65,10 +65,29 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
   };
 
   const handleProceedToPayment = () => {
+    // Validation checks
+    if (!event?.id) {
+      toast({
+        title: "Error",
+        description: "Event information is missing. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!isAuthenticated) {
       toast({
         title: "Please log in",
         description: "You need to be logged in to purchase tickets.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (quantity < 1 || quantity > 10) {
+      toast({
+        title: "Invalid quantity",
+        description: "Please select between 1 and 10 tickets.",
         variant: "destructive",
       });
       return;
@@ -81,6 +100,39 @@ const TicketPurchase = ({ event, onPurchaseComplete }: TicketPurchaseProps) => {
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate buyer information for non-authenticated users
+    if (!isAuthenticated) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+
+      if (!buyerInfo.name.trim()) {
+        toast({
+          title: "Name required",
+          description: "Please enter your full name.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!emailRegex.test(buyerInfo.email)) {
+        toast({
+          title: "Invalid email",
+          description: "Please enter a valid email address.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!phoneRegex.test(buyerInfo.phone.replace(/\s|-|\(|\)/g, ''))) {
+        toast({
+          title: "Invalid phone number",
+          description: "Please enter a valid phone number.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setShowPaymentForm(true);

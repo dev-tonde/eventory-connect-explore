@@ -300,7 +300,9 @@ const EventDetail = () => {
                       <MoodCheckinWidget 
                         eventId={event.id}
                         onCheckinComplete={() => {
-                          // Refresh mood data
+                          queryClient.invalidateQueries({
+                            queryKey: ["moodData", event.id],
+                          });
                         }}
                       />
                       <MoodPulseChart eventId={event.id} />

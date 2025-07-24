@@ -1,117 +1,173 @@
-import {
-  SECURITY_CONSTANTS,
-  PAYMENT_CONSTANTS,
-  EVENT_CONSTANTS,
-} from "@/lib/constants";
-
 /**
- * Validates an email address using a basic regex.
+ * Comprehensive validation utilities for the application
  */
+
+// Email validation
 export const validateEmail = (email: string): boolean => {
-  // RFC 5322 compliant regex is more complex, but this covers most cases.
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email.trim());
 };
 
-/**
- * Validates password strength.
- * - At least 8 characters
- * - Contains uppercase, lowercase, and a number
- */
-export const validatePassword = (
-  password: string
-): { isValid: boolean; message?: string } => {
-  if (password.length < 8) {
-    return {
-      isValid: false,
-      message: "Password must be at least 8 characters long",
-    };
+// Phone number validation (international format)
+export const validatePhone = (phone: string): boolean => {
+  const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+  const cleanPhone = phone.replace(/[\s\-\(\)\.]/g, '');
+  return phoneRegex.test(cleanPhone) && cleanPhone.length >= 7;
+};
+
+// Image file validation
+export const validateImageFile = (file: File): { isValid: boolean; error?: string } => {
+  // Check file type
+  if (!file.type.startsWith('image/')) {
+    return { isValid: false, error: 'Please select a valid image file' };
   }
-  if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-    return {
-      isValid: false,
-      message: "Password must contain uppercase, lowercase, and number",
-    };
+
+  // Check file size (10MB max)
+  const maxSize = 10 * 1024 * 1024;
+  if (file.size > maxSize) {
+    return { isValid: false, error: 'Image must be smaller than 10MB' };
   }
-  // Optionally: check for special characters, common passwords, etc.
+
+  // Check allowed formats
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  if (!allowedTypes.includes(file.type.toLowerCase())) {
+    return { isValid: false, error: 'Please use JPG, PNG, GIF, or WebP format' };
+  }
+
   return { isValid: true };
 };
 
-/**
- * Validates event data for creation or update.
- */
-type EventData = {
-  title: string;
-  description?: string;
-  price: number;
-  date: string;
-  location?: string; // Optional, can be a string or an object
-  category?: string; // Optional, can be a string or an object
-  image?: string; // Optional, URL to event image
-  organizer?: string; // Optional, can be a string or an object
-  attendeeCount?: number; // Optional, for existing events
-  maxAttendees?: number; // Optional, for existing events
-  tags?: string[]; // Optional, array of tags
-};
-
-export const validateEventData = (
-  data: EventData
-): { isValid: boolean; errors: string[] } => {
-  const errors: string[] = [];
-
-  if (
-    !data.title ||
-    typeof data.title !== "string" ||
-    data.title.length > EVENT_CONSTANTS.MAX_TITLE_LENGTH
-  ) {
-    errors.push(
-      `Title is required and must be under ${EVENT_CONSTANTS.MAX_TITLE_LENGTH} characters`
-    );
-  }
-
-  if (
-    data.description &&
-    (typeof data.description !== "string" ||
-      data.description.length > EVENT_CONSTANTS.MAX_DESCRIPTION_LENGTH)
-  ) {
-    errors.push(
-      `Description must be under ${EVENT_CONSTANTS.MAX_DESCRIPTION_LENGTH} characters`
-    );
-  }
-
-  if (
-    typeof data.price !== "number" ||
-    data.price < EVENT_CONSTANTS.MIN_PRICE ||
-    data.price > EVENT_CONSTANTS.MAX_PRICE
-  ) {
-    errors.push(
-      `Price must be between R${EVENT_CONSTANTS.MIN_PRICE} and R${EVENT_CONSTANTS.MAX_PRICE}`
-    );
-  }
-
-  if (
-    !data.date ||
-    isNaN(Date.parse(data.date)) ||
-    new Date(data.date) <= new Date()
-  ) {
-    errors.push("Event date must be a valid date in the future");
-  }
-
-  // Add more validation as needed (e.g., location, category, etc.)
-
-  return { isValid: errors.length === 0, errors };
-};
-
-/**
- * Sanitizes HTML input to prevent XSS attacks.
- * This is a basic implementation; for production use a library like DOMPurify.
- */
-export const sanitizeHtml = (input: string): string => {
-  // Remove tags and dangerous attributes
-  return input
-    .replace(/<[^>]*>?/gm, "") // Remove all HTML tags
-    .replace(/javascript:/gi, "")
-    .replace(/on\w+="[^"]*"/gi, "")
-    .replace(/on\w+='[^']*'/gi, "")
+// Text input sanitization
+export const sanitizeText = (text: string): string => {
+  if (typeof text !== 'string') return '';
+  return text
+    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
     .trim();
+};
+
+// URL validation
+export const validateUrl = (url: string): boolean => {
+  try {
+    const urlObject = new URL(url);
+    return urlObject.protocol === 'http:' || urlObject.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+// Date validation
+export const validateEventDate = (date: string): { isValid: boolean; error?: string } => {
+  const eventDate = new Date(date);
+  const now = new Date();
+  
+  if (isNaN(eventDate.getTime())) {
+    return { isValid: false, error: 'Please enter a valid date' };
+  }
+  
+  if (eventDate < now) {
+    return { isValid: false, error: 'Event date must be in the future' };
+  }
+  
+  // Check if date is within reasonable range (next 10 years)
+  const maxDate = new Date();
+  maxDate.setFullYear(maxDate.getFullYear() + 10);
+  
+  if (eventDate > maxDate) {
+    return { isValid: false, error: 'Event date is too far in the future' };
+  }
+  
+  return { isValid: true };
+};
+
+// Price validation
+export const validatePrice = (price: number): { isValid: boolean; error?: string } => {
+  if (isNaN(price) || price < 0) {
+    return { isValid: false, error: 'Price must be a valid positive number' };
+  }
+  
+  if (price > 1000000) {
+    return { isValid: false, error: 'Price cannot exceed R1,000,000' };
+  }
+  
+  return { isValid: true };
+};
+
+// Quantity validation
+export const validateQuantity = (quantity: number, max: number = 10): { isValid: boolean; error?: string } => {
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    return { isValid: false, error: 'Quantity must be at least 1' };
+  }
+  
+  if (quantity > max) {
+    return { isValid: false, error: `Maximum ${max} tickets allowed` };
+  }
+  
+  return { isValid: true };
+};
+
+// Event capacity validation
+export const validateCapacity = (capacity: number): { isValid: boolean; error?: string } => {
+  if (!Number.isInteger(capacity) || capacity < 1) {
+    return { isValid: false, error: 'Capacity must be at least 1' };
+  }
+  
+  if (capacity > 100000) {
+    return { isValid: false, error: 'Capacity cannot exceed 100,000' };
+  }
+  
+  return { isValid: true };
+};
+
+// Username validation
+export const validateUsername = (username: string): { isValid: boolean; error?: string } => {
+  const sanitized = sanitizeText(username);
+  
+  if (sanitized.length < 3) {
+    return { isValid: false, error: 'Username must be at least 3 characters' };
+  }
+  
+  if (sanitized.length > 20) {
+    return { isValid: false, error: 'Username cannot exceed 20 characters' };
+  }
+  
+  const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+  if (!usernameRegex.test(sanitized)) {
+    return { isValid: false, error: 'Username can only contain letters, numbers, underscores, and hyphens' };
+  }
+  
+  return { isValid: true };
+};
+
+// Generic string length validation
+export const validateStringLength = (
+  value: string, 
+  minLength: number = 0, 
+  maxLength: number = 1000,
+  fieldName: string = 'Field'
+): { isValid: boolean; error?: string } => {
+  const sanitized = sanitizeText(value);
+  
+  if (sanitized.length < minLength) {
+    return { isValid: false, error: `${fieldName} must be at least ${minLength} characters` };
+  }
+  
+  if (sanitized.length > maxLength) {
+    return { isValid: false, error: `${fieldName} cannot exceed ${maxLength} characters` };
+  }
+  
+  return { isValid: true };
+};
+
+// Validate multiple fields at once
+export const validateForm = (validations: Array<{ isValid: boolean; error?: string }>): { isValid: boolean; errors: string[] } => {
+  const errors = validations
+    .filter(validation => !validation.isValid)
+    .map(validation => validation.error || 'Unknown error')
+    .filter(Boolean);
+    
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
 };

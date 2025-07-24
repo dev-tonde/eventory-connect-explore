@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Upload, X, Camera, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { validateImageFile, sanitizeText, validateStringLength } from "@/utils/validation";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 interface GuestUploadFormProps {
   eventId: string;
@@ -14,6 +16,7 @@ interface GuestUploadFormProps {
 
 export function GuestUploadForm({ eventId }: GuestUploadFormProps) {
   const { toast } = useToast();
+  const { handleAsyncError } = useErrorHandler();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
@@ -26,21 +29,12 @@ export function GuestUploadForm({ eventId }: GuestUploadFormProps) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
+    // Use validation utility
+    const validation = validateImageFile(file);
+    if (!validation.isValid) {
       toast({
-        title: "Invalid file type",
-        description: "Please select an image file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please select an image under 10MB",
+        title: "Invalid file",
+        description: validation.error,
         variant: "destructive",
       });
       return;
@@ -65,10 +59,59 @@ export function GuestUploadForm({ eventId }: GuestUploadFormProps) {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     
+    // Input validation
+    if (!eventId) {
+      toast({
+        title: "Error",
+        description: "Event ID is missing. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!selectedFile) {
       toast({
         title: "No file selected",
         description: "Please select an image to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file again before upload
+    if (!selectedFile.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a valid image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image under 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate caption length
+    if (caption.length > 200) {
+      toast({
+        title: "Caption too long",
+        description: "Please keep your caption under 200 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate uploader name length
+    if (uploaderName.length > 50) {
+      toast({
+        title: "Name too long",
+        description: "Please keep your name under 50 characters.",
         variant: "destructive",
       });
       return;
@@ -79,21 +122,43 @@ export function GuestUploadForm({ eventId }: GuestUploadFormProps) {
     try {
       const sessionToken = generateSessionToken();
       const fileExt = selectedFile.name.split(".").pop();
+      
+      // Validate file extension
+      const allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+      if (!fileExt || !allowedExts.includes(fileExt.toLowerCase())) {
+        throw new Error("Unsupported file format");
+      }
+
       const fileName = `${eventId}-${Date.now()}.${fileExt}`;
 
-      // Upload to storage
+      // Upload to storage with error handling
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("snaploop-uploads")
         .upload(fileName, selectedFile);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError);
+        
+        if (uploadError.message.includes('file size')) {
+          throw new Error("File is too large");
+        } else if (uploadError.message.includes('not allowed')) {
+          throw new Error("File type not allowed");
+        } else {
+          throw uploadError;
+        }
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("snaploop-uploads")
         .getPublicUrl(fileName);
 
-      // Save to database
+      // Validate public URL
+      if (!publicUrl) {
+        throw new Error("Failed to generate file URL");
+      }
+
+      // Save to database with validation
       const { error: dbError } = await supabase
         .from("snaploop_uploads")
         .insert({
@@ -106,7 +171,16 @@ export function GuestUploadForm({ eventId }: GuestUploadFormProps) {
           mime_type: selectedFile.type,
         });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error("Database error:", dbError);
+        
+        // Clean up uploaded file if database save fails
+        await supabase.storage
+          .from("snaploop-uploads")
+          .remove([fileName]);
+          
+        throw dbError;
+      }
 
       setUploadSuccess(true);
       setSelectedFile(null);
@@ -126,11 +200,33 @@ export function GuestUploadForm({ eventId }: GuestUploadFormProps) {
 
     } catch (error) {
       console.error("Upload error:", error);
-      toast({
-        title: "Upload failed",
-        description: "There was an error uploading your photo. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Specific error handling
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        toast({
+          title: "Connection error",
+          description: "Please check your internet connection and try again.",
+          variant: "destructive",
+        });
+      } else if (error.message === "File is too large") {
+        toast({
+          title: "File too large",
+          description: "Please select an image under 10MB.",
+          variant: "destructive",
+        });
+      } else if (error.message === "Unsupported file format") {
+        toast({
+          title: "Unsupported format",
+          description: "Please select a JPG, PNG, GIF, or WebP image.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Upload failed",
+          description: "There was an error uploading your photo. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsUploading(false);
     }
