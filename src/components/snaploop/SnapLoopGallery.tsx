@@ -5,8 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Heart, MessageCircle, Download, Share2 } from "lucide-react";
+import { Heart, MessageCircle, Download, Share2, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { SocialShareButtons } from "./SocialShareButtons";
 
 interface SnapLoopGalleryProps {
   eventId: string;
@@ -20,13 +21,14 @@ interface SnapLoopUpload {
   uploaded_by: string | null;
   created_at: string;
   file_size: number | null;
+  tags: string[] | null;
 }
 
 export function SnapLoopGallery({ eventId }: SnapLoopGalleryProps) {
   const { toast } = useToast();
   const [selectedImage, setSelectedImage] = useState<SnapLoopUpload | null>(null);
 
-  const { data: uploads, isLoading } = useQuery({
+    const { data: uploads, isLoading } = useQuery({
     queryKey: ["snaploop-uploads", eventId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,6 +40,21 @@ export function SnapLoopGallery({ eventId }: SnapLoopGalleryProps) {
 
       if (error) throw error;
       return data as SnapLoopUpload[];
+    },
+  });
+
+  // Get event title for social sharing
+  const { data: event } = useQuery({
+    queryKey: ["event", eventId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("title")
+        .eq("id", eventId)
+        .single();
+
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -143,13 +160,28 @@ export function SnapLoopGallery({ eventId }: SnapLoopGalleryProps) {
                       </div>
                     )}
                   </div>
-                  {upload.uploaded_by && (
-                    <div className="p-3">
+                  <div className="p-3 space-y-2">
+                    {upload.uploaded_by && (
                       <Badge variant="secondary" className="text-xs">
                         by {upload.uploaded_by}
                       </Badge>
-                    </div>
-                  )}
+                    )}
+                    {upload.tags && upload.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {upload.tags.slice(0, 3).map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs">
+                            <Tag className="h-2 w-2 mr-1" />
+                            {tag}
+                          </Badge>
+                        ))}
+                        {upload.tags.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{upload.tags.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </DialogTrigger>
@@ -175,14 +207,12 @@ export function SnapLoopGallery({ eventId }: SnapLoopGalleryProps) {
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleShare(upload)}
-                    >
-                      <Share2 className="h-4 w-4 mr-1" />
-                      Share
-                    </Button>
+                    <SocialShareButtons
+                      uploadId={upload.id}
+                      imageUrl={upload.image_url}
+                      eventTitle={event?.title || "Event"}
+                      caption={upload.caption || undefined}
+                    />
                     <Button
                       variant="outline"
                       size="sm"

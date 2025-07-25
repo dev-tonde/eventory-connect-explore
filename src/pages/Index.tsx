@@ -17,6 +17,7 @@ import EventsWithFilters from "@/components/events/EventsWithFilters";
 import NewsletterSignup from "@/components/newsletter/NewsletterSignup";
 import TestimonialsSection from "@/components/testimonials/TestimonialsSection";
 import GoogleSignInModal from "@/components/auth/GoogleSignInModal";
+import { NearbyEventsFeed } from "@/components/feed/NearbyEventsFeed";
 import FilterBar, { FilterState } from "@/components/filters/FilterBar";
 import { useOptimizedEvents } from "@/hooks/useOptimizedEvents";
 import { useMetadata } from "@/hooks/useMetadata";
@@ -144,6 +145,21 @@ const Index = () => {
 
       {/* Events with Tab Filtering */}
       <EventsWithFilters />
+
+      {/* Live Events Feed */}
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-2">Live from Events Near You</h2>
+            <p className="text-muted-foreground">
+              See real-time photos and mood from events happening within 50km
+            </p>
+          </div>
+          <div className="max-w-2xl mx-auto">
+            <NearbyEventsFeed />
+          </div>
+        </div>
+      </section>
 
       {/* Communities CTA */}
       <section className="py-16 bg-purple-600 text-white">

@@ -1460,6 +1460,30 @@ export type Database = {
           },
         ]
       }
+      nearby_events_cache: {
+        Row: {
+          created_at: string
+          event_ids: string[]
+          expires_at: string
+          id: string
+          user_location: unknown
+        }
+        Insert: {
+          created_at?: string
+          event_ids: string[]
+          expires_at?: string
+          id?: string
+          user_location: unknown
+        }
+        Update: {
+          created_at?: string
+          event_ids?: string[]
+          expires_at?: string
+          id?: string
+          user_location?: unknown
+        }
+        Relationships: []
+      }
       newsletter_subscriptions: {
         Row: {
           created_at: string
@@ -2363,6 +2387,41 @@ export type Database = {
           },
         ]
       }
+      snaploop_social_shares: {
+        Row: {
+          branded_image_url: string | null
+          id: string
+          platform: string
+          share_url: string | null
+          shared_at: string
+          upload_id: string | null
+        }
+        Insert: {
+          branded_image_url?: string | null
+          id?: string
+          platform: string
+          share_url?: string | null
+          shared_at?: string
+          upload_id?: string | null
+        }
+        Update: {
+          branded_image_url?: string | null
+          id?: string
+          platform?: string
+          share_url?: string | null
+          shared_at?: string
+          upload_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snaploop_social_shares_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "snaploop_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       snaploop_uploads: {
         Row: {
           approved: boolean | null
@@ -2376,6 +2435,7 @@ export type Database = {
           image_url: string
           mime_type: string | null
           session_token: string | null
+          tags: string[] | null
           thumbnail_url: string | null
           uploaded_by: string | null
         }
@@ -2391,6 +2451,7 @@ export type Database = {
           image_url: string
           mime_type?: string | null
           session_token?: string | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           uploaded_by?: string | null
         }
@@ -2406,6 +2467,7 @@ export type Database = {
           image_url?: string
           mime_type?: string | null
           session_token?: string | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           uploaded_by?: string | null
         }
@@ -3193,6 +3255,19 @@ export type Database = {
       get_event_rating: {
         Args: { event_uuid: string }
         Returns: number
+      }
+      get_events_within_radius: {
+        Args: { user_lat: number; user_lng: number; radius_km?: number }
+        Returns: {
+          event_id: string
+          title: string
+          venue: string
+          event_date: string
+          event_time: string
+          distance_km: number
+          mood_color: string
+          photo_count: number
+        }[]
       }
       get_mood_summary: {
         Args: { event_uuid: string }

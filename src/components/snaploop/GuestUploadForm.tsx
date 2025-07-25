@@ -9,6 +9,7 @@ import { Upload, X, Camera, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { validateImageFile, sanitizeText, validateStringLength } from "@/utils/validation";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { useSnapLoopSocial } from "@/hooks/useSnapLoopSocial";
 
 interface GuestUploadFormProps {
   eventId: string;
@@ -17,6 +18,7 @@ interface GuestUploadFormProps {
 export function GuestUploadForm({ eventId }: GuestUploadFormProps) {
   const { toast } = useToast();
   const { handleAsyncError } = useErrorHandler();
+  const { analyzeAndTagImage } = useSnapLoopSocial();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
@@ -132,7 +134,7 @@ export function GuestUploadForm({ eventId }: GuestUploadFormProps) {
       const fileName = `${eventId}-${Date.now()}.${fileExt}`;
 
       // Upload to storage with error handling
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: storageData, error: uploadError } = await supabase.storage
         .from("snaploop-uploads")
         .upload(fileName, selectedFile);
 
@@ -159,7 +161,7 @@ export function GuestUploadForm({ eventId }: GuestUploadFormProps) {
       }
 
       // Save to database with validation
-      const { error: dbError } = await supabase
+      const { data: uploadData, error: dbError } = await supabase
         .from("snaploop_uploads")
         .insert({
           event_id: eventId,
@@ -169,7 +171,9 @@ export function GuestUploadForm({ eventId }: GuestUploadFormProps) {
           session_token: sessionToken,
           file_size: selectedFile.size,
           mime_type: selectedFile.type,
-        });
+        })
+        .select()
+        .single();
 
       if (dbError) {
         console.error("Database error:", dbError);
@@ -180,6 +184,14 @@ export function GuestUploadForm({ eventId }: GuestUploadFormProps) {
           .remove([fileName]);
           
         throw dbError;
+      }
+
+      // Automatically analyze and tag the image
+      if (uploadData) {
+        analyzeAndTagImage(uploadData.id, publicUrl).catch((error) => {
+          console.warn("Failed to analyze image:", error);
+          // Don't fail the upload if analysis fails
+        });
       }
 
       setUploadSuccess(true);
