@@ -110,9 +110,13 @@ try {
   const root = ReactDOM.createRoot(rootElement);
   console.log("✅ React root created successfully");
   
-  console.log("🎨 Rendering TestApp...");
-  root.render(<TestApp />);
-  console.log("✅ TestApp rendered successfully");
+  console.log("🎨 Rendering with StrictMode...");
+  root.render(
+    <React.StrictMode>
+      <TestApp />
+    </React.StrictMode>
+  );
+  console.log("✅ StrictMode + TestApp rendered successfully");
 } catch (error) {
   console.error("❌ Error during React initialization:", error);
   
