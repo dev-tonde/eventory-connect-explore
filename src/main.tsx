@@ -37,6 +37,8 @@ if (!rootElement) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <App />
+    <SecurityWrapper>
+      <App />
+    </SecurityWrapper>
   </React.StrictMode>
 );

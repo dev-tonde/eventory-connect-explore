@@ -16,48 +16,50 @@ const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
     setIsReady(true);
   }, []);
 
-  // Only use PWA hooks after the component is ready
-  const PWAFeatures = () => {
-    const { events, isOnline, syncData, isLoading } = useOfflineEventData();
-    const { checkUpcomingEvents } = useWeatherNotifications();
+  // Always call hooks at the top level
+  const offlineData = useOfflineEventData();
+  const weatherNotifications = useWeatherNotifications();
 
-    // Register service worker
-    useEffect(() => {
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker
-          .register("/sw.js")
-          .then((registration) => {
-            console.log("SW registered: ", registration);
-          })
-          .catch((registrationError) => {
-            console.log("SW registration failed: ", registrationError);
-          });
+  // Register service worker
+  useEffect(() => {
+    if (!isReady) return;
+    
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          console.log("SW registered: ", registration);
+        })
+        .catch((registrationError) => {
+          console.log("SW registration failed: ", registrationError);
+        });
+    }
+  }, [isReady]);
+
+  // Handle online/offline events
+  useEffect(() => {
+    if (!isReady) return;
+    
+    const handleOnline = () => {
+      if (isReady) {
+        offlineData.syncData();
+        weatherNotifications.checkUpcomingEvents();
       }
-    }, []);
+    };
 
-    // Handle online/offline events
-    useEffect(() => {
-      const handleOnline = () => {
-        syncData();
-        checkUpcomingEvents();
-      };
-
-      window.addEventListener("online", handleOnline);
-      return () => window.removeEventListener("online", handleOnline);
-    }, [syncData, checkUpcomingEvents]);
-
-    return (
-      <OfflineIndicator
-        isOnline={isOnline}
-        hasOfflineData={events.length > 0}
-        syncInProgress={isLoading}
-      />
-    );
-  };
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [isReady, offlineData, weatherNotifications]);
 
   return (
     <>
-      {isReady && <PWAFeatures />}
+      {isReady && (
+        <OfflineIndicator
+          isOnline={offlineData.isOnline}
+          hasOfflineData={offlineData.events.length > 0}
+          syncInProgress={offlineData.isLoading}
+        />
+      )}
       <PWAInstaller />
       {children}
     </>

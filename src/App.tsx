@@ -144,16 +144,16 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundaryWithSentry>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <AuthProvider>
-            <LanguageProvider>
-              <SecurityWrapper>
+      <TooltipProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <AuthProvider>
+              <LanguageProvider>
                 <PWAProvider>
                   <AppContent />
                   <SupportWidget />
@@ -161,11 +161,11 @@ function App() {
                   <Toaster />
                   <Sonner />
                 </PWAProvider>
-              </SecurityWrapper>
-            </LanguageProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
+              </LanguageProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </TooltipProvider>
     </ErrorBoundaryWithSentry>
   );
 }
