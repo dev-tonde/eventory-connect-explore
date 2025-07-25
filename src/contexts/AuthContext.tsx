@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+// Note: Removed useToast import to prevent dispatcher conflicts
 
 interface SocialLinks {
   [key: string]: string;
@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  // Note: useToast removed to prevent React dispatcher conflicts
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
@@ -154,31 +154,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         if (error) {
-          toast({
-            title: "Login Failed",
-            description: error.message,
-            variant: "destructive",
-          });
+          console.error("Login failed:", error.message);
           return { error };
         }
 
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully logged in.",
-        });
-
+        console.log("Login successful");
         return { error: null };
       } catch (error) {
         const err = error as Error;
-        toast({
-          title: "Login Error",
-          description: err.message,
-          variant: "destructive",
-        });
+        console.error("Login error:", err.message);
         return { error: err };
       }
     },
-    [toast]
+    [] // Removed toast dependency
   );
 
   const signup = useCallback(
@@ -205,60 +193,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         if (error) {
-          toast({
-            title: "Signup Failed",
-            description: error.message,
-            variant: "destructive",
-          });
+          console.error("Signup failed:", error.message);
           return { error };
         }
 
-        toast({
-          title: "Account Created!",
-          description: "Please check your email to verify your account.",
-        });
-
+        console.log("Account created successfully");
         return { error: null };
       } catch (error) {
         const err = error as Error;
-        toast({
-          title: "Signup Error",
-          description: err.message,
-          variant: "destructive",
-        });
+        console.error("Signup error:", err.message);
         return { error: err };
       }
     },
-    [toast]
+    [] // Removed toast dependency
   );
 
   const logout = useCallback(async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        toast({
-          title: "Logout Error",
-          description: error.message,
-          variant: "destructive",
-        });
+        console.error("Logout error:", error.message);
       } else {
         setUser(null);
         setProfile(null);
         setSession(null);
-        toast({
-          title: "Logged Out",
-          description: "You have been successfully logged out.",
-        });
+        console.log("Logged out successfully");
       }
     } catch (error) {
       const err = error as Error;
-      toast({
-        title: "Logout Error",
-        description: err.message,
-        variant: "destructive",
-      });
+      console.error("Logout error:", err.message);
     }
-  }, [toast]);
+  }, []); // Removed toast dependency
 
   const updateProfile = useCallback(
     async (updates: Partial<Profile>) => {
@@ -273,34 +238,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .eq("id", user.id);
 
         if (error) {
-          toast({
-            title: "Update Failed",
-            description: error.message,
-            variant: "destructive",
-          });
+          console.error("Profile update failed:", error.message);
           return { error: new Error(error.message) };
         }
 
         // Refresh profile data
         await fetchProfile(user.id);
 
-        toast({
-          title: "Profile Updated",
-          description: "Your profile has been successfully updated.",
-        });
-
+        console.log("Profile updated successfully");
         return { error: null };
       } catch (error) {
         const err = error as Error;
-        toast({
-          title: "Update Error",
-          description: err.message,
-          variant: "destructive",
-        });
+        console.error("Profile update error:", err.message);
         return { error: err };
       }
     },
-    [user?.id, fetchProfile, toast]
+    [user?.id, fetchProfile] // Removed toast dependency
   );
 
   const isAuthenticated = !!user;
