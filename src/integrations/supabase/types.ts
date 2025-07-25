@@ -961,6 +961,48 @@ export type Database = {
         }
         Relationships: []
       }
+      event_stories: {
+        Row: {
+          caption: string | null
+          created_at: string | null
+          display_order: number | null
+          event_id: string
+          expires_at: string
+          file_type: string
+          file_url: string
+          id: string
+          is_pinned: boolean | null
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          event_id: string
+          expires_at?: string
+          file_type: string
+          file_url: string
+          id?: string
+          is_pinned?: boolean | null
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          event_id?: string
+          expires_at?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          is_pinned?: boolean | null
+          user_id?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
       event_summaries: {
         Row: {
           created_at: string
@@ -1408,6 +1450,36 @@ export type Database = {
           status?: string
           thumbnail_url?: string | null
           video_url?: string | null
+        }
+        Relationships: []
+      }
+      interest_tags: {
+        Row: {
+          category: string
+          color_hex: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          category: string
+          color_hex?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          category?: string
+          color_hex?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
         }
         Relationships: []
       }
@@ -3026,6 +3098,27 @@ export type Database = {
           },
         ]
       }
+      user_interest_follows: {
+        Row: {
+          followed_at: string | null
+          id: string
+          tag_id: string
+          user_id: string
+        }
+        Insert: {
+          followed_at?: string | null
+          id?: string
+          tag_id: string
+          user_id: string
+        }
+        Update: {
+          followed_at?: string | null
+          id?: string
+          tag_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_notifications: {
         Row: {
           created_at: string | null
@@ -3438,6 +3531,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_expired_stories: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_split_payment: {
         Args: {
           _event_id: string
@@ -3527,6 +3624,21 @@ export type Database = {
       get_performance_ratings_summary: {
         Args: { event_uuid: string; lineup_uuid: string }
         Returns: Json
+      }
+      get_personalized_events: {
+        Args: { p_user_id: string; p_limit?: number }
+        Returns: {
+          event_id: string
+          title: string
+          description: string
+          venue: string
+          event_date: string
+          event_time: string
+          category: string
+          tags: string[]
+          image_url: string
+          match_score: number
+        }[]
       }
       get_top_photos_for_highlight: {
         Args: { event_uuid: string; limit_count?: number }

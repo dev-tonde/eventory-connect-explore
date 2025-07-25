@@ -12,9 +12,9 @@ const sanitizeText = (text: string) =>
 
 const EventRecommendations = () => {
   const { isAuthenticated } = useAuth();
-  const { data: recommendations = [], isLoading } = useEventRecommendations();
+  const { recommendations, isLoading } = useEventRecommendations();
 
-  if (!isAuthenticated || recommendations.length === 0) {
+  if (!isAuthenticated || !recommendations || recommendations.length === 0) {
     return null;
   }
 
@@ -48,15 +48,15 @@ const EventRecommendations = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {recommendations.slice(0, 6).map((recommendation) => (
+        {recommendations.slice(0, 6).map((recommendation, index) => (
           <Card
-            key={recommendation.event.id}
+            key={recommendation.event?.id || recommendation.id || index}
             className="hover:shadow-lg transition-shadow group"
           >
             <div className="relative">
               <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
                 <img
-                  src={recommendation.event.image || "/placeholder.svg"}
+                  src={recommendation.event.image_url || "/placeholder.svg"}
                   alt={sanitizeText(recommendation.event.title)}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
@@ -69,7 +69,7 @@ const EventRecommendations = () => {
               </div>
               <div className="absolute top-2 left-2">
                 <Badge className="bg-purple-600">
-                  {Math.round(recommendation.score)}% Match
+                  {Math.round(recommendation.score || 0)}% Match
                 </Badge>
               </div>
               <div className="absolute top-2 right-2">
@@ -100,26 +100,18 @@ const EventRecommendations = () => {
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" aria-hidden="true" />
                   <span className="line-clamp-1">
-                    {sanitizeText(recommendation.event.location)}
+                    {sanitizeText(recommendation.event.venue)}
                   </span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-purple-600">
-                  Why this matches you:
+                  Recommended for you
                 </p>
-                <ul className="text-xs text-gray-600 space-y-1">
-                  {recommendation.reasons.slice(0, 2).map((reason, index) => (
-                    <li key={index} className="flex items-start gap-1">
-                      <Heart
-                        className="h-3 w-3 text-purple-400 mt-0.5 flex-shrink-0"
-                        aria-hidden="true"
-                      />
-                      {sanitizeText(reason)}
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-xs text-gray-600">
+                  Based on your interests and activity
+                </p>
               </div>
 
               <div className="flex justify-between items-center pt-2">
@@ -129,7 +121,7 @@ const EventRecommendations = () => {
                     : `$${Number(recommendation.event.price).toFixed(2)}`}
                 </span>
                 <Link
-                  to={`/events/${encodeURIComponent(recommendation.event.id)}`}
+                  to={`/events/${encodeURIComponent(recommendation.event?.id || recommendation.event_id || index)}`}
                 >
                   <Button
                     size="sm"

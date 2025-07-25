@@ -9,6 +9,7 @@ interface EventRecommendation {
   score: number;
   reasoning: string;
   event: {
+    id: string;
     title: string;
     description: string;
     date: string;
