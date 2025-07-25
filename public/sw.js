@@ -1,8 +1,9 @@
-const STATIC_CACHE = 'eventory-static-v2';
-const DYNAMIC_CACHE = 'eventory-dynamic-v2';
-const EVENT_DATA_CACHE = 'eventory-events-v1';
-const LINEUP_CACHE = 'eventory-lineup-v1';
-const SNAPLOOP_CACHE = 'eventory-snaploop-v1';
+const CACHE_VERSION = 'v3';
+const STATIC_CACHE = `eventory-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `eventory-dynamic-${CACHE_VERSION}`;
+const EVENT_DATA_CACHE = `eventory-events-${CACHE_VERSION}`;
+const LINEUP_CACHE = `eventory-lineup-${CACHE_VERSION}`;
+const SNAPLOOP_CACHE = `eventory-snaploop-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
   '/',
@@ -22,7 +23,7 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and claim clients immediately
 self.addEventListener('activate', event => {
   const allowedCaches = [
     STATIC_CACHE, 
@@ -33,15 +34,21 @@ self.addEventListener('activate', event => {
   ];
   
   event.waitUntil(
-    caches.keys().then(cacheNames =>
-      Promise.all(
-        cacheNames.map(cache => {
-          if (!allowedCaches.includes(cache)) {
-            return caches.delete(cache);
-          }
-        })
-      )
-    ).then(() => self.clients.claim())
+    Promise.all([
+      // Clear old caches
+      caches.keys().then(cacheNames =>
+        Promise.all(
+          cacheNames.map(cache => {
+            if (!allowedCaches.includes(cache)) {
+              console.log('Deleting old cache:', cache);
+              return caches.delete(cache);
+            }
+          })
+        )
+      ),
+      // Take control of all clients immediately
+      self.clients.claim()
+    ])
   );
 });
 
@@ -51,16 +58,20 @@ self.addEventListener('fetch', event => {
   
   const url = new URL(event.request.url);
   
-  // Skip service worker for development assets and external domains
+  // Skip service worker for external domains
   if (!url.origin.includes('lovableproject.com') && 
       !url.origin.includes('lovable.app') && 
       !url.origin.includes('supabase.co')) {
     return;
   }
 
-  // Skip caching for JS/CSS assets during development to prevent loading issues
+  // Always serve fresh JS/CSS assets to prevent stale builds
   if (url.pathname.includes('/assets/') && 
       (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-cache' })
+        .catch(() => caches.match(event.request))
+    );
     return;
   }
   

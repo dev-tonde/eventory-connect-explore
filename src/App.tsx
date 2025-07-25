@@ -17,6 +17,9 @@ import PosterStudio from "@/pages/PosterStudio";
 import { PostEventSummary } from "@/pages/PostEventSummary";
 import Gamification from "@/pages/Gamification";
 import FollowedOrganizers from "@/pages/FollowedOrganizers";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import CookiePolicy from "@/pages/CookiePolicy";
+import TermsOfService from "@/pages/TermsOfService";
 import NotFound from "@/pages/NotFound";
 import Footer from "@/components/layout/Footer";
 
@@ -33,6 +36,9 @@ export default function App() {
           <Route path="/communities" element={<Communities />} />
           <Route path="/communities/:id" element={<Community />} />
           <Route path="/organizer/:id" element={<OrganizerProfile />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
           
           {/* Protected routes */}
           <Route path="/profile" element={
