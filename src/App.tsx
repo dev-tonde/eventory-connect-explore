@@ -1,9 +1,10 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/SimpleAuthContext";
 import { LanguageProvider } from "./contexts/SecureLanguageContext";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
@@ -143,30 +144,32 @@ function AppContent() {
 
 function App() {
   return (
-    <ErrorBoundaryWithSentry>
-      <TooltipProvider>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <AuthProvider>
-              <LanguageProvider>
-                <PWAProvider>
-                  <AppContent />
-                  <SupportWidget />
-                  <PrivacyBanner />
-                  <Toaster />
-                  <Sonner />
-                </PWAProvider>
-              </LanguageProvider>
-            </AuthProvider>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </TooltipProvider>
-    </ErrorBoundaryWithSentry>
+    <React.StrictMode>
+      <ErrorBoundaryWithSentry>
+        <TooltipProvider>
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+              <AuthProvider>
+                <LanguageProvider>
+                  <PWAProvider>
+                    <AppContent />
+                    <SupportWidget />
+                    <PrivacyBanner />
+                    <Toaster />
+                    <Sonner />
+                  </PWAProvider>
+                </LanguageProvider>
+              </AuthProvider>
+            </BrowserRouter>
+          </QueryClientProvider>
+        </TooltipProvider>
+      </ErrorBoundaryWithSentry>
+    </React.StrictMode>
   );
 }
 

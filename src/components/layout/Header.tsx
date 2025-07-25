@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SimpleAuthContext";
 import UserMenu from "./UserMenu";
 import NavigationMenu from "./NavigationMenu";
 import HeaderLogo from "./HeaderLogo";
@@ -14,8 +14,7 @@ const Header = () => {
     try {
       await logout();
     } catch (error) {
-      // Optionally show a toast or error message here
-      // console.error('Error signing out:', error);
+      console.error('Error signing out:', error);
     }
   };
 
