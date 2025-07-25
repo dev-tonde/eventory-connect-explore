@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./contexts/SimpleAuthContext";
-import { LanguageProvider } from "./contexts/SecureLanguageContext";
+import { LanguageProvider } from "./contexts/SimpleLanguageContext";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import Index from "./pages/Index";
@@ -156,13 +156,11 @@ function App() {
             >
               <AuthProvider>
                 <LanguageProvider>
-                  <PWAProvider>
-                    <AppContent />
-                    <SupportWidget />
-                    <PrivacyBanner />
-                    <Toaster />
-                    <Sonner />
-                  </PWAProvider>
+                  <AppContent />
+                  <SupportWidget />
+                  <PrivacyBanner />
+                  <Toaster />
+                  <Sonner />
                 </LanguageProvider>
               </AuthProvider>
             </BrowserRouter>
