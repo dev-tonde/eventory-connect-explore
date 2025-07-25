@@ -1292,6 +1292,51 @@ export type Database = {
           },
         ]
       }
+      highlight_reels: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duration_seconds: number | null
+          error_message: string | null
+          event_id: string
+          generation_data: Json | null
+          id: string
+          organizer_id: string
+          photo_count: number | null
+          status: string
+          thumbnail_url: string | null
+          video_url: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          error_message?: string | null
+          event_id: string
+          generation_data?: Json | null
+          id?: string
+          organizer_id: string
+          photo_count?: number | null
+          status?: string
+          thumbnail_url?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          error_message?: string | null
+          event_id?: string
+          generation_data?: Json | null
+          id?: string
+          organizer_id?: string
+          photo_count?: number | null
+          status?: string
+          thumbnail_url?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       location_cache: {
         Row: {
           address: string
@@ -1319,6 +1364,48 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+        }
+        Relationships: []
+      }
+      mood_alerts: {
+        Row: {
+          alert_data: Json | null
+          alert_type: string
+          average_mood: number
+          created_at: string
+          duration_minutes: number
+          event_id: string
+          id: string
+          lineup_id: string | null
+          organizer_id: string
+          resolved_at: string | null
+          threshold_value: number
+        }
+        Insert: {
+          alert_data?: Json | null
+          alert_type?: string
+          average_mood: number
+          created_at?: string
+          duration_minutes: number
+          event_id: string
+          id?: string
+          lineup_id?: string | null
+          organizer_id: string
+          resolved_at?: string | null
+          threshold_value: number
+        }
+        Update: {
+          alert_data?: Json | null
+          alert_type?: string
+          average_mood?: number
+          created_at?: string
+          duration_minutes?: number
+          event_id?: string
+          id?: string
+          lineup_id?: string | null
+          organizer_id?: string
+          resolved_at?: string | null
+          threshold_value?: number
         }
         Relationships: []
       }
@@ -1587,6 +1674,45 @@ export type Database = {
           metric_name?: string
           metric_value?: number
           timestamp?: string | null
+        }
+        Relationships: []
+      }
+      performance_ratings: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          ip_address: unknown | null
+          lineup_id: string
+          rating_type: string
+          rating_value: number
+          session_token: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          ip_address?: unknown | null
+          lineup_id: string
+          rating_type: string
+          rating_value: number
+          session_token?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          ip_address?: unknown | null
+          lineup_id?: string
+          rating_type?: string
+          rating_value?: number
+          session_token?: string | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -3033,6 +3159,18 @@ export type Database = {
           country: string
         }[]
       }
+      get_current_performance_with_mood: {
+        Args: { event_uuid: string }
+        Returns: {
+          lineup_id: string
+          artist_name: string
+          start_time: string
+          end_time: string
+          average_mood: number
+          checkin_count: number
+          alert_threshold: number
+        }[]
+      }
       get_current_performer: {
         Args: { event_uuid: string; check_time?: string }
         Returns: {
@@ -3059,6 +3197,20 @@ export type Database = {
       get_mood_summary: {
         Args: { event_uuid: string }
         Returns: Json
+      }
+      get_performance_ratings_summary: {
+        Args: { event_uuid: string; lineup_uuid: string }
+        Returns: Json
+      }
+      get_top_photos_for_highlight: {
+        Args: { event_uuid: string; limit_count?: number }
+        Returns: {
+          photo_id: string
+          file_url: string
+          likes_count: number
+          created_at: string
+          caption: string
+        }[]
       }
       increment_likes: {
         Args: { photo_id: string }
