@@ -19,6 +19,7 @@ import BecomeOrganizer from "./pages/BecomeOrganizer";
 import Gamification from "./pages/Gamification";
 import PosterStudio from "./pages/PosterStudio";
 import Community from "./pages/Community";
+import OrganizerEvents from "./pages/OrganizerEvents";
 import FollowedOrganizers from "./pages/FollowedOrganizers";
 import NotFound from "./pages/NotFound";
 import SnapLoopUpload from "./pages/SnapLoopUpload";
@@ -119,6 +120,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <FollowedOrganizers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizer/events"
+            element={
+              <ProtectedRoute>
+                <OrganizerEvents />
               </ProtectedRoute>
             }
           />
