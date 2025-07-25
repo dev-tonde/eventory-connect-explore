@@ -1,5 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "./contexts/SimpleAuthContext";
+import { LanguageProvider } from "./contexts/SimpleLanguageContext";
 
 // Add immediate console logging
 console.log("🚀 main.tsx loading...");
@@ -110,13 +114,27 @@ try {
   const root = ReactDOM.createRoot(rootElement);
   console.log("✅ React root created successfully");
   
-  console.log("🎨 Rendering with StrictMode...");
+  // Create QueryClient
+  console.log("🔧 Creating QueryClient...");
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
+  console.log("✅ QueryClient created");
+  
+  console.log("🎨 Rendering with QueryClient provider...");
   root.render(
     <React.StrictMode>
-      <TestApp />
+      <QueryClientProvider client={queryClient}>
+        <TestApp />
+      </QueryClientProvider>
     </React.StrictMode>
   );
-  console.log("✅ StrictMode + TestApp rendered successfully");
+  console.log("✅ QueryClient + TestApp rendered successfully");
 } catch (error) {
   console.error("❌ Error during React initialization:", error);
   
