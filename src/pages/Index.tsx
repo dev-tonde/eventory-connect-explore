@@ -49,7 +49,9 @@ const Index = () => {
   });
 
   useEffect(() => {
-    setAllEvents(optimizedEvents);
+    if (optimizedEvents && optimizedEvents.length > 0) {
+      setAllEvents(optimizedEvents);
+    }
   }, [optimizedEvents]);
 
   // Filter events based on FilterBar state
