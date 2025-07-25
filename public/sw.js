@@ -48,9 +48,21 @@ self.addEventListener('activate', event => {
 // Enhanced fetch event with smart caching for PWA features
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-  if (!event.request.url.startsWith(self.location.origin)) return;
-
+  
   const url = new URL(event.request.url);
+  
+  // Skip service worker for development assets and external domains
+  if (!url.origin.includes('lovableproject.com') && 
+      !url.origin.includes('lovable.app') && 
+      !url.origin.includes('supabase.co')) {
+    return;
+  }
+
+  // Skip caching for JS/CSS assets during development to prevent loading issues
+  if (url.pathname.includes('/assets/') && 
+      (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))) {
+    return;
+  }
   
   // Cache Supabase API responses for events, lineup, and photos
   if (url.pathname.includes('/rest/v1/events') || 
@@ -61,32 +73,31 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Default caching strategy
+  // Default caching strategy for other requests
   event.respondWith(
-    caches.match(event.request).then(response => {
-      if (response) return response;
-
-      return fetch(event.request)
-        .then(networkResponse => {
-          if (
-            !networkResponse ||
-            networkResponse.status !== 200 ||
-            networkResponse.type !== 'basic'
-          ) {
-            return networkResponse;
-          }
+    fetch(event.request)
+      .then(networkResponse => {
+        // Only cache successful responses
+        if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(DYNAMIC_CACHE).then(cache => {
             cache.put(event.request, responseToCache);
           });
-          return networkResponse;
-        })
-        .catch(() => {
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        // Fallback to cache only if network fails
+        return caches.match(event.request).then(response => {
+          if (response) return response;
+          
           if (event.request.mode === 'navigate') {
             return caches.match('/offline.html');
           }
+          
+          throw new Error('Network and cache failed');
         });
-    })
+      })
   );
 });
 
