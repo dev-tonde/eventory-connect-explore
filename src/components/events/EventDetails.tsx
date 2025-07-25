@@ -1,8 +1,12 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Users } from "lucide-react";
+import AddToCalendar from "@/components/calendar/AddToCalendar";
+import { Event } from "@/types/event";
 
 interface EventDetailsProps {
+  event?: Event;
   description?: string;
   date: string;
   time: string;
@@ -14,6 +18,7 @@ interface EventDetailsProps {
 }
 
 export const EventDetails: React.FC<EventDetailsProps> = ({
+  event,
   description,
   date,
   time,
@@ -77,6 +82,14 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
               </Badge>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Calendar Export - only show if we have a full event object */}
+      {event && (
+        <div className="pt-4 border-t">
+          <h3 className="font-semibold mb-2">Add to Calendar</h3>
+          <AddToCalendar event={event} />
         </div>
       )}
     </div>

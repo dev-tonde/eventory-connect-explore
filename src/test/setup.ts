@@ -1,6 +1,10 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// Extend Vitest's expect with jest-dom matchers
+import * as matchers from '@testing-library/jest-dom/matchers';
+expect.extend(matchers);
+
 
 // Mock Supabase
 vi.mock('@/integrations/supabase/client', () => ({
