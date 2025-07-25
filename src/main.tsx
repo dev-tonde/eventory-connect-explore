@@ -25,16 +25,37 @@ if (!rootElement) {
 
 const root = ReactDOM.createRoot(rootElement);
 
-root.render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <LanguageProvider>
-            <App />
-          </LanguageProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+// Add error boundary for development
+const renderApp = () => {
+  try {
+    root.render(
+      <React.StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <AuthProvider>
+              <LanguageProvider>
+                <App />
+              </LanguageProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </React.StrictMode>
+    );
+  } catch (error) {
+    console.error('App rendering error:', error);
+    // Fallback render without strict mode for development
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AuthProvider>
+            <LanguageProvider>
+              <App />
+            </LanguageProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+  }
+};
+
+renderApp();

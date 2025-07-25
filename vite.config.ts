@@ -10,13 +10,23 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(),
-    mode === 'development' &&
-    componentTagger(),
+    react({
+      // Improve Fast Refresh stability
+      devTarget: 'esnext',
+    }),
+    mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  optimizeDeps: {
+    // Ensure React is properly bundled
+    include: ['react', 'react-dom', 'react/jsx-runtime'],
+  },
+  define: {
+    // Ensure proper React mode
+    __DEV__: mode === 'development',
   },
 }));
