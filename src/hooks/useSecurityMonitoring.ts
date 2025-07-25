@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { errorHandler } from "@/lib/errorHandler";
 import { apiRateLimiter } from "@/middleware/rateLimiter";
 
@@ -8,106 +8,170 @@ interface SecurityEvent {
   timestamp: Date;
 }
 
+interface SecurityMonitoringState {
+  securityEvents: SecurityEvent[];
+  isBlocked: boolean;
+  isInitialized: boolean;
+}
+
+const DEFAULT_STATE: SecurityMonitoringState = {
+  securityEvents: [],
+  isBlocked: false,
+  isInitialized: false,
+};
+
 /**
  * Custom hook for client-side security monitoring: rate limiting, suspicious activity, and event logging.
+ * Follows React Hook Rules and handles SSR safely.
  */
 export const useSecurityMonitoring = () => {
-  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
-  const [isBlocked, setIsBlocked] = useState(false);
+  // Initialize with safe defaults
+  const [state, setState] = useState<SecurityMonitoringState>(DEFAULT_STATE);
   const unblockTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const navigationCountRef = useRef(0);
+  const startTimeRef = useRef<number>(0);
 
   /**
    * Log a security event locally and to the error handler.
    */
-  const logSecurityEvent = (event: Omit<SecurityEvent, "timestamp">) => {
+  const logSecurityEvent = useCallback((event: Omit<SecurityEvent, "timestamp">) => {
     const securityEvent: SecurityEvent = {
       ...event,
       timestamp: new Date(),
     };
 
-    setSecurityEvents((prev) => [...prev.slice(-9), securityEvent]); // Keep last 10 events
+    setState(prev => ({
+      ...prev,
+      securityEvents: [...prev.securityEvents.slice(-9), securityEvent], // Keep last 10 events
+    }));
 
-    errorHandler.logError(`Security Event: ${event.type}`, {
-      error_type: "security_event",
-      error_message: event.message,
-    });
-  };
+    // Only log to error handler if available
+    try {
+      errorHandler.logError(`Security Event: ${event.type}`, {
+        error_type: "security_event",
+        error_message: event.message,
+      });
+    } catch (error) {
+      console.warn("Failed to log security event:", error);
+    }
+  }, []);
 
   /**
    * Check API rate limit for a given action.
    */
-  const checkRateLimit = async (action: string = "general") => {
+  const checkRateLimit = useCallback(async (action: string = "general"): Promise<boolean> => {
     try {
-      // In production, use a real user/IP identifier
-      const identifier = `ip_${Date.now()}`;
+      // Generate a safe identifier
+      const identifier = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const result = await apiRateLimiter.checkLimit(identifier, action);
 
       if (!result.allowed) {
-        setIsBlocked(true);
+        setState(prev => ({ ...prev, isBlocked: true }));
+        
         logSecurityEvent({
           type: "rate_limit_exceeded",
           message: result.message || "Rate limit exceeded",
         });
 
         // Auto-unblock after 5 minutes
-        if (unblockTimeoutRef.current) clearTimeout(unblockTimeoutRef.current);
+        if (unblockTimeoutRef.current) {
+          clearTimeout(unblockTimeoutRef.current);
+        }
+        
         unblockTimeoutRef.current = setTimeout(
-          () => setIsBlocked(false),
+          () => setState(prev => ({ ...prev, isBlocked: false })),
           5 * 60 * 1000
         );
       }
 
       return result.allowed;
     } catch (error) {
-      errorHandler.logError(error as Error, {
-        error_type: "rate_limit_check_failed",
-      });
+      // Log error safely
+      try {
+        errorHandler.logError(error as Error, {
+          error_type: "rate_limit_check_failed",
+        });
+      } catch (logError) {
+        console.warn("Failed to log rate limit error:", logError);
+      }
+      
       return true; // Fail open for user experience
     }
-  };
+  }, [logSecurityEvent]);
 
   /**
    * Report suspicious activity.
    */
-  const reportSuspiciousActivity = (activity: string) => {
+  const reportSuspiciousActivity = useCallback((activity: string) => {
     logSecurityEvent({
       type: "suspicious_activity",
       message: activity,
     });
-  };
+  }, [logSecurityEvent]);
 
+  /**
+   * Handle navigation events for suspicious activity detection
+   */
+  const handleNavigation = useCallback(() => {
+    navigationCountRef.current++;
+    const currentTime = Date.now();
+    
+    if (navigationCountRef.current > 10 && currentTime - startTimeRef.current < 30000) {
+      reportSuspiciousActivity("Rapid navigation detected");
+    }
+    
+    // Reset after 30 seconds
+    if (currentTime - startTimeRef.current > 30000) {
+      navigationCountRef.current = 0;
+      startTimeRef.current = currentTime;
+    }
+  }, [reportSuspiciousActivity]);
+
+  // Initialize and setup monitoring
   useEffect(() => {
-    // Monitor for suspicious patterns: rapid navigation (potential bot behavior)
-    let navigationCount = 0;
-    let startTime = Date.now();
+    // Only run in browser environment
+    if (typeof window === 'undefined') {
+      return;
+    }
 
-    const handleNavigation = () => {
-      navigationCount++;
-      if (navigationCount > 10 && Date.now() - startTime < 30000) {
-        reportSuspiciousActivity("Rapid navigation detected");
-      }
-      // Reset after 30 seconds
-      if (Date.now() - startTime > 30000) {
-        navigationCount = 0;
-        startTime = Date.now();
-      }
-    };
+    try {
+      // Initialize start time
+      startTimeRef.current = Date.now();
 
-    window.addEventListener("beforeunload", handleNavigation);
+      // Set as initialized
+      setState(prev => ({ ...prev, isInitialized: true }));
 
-    return () => {
-      window.removeEventListener("beforeunload", handleNavigation);
-      if (unblockTimeoutRef.current) clearTimeout(unblockTimeoutRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      // Add navigation monitoring
+      window.addEventListener("beforeunload", handleNavigation);
+
+      // Optional: Monitor for rapid clicks/interactions
+      const handleClick = () => handleNavigation();
+      document.addEventListener("click", handleClick);
+
+      return () => {
+        // Cleanup event listeners
+        window.removeEventListener("beforeunload", handleNavigation);
+        document.removeEventListener("click", handleClick);
+        
+        // Clear timeout
+        if (unblockTimeoutRef.current) {
+          clearTimeout(unblockTimeoutRef.current);
+        }
+      };
+    } catch (error) {
+      console.warn("Failed to setup security monitoring:", error);
+      
+      // Set as initialized even if setup fails
+      setState(prev => ({ ...prev, isInitialized: true }));
+    }
+  }, [handleNavigation]);
 
   return {
-    securityEvents,
-    isBlocked,
+    securityEvents: state.securityEvents,
+    isBlocked: state.isBlocked,
+    isInitialized: state.isInitialized,
     checkRateLimit,
     logSecurityEvent,
     reportSuspiciousActivity,
   };
 };
-// This hook can be used in components to monitor security events, check rate limits, and log suspicious activities.
