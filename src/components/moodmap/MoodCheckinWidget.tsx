@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/EnhancedAuthContext";
 import { validateStringLength, sanitizeText } from "@/utils/validation";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { useEventLineup } from "@/hooks/useEventLineup";
+import { Play } from "lucide-react";
 
 interface MoodCheckinWidgetProps {
   eventId: string;
@@ -26,6 +28,7 @@ export function MoodCheckinWidget({ eventId, onCheckinComplete }: MoodCheckinWid
   const { toast } = useToast();
   const { user } = useAuth();
   const { handleAsyncError } = useErrorHandler();
+  const { currentPerformer } = useEventLineup(eventId);
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,6 +90,7 @@ export function MoodCheckinWidget({ eventId, onCheckinComplete }: MoodCheckinWid
           comment: sanitizeText(comment) || null,
           user_id: user?.id || null,
           session_token: sessionToken,
+          lineup_id: currentPerformer?.lineup_id || null,
         });
 
       if (error) {
@@ -146,9 +150,21 @@ export function MoodCheckinWidget({ eventId, onCheckinComplete }: MoodCheckinWid
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <CardTitle>How are you feeling?</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Help us understand the event vibe by sharing your mood
-        </p>
+        {currentPerformer ? (
+          <div className="space-y-1">
+            <div className="flex items-center justify-center gap-2 text-primary">
+              <Play className="w-4 h-4" />
+              <span className="text-sm font-medium">Now: {currentPerformer.artist_name}</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              How are you enjoying {currentPerformer.artist_name} right now?
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Help us understand the event vibe by sharing your mood
+          </p>
+        )}
       </CardHeader>
       
       <CardContent className="space-y-6">

@@ -20,6 +20,7 @@ import { ShareEvent } from "@/components/events/ShareEvent";
 import { OrganizerProfile } from "@/components/events/OrganizerProfile";
 import { RelatedEventsCarousel } from "@/components/events/RelatedEventsCarousel";
 import { EventMap } from "@/components/events/EventMap";
+import { LineupDisplay } from "@/components/lineup/LineupDisplay";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -175,8 +176,9 @@ const EventDetail = () => {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="details" className="space-y-6">
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="details">Details</TabsTrigger>
+                    <TabsTrigger value="lineup">Lineup</TabsTrigger>
                     <TabsTrigger value="tickets">Tickets</TabsTrigger>
                     <TabsTrigger value="photos">Photos</TabsTrigger>
                     <TabsTrigger value="mood">Mood Pulse</TabsTrigger>
@@ -198,6 +200,10 @@ const EventDetail = () => {
                       organizerId={event.organizer_id}
                       organizerName={organizerName}
                     />
+                  </TabsContent>
+
+                  <TabsContent value="lineup">
+                    <LineupDisplay eventId={event.id} />
                   </TabsContent>
 
                   <TabsContent value="tickets">
