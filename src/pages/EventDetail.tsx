@@ -21,6 +21,7 @@ import { OrganizerProfile } from "@/components/events/OrganizerProfile";
 import { RelatedEventsCarousel } from "@/components/events/RelatedEventsCarousel";
 import { EventMap } from "@/components/events/EventMap";
 import { LineupDisplay } from "@/components/lineup/LineupDisplay";
+import RideBookingButton from "@/components/events/RideBookingButton";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -358,6 +359,21 @@ const EventDetail = () => {
                   </Button>
                 </CardContent>
               </Card>
+
+              {/* Ride Booking */}
+              <RideBookingButton
+                venue={event.venue}
+                address={event.address}
+                coordinates={event.location_coordinates && 
+                  typeof event.location_coordinates === 'object' &&
+                  'x' in event.location_coordinates && 
+                  'y' in event.location_coordinates ? 
+                  [Number(event.location_coordinates.x), Number(event.location_coordinates.y)] : 
+                  undefined
+                }
+                eventDate={event.date}
+                eventTime={event.time}
+              />
 
               {/* Related Events */}
               <RelatedEventsCarousel

@@ -28,6 +28,7 @@ import PrivacyBanner from "./components/legal/PrivacyBanner";
 import ErrorBoundaryWithSentry from "./components/error/ErrorBoundaryWithSentry";
 import { SecurityWrapper } from "./components/security/SecurityWrapper";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import PWAProvider from "./components/pwa/PWAProvider";
 import { analytics, trackPageView } from "@/lib/analytics";
 import { useEffect } from "react";
 
@@ -153,11 +154,13 @@ function App() {
           <AuthProvider>
             <LanguageProvider>
               <SecurityWrapper>
-                <AppContent />
-                <SupportWidget />
-                <PrivacyBanner />
-                <Toaster />
-                <Sonner />
+                <PWAProvider>
+                  <AppContent />
+                  <SupportWidget />
+                  <PrivacyBanner />
+                  <Toaster />
+                  <Sonner />
+                </PWAProvider>
               </SecurityWrapper>
             </LanguageProvider>
           </AuthProvider>
