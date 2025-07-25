@@ -765,6 +765,53 @@ export type Database = {
           },
         ]
       }
+      event_lineup: {
+        Row: {
+          artist_name: string
+          created_at: string
+          description: string | null
+          display_order: number
+          end_time: string
+          event_id: string
+          id: string
+          stage_name: string | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          artist_name: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          end_time: string
+          event_id: string
+          id?: string
+          stage_name?: string | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          artist_name?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          end_time?: string
+          event_id?: string
+          id?: string
+          stage_name?: string | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_lineup_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_polls: {
         Row: {
           created_at: string | null
@@ -1282,6 +1329,7 @@ export type Database = {
           event_id: string | null
           id: string
           ip_address: unknown | null
+          lineup_id: string | null
           mood_score: number
           session_token: string | null
           user_id: string | null
@@ -1292,6 +1340,7 @@ export type Database = {
           event_id?: string | null
           id?: string
           ip_address?: unknown | null
+          lineup_id?: string | null
           mood_score: number
           session_token?: string | null
           user_id?: string | null
@@ -1302,6 +1351,7 @@ export type Database = {
           event_id?: string | null
           id?: string
           ip_address?: unknown | null
+          lineup_id?: string | null
           mood_score?: number
           session_token?: string | null
           user_id?: string | null
@@ -1312,6 +1362,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mood_checkins_lineup_id_fkey"
+            columns: ["lineup_id"]
+            isOneToOne: false
+            referencedRelation: "event_lineup"
             referencedColumns: ["id"]
           },
         ]
@@ -2974,6 +3031,17 @@ export type Database = {
           longitude: number
           city: string
           country: string
+        }[]
+      }
+      get_current_performer: {
+        Args: { event_uuid: string; check_time?: string }
+        Returns: {
+          lineup_id: string
+          artist_name: string
+          start_time: string
+          end_time: string
+          stage_name: string
+          description: string
         }[]
       }
       get_dynamic_price: {
