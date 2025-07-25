@@ -1,20 +1,38 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Ticket } from "lucide-react";
-import ProfileForm from "./ProfileForm";
+import { User, Bell, Ticket, Heart, Users, Calendar, Settings } from "lucide-react";
 import EnhancedNotificationPanel from "@/components/notifications/EnhancedNotificationPanel";
-import TicketsTab from "./TicketsTab";
+import MyRSVPsTab from "./MyRSVPsTab";
+import SavedEventsTab from "./SavedEventsTab";
+import FollowedOrganizersTab from "./FollowedOrganizersTab";
+import AccountSettingsTab from "./AccountSettingsTab";
 
 const ProfileTabs = () => {
   return (
-    <Tabs defaultValue="profile" className="space-y-6">
-      <TabsList>
+    <Tabs defaultValue="rsvps" className="space-y-6">
+      <TabsList className="grid w-full grid-cols-5">
         <TabsTrigger
-          value="profile"
+          value="rsvps"
           className="flex items-center gap-2"
-          aria-label="Profile"
+          aria-label="My RSVPs"
         >
-          <User className="h-4 w-4" aria-hidden="true" />
-          Profile
+          <Calendar className="h-4 w-4" aria-hidden="true" />
+          RSVPs
+        </TabsTrigger>
+        <TabsTrigger
+          value="saved"
+          className="flex items-center gap-2"
+          aria-label="Saved Events"
+        >
+          <Heart className="h-4 w-4" aria-hidden="true" />
+          Saved
+        </TabsTrigger>
+        <TabsTrigger
+          value="following"
+          className="flex items-center gap-2"
+          aria-label="Followed Organizers"
+        >
+          <Users className="h-4 w-4" aria-hidden="true" />
+          Following
         </TabsTrigger>
         <TabsTrigger
           value="notifications"
@@ -25,25 +43,33 @@ const ProfileTabs = () => {
           Notifications
         </TabsTrigger>
         <TabsTrigger
-          value="tickets"
+          value="settings"
           className="flex items-center gap-2"
-          aria-label="My Tickets"
+          aria-label="Account Settings"
         >
-          <Ticket className="h-4 w-4" aria-hidden="true" />
-          My Tickets
+          <Settings className="h-4 w-4" aria-hidden="true" />
+          Settings
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="profile">
-        <ProfileForm />
+      <TabsContent value="rsvps">
+        <MyRSVPsTab />
+      </TabsContent>
+
+      <TabsContent value="saved">
+        <SavedEventsTab />
+      </TabsContent>
+
+      <TabsContent value="following">
+        <FollowedOrganizersTab />
       </TabsContent>
 
       <TabsContent value="notifications">
         <EnhancedNotificationPanel />
       </TabsContent>
 
-      <TabsContent value="tickets">
-        <TicketsTab />
+      <TabsContent value="settings">
+        <AccountSettingsTab />
       </TabsContent>
     </Tabs>
   );
