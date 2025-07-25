@@ -1,38 +1,28 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
-import "./index.css";
-import { SecurityWrapper } from "./components/security/SecurityWrapper";
-import { setupPerformanceMonitoring } from "./lib/monitoring";
-import { initSentry } from "./lib/sentry";
-import { initIntercom } from "./lib/intercom";
-import { initTermly } from "./lib/termly";
 
-// Initialize error tracking
-initSentry();
+// Minimal App component for testing
+function App() {
+  console.log("App rendering successfully");
+  return (
+    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+      <h1>Eventory - React Initialization Test</h1>
+      <p>If you can see this, React is working correctly!</p>
+      <button onClick={() => alert("React hooks are working!")}>
+        Test Button
+      </button>
+    </div>
+  );
+}
 
-// Initialize performance monitoring
-setupPerformanceMonitoring();
-
-// Initialize customer support with secure config
-const initializeServices = async () => {
-  try {
-    // Initialize Intercom - using production app ID
-    initIntercom("oyvy9c86");
-
-    // Initialize Termly - using actual embed ID from secrets
-    initTermly("8fb23262-17cc-475b-b8ec-c96dc4c63b5b");
-  } catch (error) {
-    console.warn("Failed to initialize third-party services:", error);
-  }
-};
-
-// Initialize services
-initializeServices();
-
+// Ensure DOM is ready
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   throw new Error("Root element not found");
 }
 
-ReactDOM.createRoot(rootElement).render(<App />);
+console.log("Creating React root...");
+const root = ReactDOM.createRoot(rootElement);
+
+console.log("Rendering App...");
+root.render(<App />);
