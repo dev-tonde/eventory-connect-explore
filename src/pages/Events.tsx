@@ -3,7 +3,7 @@ import { useOptimizedEvents } from "@/hooks/useOptimizedEvents";
 import { useMetadata } from "@/hooks/useMetadata";
 import EventsFilterBar from "@/components/events/EventsFilterBar";
 import EventCardList from "@/components/events/EventCardList";
-import GoogleMapComponent from "@/components/maps/GoogleMapComponent";
+import MapboxComponent from "@/components/maps/MapboxComponent";
 import { Event } from "@/types/event";
 
 const Events = () => {
@@ -82,7 +82,7 @@ const Events = () => {
 
         {/* Map Section */}
         <div className="mb-8">
-          <GoogleMapComponent
+          <MapboxComponent
             events={filteredEvents}
             selectedEvent={selectedEvent}
             onEventSelect={setSelectedEvent}
