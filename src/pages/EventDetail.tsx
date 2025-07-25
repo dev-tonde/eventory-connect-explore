@@ -4,17 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Calendar,
-  MapPin,
-  Users,
-  ArrowLeft,
-  Share2,
-  Heart,
-  Star,
-  User,
-} from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Share2, Star, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import WaitlistButton from "@/components/waitlist/WaitlistButton";
@@ -24,6 +14,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SnapLoopGallery } from "@/components/snaploop/SnapLoopGallery";
 import { MoodPulseChart } from "@/components/moodmap/MoodPulseChart";
 import { MoodCheckinWidget } from "@/components/moodmap/MoodCheckinWidget";
+import { EventHeader } from "@/components/events/EventHeader";
+import { EventDetails } from "@/components/events/EventDetails";
+import { ShareEvent } from "@/components/events/ShareEvent";
+import { OrganizerProfile } from "@/components/events/OrganizerProfile";
+import { RelatedEventsCarousel } from "@/components/events/RelatedEventsCarousel";
+import { EventMap } from "@/components/events/EventMap";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -85,6 +81,18 @@ const EventDetail = () => {
         event.profiles.last_name || ""
       }`.trim() || event.profiles.username
     : "Unknown Organizer";
+
+  // Handle share and favorite actions
+  const handleShare = () => {
+    // This will be handled by the ShareEvent component
+  };
+
+  const handleFavorite = () => {
+    toast({
+      title: "Feature coming soon",
+      description: "Favorites functionality will be available soon!",
+    });
+  };
 
   // Transform Supabase event data to match Event interface
   const transformedEvent: Event | null = event
@@ -148,48 +156,21 @@ const EventDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Hero Image */}
-            <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-              <img
-                src={event.image_url || "/placeholder.svg"}
-                alt={event.title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = "/placeholder.svg";
-                }}
-              />
-            </div>
+            {/* Event Header */}
+            <EventHeader
+              title={event.title}
+              category={event.category}
+              imageUrl={event.image_url}
+              onShare={handleShare}
+              onFavorite={handleFavorite}
+            />
 
             {/* Event Details Tabs */}
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-2xl mb-2">
-                      {event.title}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="secondary">{event.category}</Badge>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 transition-colors"
-                      aria-label="Share Event"
-                    >
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="hover:bg-red-50 focus:ring-2 focus:ring-red-500 transition-colors"
-                      aria-label="Add to Favorites"
-                    >
-                      <Heart className="h-4 w-4" />
-                    </Button>
-                  </div>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Event Details</CardTitle>
+                  <ShareEvent eventTitle={event.title} eventId={event.id} />
                 </div>
               </CardHeader>
               <CardContent>
@@ -202,76 +183,21 @@ const EventDetail = () => {
                   </TabsList>
 
                   <TabsContent value="details" className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-500" />
-                        <span>
-                          {new Date(event.date).toLocaleDateString("en-US", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}{" "}
-                          at {event.time}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-gray-500" />
-                        <span>{event.venue}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-gray-500" />
-                        <span>
-                          {event.current_attendees || 0} /{" "}
-                          {event.max_attendees || 100} attending
-                        </span>
-                      </div>
-                    </div>
-
-                    {event.address && (
-                      <div className="pt-2 border-t">
-                        <p className="text-sm text-gray-600">{event.address}</p>
-                      </div>
-                    )}
-
-                    <div className="pt-4 border-t">
-                      <h3 className="font-semibold mb-2">About This Event</h3>
-                      <p className="text-gray-700 whitespace-pre-line">
-                        {event.description || "No description available."}
-                      </p>
-                    </div>
-
-                    {event.tags && event.tags.length > 0 && (
-                      <div className="pt-4 border-t">
-                        <h3 className="font-semibold mb-2">Tags</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {event.tags.map((tag: string, index: number) => (
-                            <Badge key={index} variant="outline">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="pt-4 border-t">
-                      <h3 className="font-semibold mb-2">Organized by</h3>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-purple-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{organizerName}</p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 p-0 h-auto font-normal"
-                          >
-                            Follow Organizer
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+                    <EventDetails
+                      description={event.description}
+                      date={event.date}
+                      time={event.time}
+                      venue={event.venue}
+                      address={event.address}
+                      currentAttendees={event.current_attendees || 0}
+                      maxAttendees={event.max_attendees || 100}
+                      tags={event.tags}
+                    />
+                    
+                    <OrganizerProfile
+                      organizerId={event.organizer_id}
+                      organizerName={organizerName}
+                    />
                   </TabsContent>
 
                   <TabsContent value="tickets">
@@ -311,6 +237,19 @@ const EventDetail = () => {
                 </Tabs>
               </CardContent>
             </Card>
+
+            {/* Event Map */}
+            <EventMap
+              venue={event.venue}
+              address={event.address}
+              coordinates={event.location_coordinates && 
+                typeof event.location_coordinates === 'object' &&
+                'x' in event.location_coordinates && 
+                'y' in event.location_coordinates ? 
+                [Number(event.location_coordinates.x), Number(event.location_coordinates.y)] : 
+                undefined
+              }
+            />
 
             {/* Event Reviews & Ratings */}
             <Card className="hover:shadow-md transition-shadow">
@@ -414,17 +353,11 @@ const EventDetail = () => {
                 </CardContent>
               </Card>
 
-              {/* Similar Events */}
-              <Card className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-lg">Similar Events</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-4 text-gray-500">
-                    <p className="text-sm">Loading similar events...</p>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Related Events */}
+              <RelatedEventsCarousel
+                currentEventId={event.id}
+                category={event.category}
+              />
             </div>
           </div>
         </div>
