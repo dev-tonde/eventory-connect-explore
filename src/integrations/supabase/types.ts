@@ -115,6 +115,33 @@ export type Database = {
         }
         Relationships: []
       }
+      artist_genres: {
+        Row: {
+          artist_name: string
+          created_at: string | null
+          energy_level: number
+          genre: string
+          historical_engagement: number | null
+          id: string
+        }
+        Insert: {
+          artist_name: string
+          created_at?: string | null
+          energy_level: number
+          genre: string
+          historical_engagement?: number | null
+          id?: string
+        }
+        Update: {
+          artist_name?: string
+          created_at?: string | null
+          energy_level?: number
+          genre?: string
+          historical_engagement?: number | null
+          id?: string
+        }
+        Relationships: []
+      }
       calendar_sync: {
         Row: {
           calendar_event_id: string | null
@@ -1384,6 +1411,39 @@ export type Database = {
         }
         Relationships: []
       }
+      lineup_suggestions: {
+        Row: {
+          created_at: string | null
+          created_by_ai: boolean | null
+          engagement_score: number
+          event_id: string
+          id: string
+          is_accepted: boolean | null
+          suggested_order: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by_ai?: boolean | null
+          engagement_score: number
+          event_id: string
+          id?: string
+          is_accepted?: boolean | null
+          suggested_order: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by_ai?: boolean | null
+          engagement_score?: number
+          event_id?: string
+          id?: string
+          is_accepted?: boolean | null
+          suggested_order?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       location_cache: {
         Row: {
           address: string
@@ -2434,6 +2494,39 @@ export type Database = {
           },
         ]
       }
+      snaploop_contributors: {
+        Row: {
+          badge_earned_at: string | null
+          created_at: string | null
+          event_id: string
+          id: string
+          is_top_contributor: boolean | null
+          updated_at: string | null
+          upload_count: number | null
+          user_id: string
+        }
+        Insert: {
+          badge_earned_at?: string | null
+          created_at?: string | null
+          event_id: string
+          id?: string
+          is_top_contributor?: boolean | null
+          updated_at?: string | null
+          upload_count?: number | null
+          user_id: string
+        }
+        Update: {
+          badge_earned_at?: string | null
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          is_top_contributor?: boolean | null
+          updated_at?: string | null
+          upload_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       snaploop_social_shares: {
         Row: {
           branded_image_url: string | null
@@ -2715,6 +2808,36 @@ export type Database = {
           },
         ]
       }
+      streak_badges: {
+        Row: {
+          badge_type: string
+          category: string
+          earned_at: string | null
+          id: string
+          streak_count: number
+          user_id: string
+          xp_awarded: number | null
+        }
+        Insert: {
+          badge_type: string
+          category: string
+          earned_at?: string | null
+          id?: string
+          streak_count: number
+          user_id: string
+          xp_awarded?: number | null
+        }
+        Update: {
+          badge_type?: string
+          category?: string
+          earned_at?: string | null
+          id?: string
+          streak_count?: number
+          user_id?: string
+          xp_awarded?: number | null
+        }
+        Relationships: []
+      }
       tickets: {
         Row: {
           event_id: string | null
@@ -2825,6 +2948,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_attendance_streaks: {
+        Row: {
+          category: string
+          created_at: string | null
+          current_streak: number | null
+          id: string
+          last_event_date: string | null
+          longest_streak: number | null
+          total_events_attended: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_event_date?: string | null
+          longest_streak?: number | null
+          total_events_attended?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_event_date?: string | null
+          longest_streak?: number | null
+          total_events_attended?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_event_recommendations: {
         Row: {
@@ -3257,6 +3416,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      calculate_lineup_engagement_score: {
+        Args: { lineup_order: Json }
+        Returns: number
+      }
       check_form_rate_limit: {
         Args: {
           identifier_val: string
@@ -3411,6 +3574,14 @@ export type Database = {
       }
       track_event_view: {
         Args: { event_uuid: string; session_id?: string }
+        Returns: undefined
+      }
+      update_attendance_streak: {
+        Args: { p_user_id: string; p_category: string; p_event_date: string }
+        Returns: undefined
+      }
+      update_snaploop_contributor_stats: {
+        Args: { p_user_id: string; p_event_id: string }
         Returns: undefined
       }
       update_user_points: {
