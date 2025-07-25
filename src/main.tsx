@@ -2,6 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "./contexts/SimpleAuthContext";
+import { LanguageProvider } from "./contexts/SimpleLanguageContext";
 import App from "./App";
 
 // Add immediate console logging
@@ -125,17 +127,21 @@ try {
   });
   console.log("✅ QueryClient created");
   
-  console.log("🎨 Rendering with QueryClient + BrowserRouter...");
+  console.log("🎨 Rendering with all providers...");
   root.render(
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <App />
+          <AuthProvider>
+            <LanguageProvider>
+              <App />
+            </LanguageProvider>
+          </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </React.StrictMode>
   );
-  console.log("✅ QueryClient + BrowserRouter + App rendered successfully");
+  console.log("✅ All providers + App rendered successfully");
 } catch (error) {
   console.error("❌ Error during React initialization:", error);
   
