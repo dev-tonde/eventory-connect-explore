@@ -152,15 +152,13 @@ function App() {
         >
           <AuthProvider>
             <LanguageProvider>
-              <TooltipProvider>
-                <SecurityWrapper>
-                  <AppContent />
-                  <SupportWidget />
-                  <PrivacyBanner />
-                  <Toaster />
-                  <Sonner />
-                </SecurityWrapper>
-              </TooltipProvider>
+              <SecurityWrapper>
+                <AppContent />
+                <SupportWidget />
+                <PrivacyBanner />
+                <Toaster />
+                <Sonner />
+              </SecurityWrapper>
             </LanguageProvider>
           </AuthProvider>
         </BrowserRouter>
