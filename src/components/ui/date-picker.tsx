@@ -12,10 +12,61 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+interface DatePickerProps {
+  selected?: Date | null;
+  onSelect?: (date: Date | undefined) => void;
+  placeholder?: string;
+  triggerProps?: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    children?: React.ReactNode;
+  };
+  disabled?: boolean;
+}
+
 interface DatePickerWithRangeProps {
   date?: DateRange;
   onDateChange?: (date: DateRange | undefined) => void;
   className?: string;
+}
+
+export function DatePicker({
+  selected,
+  onSelect,
+  placeholder = "Pick a date",
+  triggerProps,
+  disabled = false
+}: DatePickerProps) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            "w-[240px] justify-start text-left font-normal",
+            !selected && "text-muted-foreground",
+            triggerProps?.className
+          )}
+          disabled={disabled}
+          {...triggerProps}
+        >
+          {triggerProps?.children || (
+            <>
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {selected ? format(selected, "PPP") : <span>{placeholder}</span>}
+            </>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={selected || undefined}
+          onSelect={onSelect}
+          initialFocus
+          className={cn("p-3 pointer-events-auto")}
+        />
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function DatePickerWithRange({

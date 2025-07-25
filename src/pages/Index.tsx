@@ -17,6 +17,7 @@ import EventsWithFilters from "@/components/events/EventsWithFilters";
 import NewsletterSignup from "@/components/newsletter/NewsletterSignup";
 import TestimonialsSection from "@/components/testimonials/TestimonialsSection";
 import GoogleSignInModal from "@/components/auth/GoogleSignInModal";
+import FilterBar, { FilterState } from "@/components/filters/FilterBar";
 import { useOptimizedEvents } from "@/hooks/useOptimizedEvents";
 import { useMetadata } from "@/hooks/useMetadata";
 import { defaultMetadata } from "@/lib/metadata";
@@ -30,6 +31,11 @@ const Index = () => {
   const { events: optimizedEvents, isLoading } = useOptimizedEvents();
   const { isAuthenticated } = useAuth();
   const [allEvents, setAllEvents] = useState<Event[]>([]);
+  const [filterState, setFilterState] = useState<FilterState>({
+    category: "All",
+    isFree: false,
+    isFamilyFriendly: false
+  });
 
   // Set SEO metadata for homepage
   useMetadata({
@@ -44,6 +50,20 @@ const Index = () => {
   useEffect(() => {
     setAllEvents(optimizedEvents);
   }, [optimizedEvents]);
+
+  // Filter events based on FilterBar state
+  const filteredEvents = allEvents.filter(event => {
+    if (filterState.category !== "All" && event.category !== filterState.category) {
+      return false;
+    }
+    if (filterState.isFree && Number(event.price) > 0) {
+      return false;
+    }
+    if (filterState.isFamilyFriendly && !event.tags?.includes("family-friendly")) {
+      return false;
+    }
+    return true;
+  });
 
   if (isLoading) {
     return (
@@ -109,8 +129,18 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Filter Bar */}
+      <section className="py-8">
+        <div className="container mx-auto px-4">
+          <FilterBar 
+            activeFilters={filterState}
+            onFiltersChange={setFilterState}
+          />
+        </div>
+      </section>
+
       {/* Featured Events Carousel */}
-      <FeaturedEventsSection events={allEvents} />
+      <FeaturedEventsSection events={filteredEvents} />
 
       {/* Events with Tab Filtering */}
       <EventsWithFilters />

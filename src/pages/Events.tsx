@@ -1,48 +1,20 @@
 import { useState, useMemo } from "react";
 import { useOptimizedEvents } from "@/hooks/useOptimizedEvents";
 import { useMetadata } from "@/hooks/useMetadata";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Search, Filter } from "lucide-react";
-import { Link } from "react-router-dom";
-
-const categories = [
-  "Music",
-  "Technology",
-  "Food & Drink",
-  "Business",
-  "Arts & Culture",
-  "Health & Wellness",
-  "Sports",
-  "Entertainment",
-];
-
-const locations = [
-  "Cape Town",
-  "Johannesburg",
-  "Durban",
-  "Pretoria",
-  "Port Elizabeth",
-  "Stellenbosch",
-  "Bloemfontein",
-  "New York",
-  "San Francisco",
-  "Los Angeles",
-];
+import EventsFilterBar from "@/components/events/EventsFilterBar";
+import EventCardList from "@/components/events/EventCardList";
+import GoogleMapComponent from "@/components/maps/GoogleMapComponent";
+import { Event } from "@/types/event";
 
 const Events = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [filters, setFilters] = useState({
+    search: "",
+    category: "",
+    location: "",
+    dateFrom: null as Date | null,
+    dateTo: null as Date | null,
+  });
 
   const { events, isLoading } = useOptimizedEvents();
 
@@ -59,21 +31,30 @@ const Events = () => {
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
       const matchesSearch =
-        !searchTerm ||
-        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchTerm.toLowerCase());
+        !filters.search ||
+        event.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+        (event.description || "").toLowerCase().includes(filters.search.toLowerCase());
 
       const matchesCategory =
-        !selectedCategory ||
-        event.category.toLowerCase() === selectedCategory.toLowerCase();
+        !filters.category ||
+        event.category.toLowerCase() === filters.category.toLowerCase();
 
       const matchesLocation =
-        !selectedLocation ||
-        event.location.toLowerCase().includes(selectedLocation.toLowerCase());
+        !filters.location ||
+        (event.location || "").toLowerCase().includes(filters.location.toLowerCase()) ||
+        (event.address || "").toLowerCase().includes(filters.location.toLowerCase());
 
-      return matchesSearch && matchesCategory && matchesLocation;
+      const matchesDateFrom = 
+        !filters.dateFrom ||
+        new Date(event.date) >= filters.dateFrom;
+
+      const matchesDateTo =
+        !filters.dateTo ||
+        new Date(event.date) <= filters.dateTo;
+
+      return matchesSearch && matchesCategory && matchesLocation && matchesDateFrom && matchesDateTo;
     });
-  }, [events, searchTerm, selectedCategory, selectedLocation]);
+  }, [events, filters]);
 
   if (isLoading) {
     return (
@@ -96,67 +77,17 @@ const Events = () => {
           </p>
         </div>
 
-        {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search events..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-                aria-label="Search events"
-              />
-            </div>
+        {/* Enhanced Filter Bar */}
+        <EventsFilterBar onFiltersChange={setFilters} />
 
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={selectedLocation}
-              onValueChange={setSelectedLocation}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All Locations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Locations</SelectItem>
-                {locations.map((location) => (
-                  <SelectItem key={location} value={location}>
-                    {location}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategory("");
-                setSelectedLocation("");
-              }}
-              variant="outline"
-              aria-label="Clear filters"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Clear Filters
-            </Button>
-          </div>
+        {/* Map Section */}
+        <div className="mb-8">
+          <GoogleMapComponent
+            events={filteredEvents}
+            selectedEvent={selectedEvent}
+            onEventSelect={setSelectedEvent}
+            className="w-full h-96"
+          />
         </div>
 
         {/* Results */}
@@ -166,89 +97,12 @@ const Events = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvents.length > 0 ? (
-            filteredEvents.map((event) => (
-              <Link key={event.id} to={`/event/${event.id}`}>
-                <Card className="hover:shadow-lg transition-shadow group cursor-pointer">
-                  <div className="relative">
-                    <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
-                      <img
-                        src={event.image || "/placeholder.svg"}
-                        alt={event.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.currentTarget.src = "/placeholder.svg";
-                        }}
-                      />
-                    </div>
-                    <Badge className="absolute top-2 right-2 bg-purple-600">
-                      {event.category}
-                    </Badge>
-                  </div>
-
-                  <CardHeader>
-                    <CardTitle className="text-lg group-hover:text-purple-600 transition-colors line-clamp-2">
-                      {event.title}
-                    </CardTitle>
-                    <p className="text-sm text-gray-600 line-clamp-2">
-                      {event.description}
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm text-gray-600 mb-4">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>
-                          {new Date(event.date).toLocaleDateString()} at{" "}
-                          {event.time}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span className="line-clamp-1">{event.location}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        <span>{event.attendeeCount || 0} attending</span>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-purple-600">
-                        {Number(event.price) === 0
-                          ? "Free"
-                          : `R${Number(event.price).toFixed(2)}`}
-                      </span>
-                      <Button
-                        size="sm"
-                        className="group-hover:bg-purple-700 transition-colors"
-                        tabIndex={-1}
-                        aria-label={`View details for ${event.title}`}
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <div className="text-gray-400 mb-4">
-                <Search className="h-16 w-16 mx-auto mb-4" />
-              </div>
-              <h3 className="text-xl font-medium text-gray-900 mb-2">
-                No events found
-              </h3>
-              <p className="text-gray-600">
-                {events.length === 0
-                  ? "No events are currently available."
-                  : "Try adjusting your search criteria or clear the filters."}
-              </p>
-            </div>
-          )}
-        </div>
+        {/* Event Card List with Infinite Scroll */}
+        <EventCardList
+          events={filteredEvents}
+          searchTerm={filters.search}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );
