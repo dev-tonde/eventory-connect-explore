@@ -25,7 +25,13 @@ const Auth = () => {
     return null;
   }
 
-  return <AuthForm />;
+  return (
+    <>
+      <title>Sign In | Eventory - Join the Community</title>
+      <meta name="description" content="Sign in to Eventory to discover amazing events, connect with communities, and create memorable experiences." />
+      <AuthForm />
+    </>
+  );
 };
 
 export default Auth;

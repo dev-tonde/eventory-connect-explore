@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/SimpleAuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import UserMenu from "./UserMenu";
 import NavigationMenu from "./NavigationMenu";
 import HeaderLogo from "./HeaderLogo";

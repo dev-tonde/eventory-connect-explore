@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -31,14 +31,13 @@ import UserPointsDisplay from "@/components/gamification/UserPointsDisplay";
 const Index = () => {
   const { events: optimizedEvents, isLoading } = useOptimizedEvents();
   const { isAuthenticated } = useAuth();
-  const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [filterState, setFilterState] = useState<FilterState>({
     category: "All",
     isFree: false,
     isFamilyFriendly: false
   });
 
-  // Set SEO metadata for homepage
+  // Set SEO metadata for homepage - moved to prevent re-rendering loops
   useMetadata({
     ...defaultMetadata,
     title: "Eventory - Discover Amazing Events | AI-Powered Event Discovery",
@@ -48,25 +47,23 @@ const Index = () => {
       "events, event discovery, AI events, community events, concerts, conferences, workshops, meetups, social events",
   });
 
-  useEffect(() => {
-    if (optimizedEvents && optimizedEvents.length > 0) {
-      setAllEvents(optimizedEvents);
-    }
-  }, [optimizedEvents]);
-
-  // Filter events based on FilterBar state
-  const filteredEvents = allEvents.filter(event => {
-    if (filterState.category !== "All" && event.category !== filterState.category) {
-      return false;
-    }
-    if (filterState.isFree && Number(event.price) > 0) {
-      return false;
-    }
-    if (filterState.isFamilyFriendly && !event.tags?.includes("family-friendly")) {
-      return false;
-    }
-    return true;
-  });
+  // Filter events based on FilterBar state - memoized to prevent re-renders
+  const filteredEvents = useMemo(() => {
+    if (!optimizedEvents) return [];
+    
+    return optimizedEvents.filter(event => {
+      if (filterState.category !== "All" && event.category !== filterState.category) {
+        return false;
+      }
+      if (filterState.isFree && Number(event.price) > 0) {
+        return false;
+      }
+      if (filterState.isFamilyFriendly && !event.tags?.includes("family-friendly")) {
+        return false;
+      }
+      return true;
+    });
+  }, [optimizedEvents, filterState]);
 
   if (isLoading) {
     return (

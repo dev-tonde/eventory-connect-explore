@@ -64,18 +64,21 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                My Profile
-              </h1>
-              <p className="text-gray-600">
-                Manage your account and view your events
-              </p>
-            </div>
+    <>
+      <title>{profile?.first_name ? `${profile.first_name}'s Profile` : 'My Profile'} | Eventory</title>
+      <meta name="description" content="Manage your Eventory profile, view your events, and update your account settings." />
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  My Profile
+                </h1>
+                <p className="text-gray-600">
+                  Manage your account and view your events
+                </p>
+              </div>
             <Button
               onClick={handleRefreshProfile}
               disabled={isRefreshing}
@@ -160,7 +163,8 @@ const Profile = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
