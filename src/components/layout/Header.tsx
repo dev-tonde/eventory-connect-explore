@@ -5,6 +5,7 @@ import UserMenu from "./UserMenu";
 import NavigationMenu from "./NavigationMenu";
 import HeaderLogo from "./HeaderLogo";
 import LocationIndicator from "../location/LocationIndicator";
+import NotificationIcon from "../notifications/NotificationIcon";
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -33,7 +34,10 @@ const Header = () => {
 
             <div className="flex items-center space-x-4">
               {user ? (
-                <UserMenu onLogout={handleLogout} />
+                <>
+                  <NotificationIcon />
+                  <UserMenu onLogout={handleLogout} />
+                </>
               ) : (
                 <div className="flex items-center space-x-2">
                   <Link to="/auth" aria-label="Log in to your account">

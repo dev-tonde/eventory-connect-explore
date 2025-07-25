@@ -21,12 +21,12 @@ export function useAdvancedAnalytics() {
   const [isTracking, setIsTracking] = useState(false);
   const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null);
 
-  // Track events to Google Analytics and internal database
+  // Track events to Supabase database only
   const trackEvent = async (eventData: AnalyticsEvent) => {
     try {
       setIsTracking(true);
 
-      // Track to internal database
+      // Track to Supabase database
       await supabase.from('event_analytics').insert({
         event_id: eventData.event_id,
         user_id: eventData.user_id,
@@ -36,17 +36,20 @@ export function useAdvancedAnalytics() {
         user_agent: navigator.userAgent,
       });
 
-      // Track to Google Analytics if available
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', eventData.event_name, {
-          event_category: 'eventory',
-          event_label: eventData.event_id,
-          custom_parameter_1: eventData.user_id,
-          ...eventData.properties,
+      // Also track user interactions for better insights
+      if (eventData.event_id) {
+        await supabase.from('event_interactions').insert({
+          event_id: eventData.event_id,
+          user_id: eventData.user_id,
+          interaction_type: eventData.event_name,
+          interaction_data: eventData.properties || {},
+          session_id: generateSessionId(),
+          user_agent: navigator.userAgent,
+          referrer: document.referrer,
         });
       }
 
-      console.log('Analytics event tracked:', eventData.event_name);
+      console.log('Analytics event tracked to Supabase:', eventData.event_name);
     } catch (error) {
       console.error('Analytics tracking error:', error);
     } finally {
@@ -136,44 +139,6 @@ export function useAdvancedAnalytics() {
   const generateSessionId = () => {
     return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
-
-  // Initialize Google Analytics
-  useEffect(() => {
-    const initializeGA = async () => {
-      try {
-        const { data } = await supabase.functions.invoke('google-analytics-config');
-        
-        if (data?.trackingId) {
-          // Load Google Analytics script
-          const script = document.createElement('script');
-          script.src = `https://www.googletagmanager.com/gtag/js?id=${data.trackingId}`;
-          script.async = true;
-          document.head.appendChild(script);
-
-          // Initialize gtag
-          (window as any).dataLayer = (window as any).dataLayer || [];
-          function gtag(...args: any[]) {
-            (window as any).dataLayer.push(args);
-          }
-          (window as any).gtag = gtag;
-
-          gtag('js', new Date());
-          gtag('config', data.trackingId, {
-            page_title: 'Eventory',
-            page_location: window.location.href,
-          });
-
-          console.log('Google Analytics initialized');
-        }
-      } catch (error) {
-        console.warn('Google Analytics initialization failed:', error);
-      }
-    };
-
-    if (typeof window !== 'undefined') {
-      initializeGA();
-    }
-  }, []);
 
   return {
     trackEvent,

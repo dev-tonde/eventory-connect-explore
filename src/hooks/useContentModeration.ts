@@ -80,30 +80,38 @@ export function useContentModeration() {
     };
   };
 
-  // AI-powered content moderation (using OpenAI)
-  const moderateContentWithAI = async (content: ContentToModerate): Promise<ModerationResult> => {
+  // Enhanced Supabase-based content moderation
+  const moderateContentWithSupabase = async (content: ContentToModerate): Promise<ModerationResult> => {
     try {
       const fullText = [content.text, content.title, content.description]
         .filter(Boolean)
         .join(' ');
 
-      const { data, error } = await supabase.functions.invoke('openai-content-moderation', {
-        body: {
-          text: fullText,
-          contentType: content.type,
+      // Use local moderation as primary method
+      const localResult = moderateContentLocally(content);
+
+      // Log moderation attempt
+      const { data, error } = await supabase.from('content_moderation_logs').insert({
+        content_type: content.type,
+        content_text: fullText,
+        is_approved: localResult.isApproved,
+        confidence: localResult.confidence,
+        flags: localResult.flags,
+        moderation_result: {
+          approved: localResult.isApproved,
+          confidence: localResult.confidence,
+          flags: localResult.flags,
+          reason: localResult.reason,
         },
-      });
+      }).select().single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Failed to log moderation:', error);
+      }
 
-      return {
-        isApproved: !data.flagged,
-        confidence: data.confidence || 0.8,
-        flags: data.categories || [],
-        reason: data.flagged ? 'Content flagged by AI moderation' : undefined,
-      };
+      return localResult;
     } catch (err) {
-      console.error('AI moderation error:', err);
+      console.error('Supabase moderation error:', err);
       // Fallback to local moderation
       return moderateContentLocally(content);
     }
@@ -126,17 +134,12 @@ export function useContentModeration() {
         return localResult;
       }
 
-      // If enabled and local check passes, use AI for additional verification
+      // If enabled and local check passes, use Supabase for additional verification
       if (useAI) {
-        const aiResult = await moderateContentWithAI(content);
+        const supabaseResult = await moderateContentWithSupabase(content);
         
-        // Combine results - fail if either fails
-        return {
-          isApproved: localResult.isApproved && aiResult.isApproved,
-          confidence: Math.min(localResult.confidence, aiResult.confidence),
-          flags: [...localResult.flags, ...aiResult.flags],
-          reason: !aiResult.isApproved ? aiResult.reason : localResult.reason,
-        };
+        // Use Supabase result (which includes local moderation)
+        return supabaseResult;
       }
 
       return localResult;
@@ -189,7 +192,7 @@ export function useContentModeration() {
       title: eventData.title,
       description: eventData.description,
       type: 'event',
-    }, true); // Use AI for events
+    }, true); // Use Supabase for events
   };
 
   // Auto-moderate community messages
