@@ -934,6 +934,53 @@ export type Database = {
         }
         Relationships: []
       }
+      event_summaries: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          highlight_reel_url: string | null
+          id: string
+          is_public: boolean | null
+          mood_timeline: Json | null
+          organizer_message: string | null
+          share_token: string | null
+          top_photos: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          highlight_reel_url?: string | null
+          id?: string
+          is_public?: boolean | null
+          mood_timeline?: Json | null
+          organizer_message?: string | null
+          share_token?: string | null
+          top_photos?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          highlight_reel_url?: string | null
+          id?: string
+          is_public?: boolean | null
+          mood_timeline?: Json | null
+          organizer_message?: string | null
+          share_token?: string | null
+          top_photos?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_summaries_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_waitlist: {
         Row: {
           created_at: string | null
@@ -2779,6 +2826,47 @@ export type Database = {
           },
         ]
       }
+      user_event_recommendations: {
+        Row: {
+          clicked: boolean | null
+          created_at: string
+          event_id: string | null
+          id: string
+          reasoning: string | null
+          score: number
+          user_id: string
+          viewed: boolean | null
+        }
+        Insert: {
+          clicked?: boolean | null
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          reasoning?: string | null
+          score: number
+          user_id: string
+          viewed?: boolean | null
+        }
+        Update: {
+          clicked?: boolean | null
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          reasoning?: string | null
+          score?: number
+          user_id?: string
+          viewed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_event_recommendations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_notifications: {
         Row: {
           created_at: string | null
@@ -3286,6 +3374,10 @@ export type Database = {
           created_at: string
           caption: string
         }[]
+      }
+      get_user_recommendation_data: {
+        Args: { target_user_id: string }
+        Returns: Json
       }
       increment_likes: {
         Args: { photo_id: string }

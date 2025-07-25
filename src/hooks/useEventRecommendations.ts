@@ -1,152 +1,101 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Event } from "@/types/event";
 
 interface EventRecommendation {
-  event: Event;
+  id: string;
+  event_id: string;
   score: number;
-  reasons: string[];
+  reasoning: string;
+  event: {
+    title: string;
+    description: string;
+    date: string;
+    time: string;
+    venue: string;
+    category: string;
+    image_url: string;
+    price: number;
+  };
 }
 
-/**
- * Custom hook to fetch personalized event recommendations for the current user.
- */
-export const useEventRecommendations = () => {
+export function useEventRecommendations() {
   const { user } = useAuth();
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  return useQuery<EventRecommendation[]>({
+  const { data: recommendations, isLoading, refetch } = useQuery({
     queryKey: ["event-recommendations", user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user?.id) return [];
 
-      // Get user's event history and preferences
-      const { data: userTickets = [] } = await supabase
-        .from("tickets")
-        .select("event_id, events(category, tags, price)")
-        .eq("user_id", user.id);
+      const { data, error } = await supabase
+        .from("user_event_recommendations")
+        .select(`
+          *,
+          event:events (
+            id,
+            title,
+            description,
+            date,
+            time,
+            venue,
+            category,
+            image_url,
+            price
+          )
+        `)
+        .eq("user_id", user.id)
+        .order("score", { ascending: false })
+        .limit(10);
 
-      const { data: userFavorites = [] } = await supabase
-        .from("favorites")
-        .select("event_id, events(category, tags, price)")
-        .eq("user_id", user.id);
+      if (error) throw error;
+      return data as EventRecommendation[];
+    },
+    enabled: !!user?.id,
+  });
 
-      // Analyze user preferences
-      const categories = new Map<string, number>();
-      const tags = new Map<string, number>();
-      let priceSum = 0;
-      let priceCount = 0;
-
-      [...userTickets, ...userFavorites].forEach((item) => {
-        if (item.events) {
-          const event = item.events as any;
-          if (event.category) {
-            categories.set(
-              event.category,
-              (categories.get(event.category) || 0) + 1
-            );
-          }
-          if (event.tags) {
-            event.tags.forEach((tag: string) => {
-              tags.set(tag, (tags.get(tag) || 0) + 1);
-            });
-          }
-          if (typeof event.price === "number") {
-            priceSum += event.price;
-            priceCount++;
-          }
-        }
+  const generateRecommendations = async () => {
+    if (!user?.id) return;
+    
+    setIsGenerating(true);
+    try {
+      const { error } = await supabase.functions.invoke('generate-event-recommendations', {
+        body: { userId: user.id }
       });
 
-      const avgPrice = priceCount > 0 ? priceSum / priceCount : 0;
+      if (error) throw error;
+      
+      // Refresh recommendations after generation
+      await refetch();
+    } catch (error) {
+      console.error('Error generating recommendations:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
-      // Get upcoming events
-      const { data: upcomingEvents = [] } = await supabase
-        .from("events")
-        .select("*")
-        .eq("is_active", true)
-        .gte("date", new Date().toISOString().split("T")[0])
-        .order("date", { ascending: true })
-        .limit(20);
+  const markAsViewed = async (recommendationId: string) => {
+    await supabase
+      .from("user_event_recommendations")
+      .update({ viewed: true })
+      .eq("id", recommendationId);
+  };
 
-      if (!upcomingEvents.length) return [];
+  const markAsClicked = async (recommendationId: string) => {
+    await supabase
+      .from("user_event_recommendations")
+      .update({ clicked: true })
+      .eq("id", recommendationId);
+  };
 
-      // Score events based on user preferences
-      const recommendations: EventRecommendation[] = upcomingEvents.map(
-        (event) => {
-          let score = 0;
-          const reasons: string[] = [];
-
-          // Category matching
-          const categoryScore = categories.get(event.category) || 0;
-          if (categoryScore > 0) {
-            score += categoryScore * 10;
-            reasons.push(
-              `You've attended ${categoryScore} ${event.category} events`
-            );
-          }
-
-          // Tag matching
-          if (event.tags) {
-            event.tags.forEach((tag: string) => {
-              const tagScore = tags.get(tag) || 0;
-              if (tagScore > 0) {
-                score += tagScore * 5;
-                reasons.push(`Matches your interest in ${tag}`);
-              }
-            });
-          }
-
-          // Price preference (favor events in similar price range)
-          if (
-            typeof event.price === "number" &&
-            avgPrice > 0 &&
-            Math.abs(event.price - avgPrice) < 50
-          ) {
-            score += 5;
-            reasons.push("Price matches your typical spending");
-          }
-
-          // Time-based boost for events happening soon
-          const daysUntil = Math.ceil(
-            (new Date(event.date).getTime() - Date.now()) /
-              (1000 * 60 * 60 * 24)
-          );
-          if (daysUntil <= 7) {
-            score += 3;
-            reasons.push("Happening soon");
-          }
-
-          return {
-            event: {
-              id: event.id,
-              title: event.title,
-              description: event.description || "",
-              date: event.date,
-              time: event.time,
-              location: event.venue,
-              address: event.address || "",
-              price: Number(event.price),
-              category: event.category,
-              image: event.image_url || "/placeholder.svg",
-              organizer: "Organizer",
-              attendeeCount: event.current_attendees || 0,
-              maxAttendees: event.max_attendees || 100,
-              tags: event.tags || [],
-            } as Event,
-            score,
-            reasons,
-          };
-        }
-      );
-
-      return recommendations
-        .filter((rec) => rec.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 10);
-    },
-    enabled: !!user,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  });
-};
+  return {
+    recommendations: recommendations || [],
+    isLoading,
+    isGenerating,
+    generateRecommendations,
+    markAsViewed,
+    markAsClicked,
+    refetch
+  };
+}
