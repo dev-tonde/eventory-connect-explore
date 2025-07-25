@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useOfflineEventData } from "@/hooks/useOfflineEventData";
 import { useWeatherNotifications } from "@/hooks/useWeatherNotifications";
 import OfflineIndicator from "./OfflineIndicator";
@@ -9,41 +9,55 @@ interface PWAProviderProps {
 }
 
 const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
-  const { events, isOnline, syncData, isLoading } = useOfflineEventData();
-  const { notifications, checkUpcomingEvents } = useWeatherNotifications();
-
-  // Register service worker
+  const [isReady, setIsReady] = useState(false);
+  
+  // Initialize PWA features only after component is mounted
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log("SW registered: ", registration);
-        })
-        .catch((registrationError) => {
-          console.log("SW registration failed: ", registrationError);
-        });
-    }
+    setIsReady(true);
   }, []);
 
-  // Handle online/offline events
-  useEffect(() => {
-    const handleOnline = () => {
-      syncData();
-      checkUpcomingEvents();
-    };
+  // Only use PWA hooks after the component is ready
+  const PWAFeatures = () => {
+    const { events, isOnline, syncData, isLoading } = useOfflineEventData();
+    const { checkUpcomingEvents } = useWeatherNotifications();
 
-    window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
-  }, [syncData, checkUpcomingEvents]);
+    // Register service worker
+    useEffect(() => {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((registration) => {
+            console.log("SW registered: ", registration);
+          })
+          .catch((registrationError) => {
+            console.log("SW registration failed: ", registrationError);
+          });
+      }
+    }, []);
 
-  return (
-    <>
+    // Handle online/offline events
+    useEffect(() => {
+      const handleOnline = () => {
+        syncData();
+        checkUpcomingEvents();
+      };
+
+      window.addEventListener("online", handleOnline);
+      return () => window.removeEventListener("online", handleOnline);
+    }, [syncData, checkUpcomingEvents]);
+
+    return (
       <OfflineIndicator
         isOnline={isOnline}
         hasOfflineData={events.length > 0}
         syncInProgress={isLoading}
       />
+    );
+  };
+
+  return (
+    <>
+      {isReady && <PWAFeatures />}
       <PWAInstaller />
       {children}
     </>
