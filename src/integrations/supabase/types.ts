@@ -88,6 +88,135 @@ export type Database = {
           },
         ]
       }
+      affiliate_clicks: {
+        Row: {
+          affiliate_link_id: string
+          clicked_at: string | null
+          conversion_value: number | null
+          converted: boolean | null
+          event_id: string
+          id: string
+          ip_address: unknown | null
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          affiliate_link_id: string
+          clicked_at?: string | null
+          conversion_value?: number | null
+          converted?: boolean | null
+          event_id: string
+          id?: string
+          ip_address?: unknown | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          affiliate_link_id?: string
+          clicked_at?: string | null
+          conversion_value?: number | null
+          converted?: boolean | null
+          event_id?: string
+          id?: string
+          ip_address?: unknown | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      affiliate_conversions: {
+        Row: {
+          affiliate_click_id: string | null
+          affiliate_link_id: string
+          commission_amount: number
+          commission_status: string | null
+          conversion_type: string
+          conversion_value: number
+          converted_at: string | null
+          event_id: string
+          guest_email: string | null
+          guest_name: string | null
+          id: string
+          ticket_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          affiliate_click_id?: string | null
+          affiliate_link_id: string
+          commission_amount: number
+          commission_status?: string | null
+          conversion_type: string
+          conversion_value: number
+          converted_at?: string | null
+          event_id: string
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          affiliate_click_id?: string | null
+          affiliate_link_id?: string
+          commission_amount?: number
+          commission_status?: string | null
+          conversion_type?: string
+          conversion_value?: number
+          converted_at?: string | null
+          event_id?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      affiliate_links: {
+        Row: {
+          affiliate_code: string
+          commission_rate: number | null
+          created_at: string | null
+          event_id: string
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          organizer_id: string
+          promoter_email: string | null
+          promoter_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          affiliate_code: string
+          commission_rate?: number | null
+          created_at?: string | null
+          event_id: string
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          organizer_id: string
+          promoter_email?: string | null
+          promoter_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          affiliate_code?: string
+          commission_rate?: number | null
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          organizer_id?: string
+          promoter_email?: string | null
+          promoter_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       analytics_config: {
         Row: {
           config_key: string
@@ -1919,6 +2048,48 @@ export type Database = {
         }
         Relationships: []
       }
+      photo_downloads: {
+        Row: {
+          download_type: string
+          downloaded_at: string | null
+          event_id: string
+          file_size_bytes: number | null
+          guest_email: string | null
+          guest_name: string | null
+          id: string
+          ip_address: unknown | null
+          photo_id: string
+          resolution: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          download_type: string
+          downloaded_at?: string | null
+          event_id: string
+          file_size_bytes?: number | null
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          ip_address?: unknown | null
+          photo_id: string
+          resolution?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          download_type?: string
+          downloaded_at?: string | null
+          event_id?: string
+          file_size_bytes?: number | null
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          ip_address?: unknown | null
+          photo_id?: string
+          resolution?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       photo_likes: {
         Row: {
           created_at: string | null
@@ -2259,6 +2430,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      print_orders: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          frame_type: string | null
+          guest_email: string
+          guest_name: string
+          id: string
+          payment_reference: string | null
+          payment_status: string | null
+          phone_number: string | null
+          photo_id: string
+          print_size: string
+          quantity: number | null
+          shipping_address: Json
+          status: string | null
+          total_price: number
+          tracking_number: string | null
+          unit_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          frame_type?: string | null
+          guest_email: string
+          guest_name: string
+          id?: string
+          payment_reference?: string | null
+          payment_status?: string | null
+          phone_number?: string | null
+          photo_id: string
+          print_size: string
+          quantity?: number | null
+          shipping_address: Json
+          status?: string | null
+          total_price: number
+          tracking_number?: string | null
+          unit_price: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          frame_type?: string | null
+          guest_email?: string
+          guest_name?: string
+          id?: string
+          payment_reference?: string | null
+          payment_status?: string | null
+          phone_number?: string | null
+          photo_id?: string
+          print_size?: string
+          quantity?: number | null
+          shipping_address?: Json
+          status?: string | null
+          total_price?: number
+          tracking_number?: string | null
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -3548,6 +3782,10 @@ export type Database = {
         Args: { photo_id: string }
         Returns: undefined
       }
+      generate_affiliate_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -3559,6 +3797,17 @@ export type Database = {
       generate_unique_username: {
         Args: { first_name: string }
         Returns: string
+      }
+      get_affiliate_stats: {
+        Args: { p_affiliate_link_id: string }
+        Returns: {
+          total_clicks: number
+          total_conversions: number
+          total_revenue: number
+          total_commission: number
+          conversion_rate: number
+          avg_order_value: number
+        }[]
       }
       get_cached_location: {
         Args: { _address: string }
@@ -3683,6 +3932,19 @@ export type Database = {
           _payment_method?: string
         }
         Returns: boolean
+      }
+      track_affiliate_conversion: {
+        Args: {
+          p_affiliate_code: string
+          p_event_id: string
+          p_user_id?: string
+          p_ticket_id?: string
+          p_conversion_type?: string
+          p_conversion_value?: number
+          p_guest_email?: string
+          p_guest_name?: string
+        }
+        Returns: string
       }
       track_event_view: {
         Args: { event_uuid: string; session_id?: string }
