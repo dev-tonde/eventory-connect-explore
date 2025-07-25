@@ -116,7 +116,7 @@ const translations: Record<string, Record<string, string>> = {
  * Secure language provider that doesn't use localStorage
  * Uses session storage for temporary persistence within the browser session
  */
-export const LanguageProvider = ({ children }: { children: ReactNode }) => {
+export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentLanguage, setCurrentLanguage] = useState<string>("en");
 
   useEffect(() => {
