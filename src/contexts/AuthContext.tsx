@@ -27,6 +27,11 @@ interface Profile {
   social_links: SocialLinks;
   name?: string;
   phone?: string;
+  organization_name?: string;
+  experience?: string;
+  username_last_changed?: string;
+  events_attended_count?: number;
+  followed_count?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -97,6 +102,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           bio: data.bio,
           social_links: (data.social_links as Record<string, string>) || {},
           name: data.name,
+          organization_name: data.organization_name,
+          experience: data.experience,
+          username_last_changed: data.username_last_changed,
+          events_attended_count: data.events_attended_count || 0,
+          followed_count: data.followed_count || 0,
           created_at: data.created_at,
           updated_at: data.updated_at,
         });

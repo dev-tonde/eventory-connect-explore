@@ -2500,45 +2500,60 @@ export type Database = {
           bio: string | null
           created_at: string | null
           email: string | null
+          events_attended_count: number | null
+          experience: string | null
           first_name: string | null
+          followed_count: number | null
           id: string
           last_name: string | null
           name: string | null
+          organization_name: string | null
           role: string | null
           secondary_email: string | null
           social_links: Json | null
           updated_at: string | null
           username: string | null
+          username_last_changed: string | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
           email?: string | null
+          events_attended_count?: number | null
+          experience?: string | null
           first_name?: string | null
+          followed_count?: number | null
           id: string
           last_name?: string | null
           name?: string | null
+          organization_name?: string | null
           role?: string | null
           secondary_email?: string | null
           social_links?: Json | null
           updated_at?: string | null
           username?: string | null
+          username_last_changed?: string | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
           email?: string | null
+          events_attended_count?: number | null
+          experience?: string | null
           first_name?: string | null
+          followed_count?: number | null
           id?: string
           last_name?: string | null
           name?: string | null
+          organization_name?: string | null
           role?: string | null
           secondary_email?: string | null
           social_links?: Json | null
           updated_at?: string | null
           username?: string | null
+          username_last_changed?: string | null
         }
         Relationships: []
       }

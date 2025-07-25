@@ -14,7 +14,7 @@ interface NotificationModalProps {
 const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden fixed top-16 right-4 left-auto transform-none">
         <DialogHeader>
           <DialogTitle>Notifications</DialogTitle>
         </DialogHeader>

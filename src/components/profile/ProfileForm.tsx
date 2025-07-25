@@ -13,7 +13,11 @@ import { Loader2 } from "lucide-react";
 const sanitizeText = (text: string) =>
   typeof text === "string" ? text.replace(/[<>]/g, "").trim() : "";
 
-const ProfileForm = () => {
+interface ProfileFormProps {
+  onProfileUpdate?: () => void;
+}
+
+const ProfileForm = ({ onProfileUpdate }: ProfileFormProps) => {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -80,13 +84,11 @@ const ProfileForm = () => {
           variant: "destructive",
         });
       } else {
-        setTimeout(() => {
-          refreshProfile();
-        }, 500);
+        await refreshProfile();
+        onProfileUpdate?.();
         toast({
           title: "Success",
-          description:
-            "Profile updated successfully! The changes will appear shortly.",
+          description: "Profile updated successfully!",
           variant: "default",
         });
       }

@@ -1,26 +1,31 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { User, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import ProfileTabs from "@/components/profile/ProfileTabs";
+import ProfileOverview from "@/components/profile/ProfileOverview";
+import GamificationDashboard from "@/components/gamification/GamificationDashboard";
 
 const Profile = () => {
   const { user, profile, isLoading: authLoading, refreshProfile } = useAuth();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [profileUpdateKey, setProfileUpdateKey] = useState(0);
+
+  const activeTab = searchParams.get('tab') || 'rsvps';
 
   const handleRefreshProfile = async () => {
     setIsRefreshing(true);
     try {
       await refreshProfile();
+      setProfileUpdateKey(prev => prev + 1);
       toast({
         title: "Profile Refreshed",
-        description:
-          "Your profile has been updated with the latest information.",
+        description: "Your profile has been updated with the latest information.",
       });
     } catch (error) {
       toast({
@@ -31,6 +36,10 @@ const Profile = () => {
     } finally {
       setIsRefreshing(false);
     }
+  };
+
+  const handleProfileUpdate = () => {
+    setProfileUpdateKey(prev => prev + 1);
   };
 
   if (authLoading) {
@@ -94,72 +103,18 @@ const Profile = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Profile Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <div className="w-24 h-24 bg-purple-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <User className="h-12 w-12 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">
-                {profile?.first_name && profile?.last_name
-                  ? `${profile.first_name} ${profile.last_name}`
-                  : profile?.username ||
-                    profile?.email?.split("@")[0] ||
-                    "User"}
-              </h3>
-              <p className="text-gray-600 mb-2">
-                {profile?.email || user.email}
-              </p>
-              <div className="mb-4">
-                <Badge
-                  variant={
-                    profile?.role === "organizer" ? "default" : "secondary"
-                  }
-                  className={
-                    profile?.role === "organizer" ? "bg-purple-600" : ""
-                  }
-                >
-                  {profile?.role === "organizer"
-                    ? "Event Organizer"
-                    : "Event Attendee"}
-                </Badge>
-              </div>
-              {profile?.bio && (
-                <p className="text-sm text-gray-600 mt-2">{profile.bio}</p>
-              )}
-
-              {profile?.role === "organizer" && (
-                <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-purple-800 font-medium">
-                    🎉 Organizer Features Active!
-                  </p>
-                  <p className="text-xs text-purple-600 mt-1">
-                    You can now create and manage events
-                  </p>
-                  <Link to="/dashboard">
-                    <Button size="sm" className="mt-2 w-full">
-                      Go to Dashboard
-                    </Button>
-                  </Link>
-                </div>
-              )}
-
-              {profile?.role === "attendee" && (
-                <div className="mt-4">
-                  <Link to="/become-organizer">
-                    <Button variant="outline" size="sm" className="w-full">
-                      Become an Organizer
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className="lg:col-span-1 space-y-6">
+            <ProfileOverview 
+              key={profileUpdateKey}
+              onProfileUpdate={handleProfileUpdate}
+            />
+            
+            {/* Gamification Dashboard - Profile page only */}
+            <GamificationDashboard />
+          </div>
 
           <div className="lg:col-span-2">
-            <ProfileTabs />
+            <ProfileTabs defaultTab={activeTab} onProfileUpdate={handleProfileUpdate} />
           </div>
         </div>
       </div>

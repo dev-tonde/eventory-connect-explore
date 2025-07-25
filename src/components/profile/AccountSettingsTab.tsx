@@ -8,12 +8,17 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Upload, User, Shield, Loader2 } from "lucide-react";
 import ProfileForm from "./ProfileForm";
+import ProfileOverview from "./ProfileOverview";
 
 // Sanitize text to prevent XSS
 const sanitizeText = (text: string) =>
   typeof text === "string" ? text.replace(/[<>]/g, "").trim() : "";
 
-const AccountSettingsTab = () => {
+interface AccountSettingsTabProps {
+  onProfileUpdate?: () => void;
+}
+
+const AccountSettingsTab = ({ onProfileUpdate }: AccountSettingsTabProps) => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
@@ -78,70 +83,21 @@ const AccountSettingsTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Profile Picture Section */}
+      {/* Profile Overview Section - Instagram Style */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Profile Picture
-          </CardTitle>
+          <CardTitle>Profile Overview</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <Avatar className="h-24 w-24">
-                <AvatarImage 
-                  src={profile?.avatar_url} 
-                  alt={sanitizeText(displayName)}
-                />
-                <AvatarFallback className="text-lg">
-                  {getInitials(sanitizeText(displayName))}
-                </AvatarFallback>
-              </Avatar>
-              
-              <label 
-                htmlFor="avatar-upload"
-                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-              >
-                {isUploading ? (
-                  <Loader2 className="h-6 w-6 text-white animate-spin" />
-                ) : (
-                  <Upload className="h-6 w-6 text-white" />
-                )}
-              </label>
-              
-              <input
-                id="avatar-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                className="hidden"
-                disabled={isUploading}
-              />
-            </div>
-            
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold mb-1">
-                {sanitizeText(displayName)}
-              </h3>
-              <p className="text-gray-600 mb-2">
-                {sanitizeText(user?.email || "")}
-              </p>
-              <Badge 
-                variant={profile?.role === "organizer" ? "default" : "secondary"}
-              >
-                {profile?.role === "organizer" ? "Event Organizer" : "Event Attendee"}
-              </Badge>
-              <p className="text-sm text-gray-500 mt-3">
-                Click on your avatar to upload a new profile picture
-              </p>
-            </div>
-          </div>
+          <ProfileOverview 
+            showEditButton={false} 
+            onProfileUpdate={onProfileUpdate}
+          />
         </CardContent>
       </Card>
 
       {/* Account Information */}
-      <ProfileForm />
+      <ProfileForm onProfileUpdate={onProfileUpdate} />
 
       {/* Security Section */}
       <Card>

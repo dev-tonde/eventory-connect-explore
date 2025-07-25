@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import UserMenu from "./UserMenu";
+import ProfileMenu from "./ProfileMenu";
 import NavigationMenu from "./NavigationMenu";
 import HeaderLogo from "./HeaderLogo";
 import LocationIndicator from "../location/LocationIndicator";
@@ -28,14 +28,16 @@ const Header = () => {
           <HeaderLogo />
 
           <div className="flex items-center space-x-6">
-            <LocationIndicator />
+            <div className="hidden lg:block">
+              <LocationIndicator />
+            </div>
             <NavigationMenu />
 
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
                   <NotificationIcon />
-                  <UserMenu onLogout={handleLogout} />
+                  <ProfileMenu onLogout={handleLogout} />
                 </>
               ) : (
                 <div className="flex items-center space-x-2">

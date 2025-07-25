@@ -6,49 +6,38 @@ import SavedEventsTab from "./SavedEventsTab";
 import FollowedOrganizersTab from "./FollowedOrganizersTab";
 import AccountSettingsTab from "./AccountSettingsTab";
 
-const ProfileTabs = () => {
+interface ProfileTabsProps {
+  defaultTab?: string;
+  onProfileUpdate?: () => void;
+}
+
+const ProfileTabs = ({ defaultTab = "rsvps", onProfileUpdate }: ProfileTabsProps) => {
   return (
-    <Tabs defaultValue="rsvps" className="space-y-6">
+    <Tabs defaultValue={defaultTab} className="space-y-6">
       <TabsList className="grid w-full grid-cols-5">
-        <TabsTrigger
-          value="rsvps"
-          className="flex items-center gap-2"
-          aria-label="My RSVPs"
-        >
-          <Calendar className="h-4 w-4" aria-hidden="true" />
-          RSVPs
+        <TabsTrigger value="rsvps" className="flex items-center space-x-2">
+          <Calendar className="h-4 w-4" />
+          <span className="hidden sm:inline">RSVPs</span>
         </TabsTrigger>
-        <TabsTrigger
-          value="saved"
-          className="flex items-center gap-2"
-          aria-label="Saved Events"
-        >
-          <Heart className="h-4 w-4" aria-hidden="true" />
-          Saved
+        
+        <TabsTrigger value="saved" className="flex items-center space-x-2">
+          <Heart className="h-4 w-4" />
+          <span className="hidden sm:inline">Saved</span>
         </TabsTrigger>
-        <TabsTrigger
-          value="following"
-          className="flex items-center gap-2"
-          aria-label="Followed Organizers"
-        >
-          <Users className="h-4 w-4" aria-hidden="true" />
-          Following
+        
+        <TabsTrigger value="following" className="flex items-center space-x-2">
+          <Users className="h-4 w-4" />
+          <span className="hidden sm:inline">Following</span>
         </TabsTrigger>
-        <TabsTrigger
-          value="notifications"
-          className="flex items-center gap-2"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" aria-hidden="true" />
-          Notifications
+        
+        <TabsTrigger value="notifications" className="flex items-center space-x-2">
+          <Bell className="h-4 w-4" />
+          <span className="hidden sm:inline">Notifications</span>
         </TabsTrigger>
-        <TabsTrigger
-          value="settings"
-          className="flex items-center gap-2"
-          aria-label="Account Settings"
-        >
-          <Settings className="h-4 w-4" aria-hidden="true" />
-          Settings
+        
+        <TabsTrigger value="settings" className="flex items-center space-x-2">
+          <Settings className="h-4 w-4" />
+          <span className="hidden sm:inline">Settings</span>
         </TabsTrigger>
       </TabsList>
 
@@ -69,13 +58,10 @@ const ProfileTabs = () => {
       </TabsContent>
 
       <TabsContent value="settings">
-        <AccountSettingsTab />
+        <AccountSettingsTab onProfileUpdate={onProfileUpdate} />
       </TabsContent>
     </Tabs>
   );
 };
 
 export default ProfileTabs;
-// This component renders a tabbed interface for the user profile section.
-// It includes tabs for Profile, Notifications, and My Tickets.
-// Each tab displays a different component: ProfileForm for user details, EnhancedNotificationPanel for notifications, and TicketsTab for viewing user tickets.

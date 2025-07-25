@@ -7,7 +7,6 @@ const NavigationMenu = () => {
   const { isAuthenticated } = useAuth();
 
   const navItems = [
-    { href: "/", label: "Home" },
     { href: "/events", label: "Events" },
     // Show "Communities" only if not authenticated
     ...(!isAuthenticated

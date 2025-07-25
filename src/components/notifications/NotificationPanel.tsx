@@ -87,9 +87,11 @@ const NotificationPanel = () => {
                     ? "bg-blue-50 border-l-4 border-l-blue-500"
                     : ""
                 }`}
-                onClick={() =>
-                  !notification.is_read && markAsRead(notification.id)
-                }
+                onClick={() => {
+                  if (!notification.is_read) {
+                    markAsRead(notification.id);
+                  }
+                }}
                 tabIndex={0}
                 role="button"
                 aria-label={
