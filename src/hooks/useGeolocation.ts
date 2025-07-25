@@ -48,8 +48,15 @@ export const useGeolocation = () => {
         setLoading(false);
       },
       (err) => {
-        console.error("Geolocation error:", err);
-        setError(err.message);
+        // Silently handle geolocation errors to avoid console spam
+        const errorMessages = {
+          [err.PERMISSION_DENIED]: "Location access denied",
+          [err.POSITION_UNAVAILABLE]: "Location unavailable", 
+          [err.TIMEOUT]: "Location request timeout"
+        };
+        
+        const userMessage = errorMessages[err.code] || "Location error";
+        setError(userMessage);
         setLoading(false);
       },
       {

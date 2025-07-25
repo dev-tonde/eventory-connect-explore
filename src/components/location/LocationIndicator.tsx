@@ -10,12 +10,8 @@ const LocationIndicator = () => {
   const { location, loading, error, requestLocation } = useGeolocation();
   const [userDeniedLocation, setUserDeniedLocation] = useState(false);
 
-  useEffect(() => {
-    // Auto-request location on first load if not already available and user hasn't denied
-    if (!location && !error && !loading && !userDeniedLocation) {
-      requestLocation();
-    }
-  }, [location, error, loading, userDeniedLocation, requestLocation]);
+  // Only auto-request if user explicitly wants location services
+  // No automatic location requests to avoid permission popups
 
   if (loading) {
     return (
