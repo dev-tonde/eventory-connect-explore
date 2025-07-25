@@ -18,6 +18,7 @@ import CreateEvent from "./pages/CreateEvent";
 import BecomeOrganizer from "./pages/BecomeOrganizer";
 import Gamification from "./pages/Gamification";
 import PosterStudio from "./pages/PosterStudio";
+import Community from "./pages/Community";
 import FollowedOrganizers from "./pages/FollowedOrganizers";
 import NotFound from "./pages/NotFound";
 import SnapLoopUpload from "./pages/SnapLoopUpload";
@@ -58,6 +59,11 @@ function AppContent() {
           <Route path="/events" element={<Events />} />
           <Route path="/event/:id" element={<EventDetail />} />
           <Route path="/communities" element={<Communities />} />
+          <Route path="/community/:id" element={
+            <ProtectedRoute>
+              <Community />
+            </ProtectedRoute>
+          } />
           <Route path="/snaploop/upload" element={<SnapLoopUpload />} />
           <Route path="/auth" element={<Auth />} />
           <Route 
