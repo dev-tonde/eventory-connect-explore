@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { screen } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import EventCard from '../EventCard';
@@ -10,14 +11,11 @@ const mockEvent = {
   date: '2024-12-25',
   time: '18:00',
   venue: 'Test Venue',
-  address: '123 Test St',
-  price: 25.99,
   category: 'Music',
   image_url: 'https://example.com/image.jpg',
-  organizer_id: 'org-1',
-  is_active: true,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z'
+  price: 25.99,
+  max_attendees: 100,
+  current_attendees: 50
 };
 
 // Mock react-router-dom

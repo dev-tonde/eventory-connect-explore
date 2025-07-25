@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -43,13 +44,18 @@ vi.mock('@/integrations/supabase/client', () => ({
 const mockEvent = {
   id: 'event-1',
   title: 'Test Event',
-  price: 25.99,
-  max_attendees: 100,
-  current_attendees: 50,
+  description: 'Test event description',
   date: '2024-12-25',
   time: '18:00',
-  venue: 'Test Venue',
-  organizer_id: 'org-1',
+  location: 'Test Venue',
+  address: '123 Test Street',
+  price: 25.99,
+  category: 'Music',
+  image: 'https://example.com/image.jpg',
+  organizer: 'Test Organizer',
+  attendeeCount: 50,
+  maxAttendees: 100,
+  tags: ['music', 'test']
 };
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -84,7 +90,7 @@ describe('TicketPurchase Component', () => {
   it('renders ticket purchase form with event details', async () => {
     render(
       <TestWrapper>
-        <TicketPurchase />
+        <TicketPurchase event={mockEvent} />
       </TestWrapper>
     );
 
@@ -100,7 +106,7 @@ describe('TicketPurchase Component', () => {
     
     render(
       <TestWrapper>
-        <TicketPurchase />
+        <TicketPurchase event={mockEvent} />
       </TestWrapper>
     );
 
@@ -120,7 +126,7 @@ describe('TicketPurchase Component', () => {
     
     render(
       <TestWrapper>
-        <TicketPurchase />
+        <TicketPurchase event={mockEvent} />
       </TestWrapper>
     );
 
@@ -142,7 +148,7 @@ describe('TicketPurchase Component', () => {
     
     render(
       <TestWrapper>
-        <TicketPurchase />
+        <TicketPurchase event={mockEvent} />
       </TestWrapper>
     );
 
@@ -164,7 +170,7 @@ describe('TicketPurchase Component', () => {
     
     render(
       <TestWrapper>
-        <TicketPurchase />
+        <TicketPurchase event={mockEvent} />
       </TestWrapper>
     );
 
@@ -201,7 +207,7 @@ describe('TicketPurchase Component', () => {
     
     render(
       <TestWrapper>
-        <TicketPurchase />
+        <TicketPurchase event={mockEvent} />
       </TestWrapper>
     );
 
@@ -232,7 +238,7 @@ describe('TicketPurchase Component', () => {
     
     render(
       <TestWrapper>
-        <TicketPurchase />
+        <TicketPurchase event={{ ...mockEvent, attendeeCount: 100, maxAttendees: 100 }} />
       </TestWrapper>
     );
 
@@ -248,7 +254,7 @@ describe('TicketPurchase Component', () => {
     
     render(
       <TestWrapper>
-        <TicketPurchase />
+        <TicketPurchase event={mockEvent} />
       </TestWrapper>
     );
 
