@@ -55,6 +55,7 @@ export interface AuthContextType {
     updates: Partial<Profile>
   ) => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
+  getDisplayName: () => string;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -274,6 +275,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isAuthenticated = !!user;
 
+  // Get display name for marketing/personalization
+  const getDisplayName = useCallback(() => {
+    // Priority: Google OAuth name > profile first name > email fallback
+    const googleName = user?.user_metadata?.name;
+    if (googleName) {
+      const firstName = googleName.split(' ')[0];
+      return firstName || 'there';
+    }
+    
+    if (profile?.first_name) {
+      return profile.first_name;
+    }
+    
+    // Fallback to email-based name (for internal use only)
+    if (user?.email) {
+      const emailName = user.email.split('@')[0]
+        .replace(/[.\-_]/g, ' ')
+        .split(' ')[0];
+      return emailName.charAt(0).toUpperCase() + emailName.slice(1) || 'there';
+    }
+    
+    return 'there';
+  }, [user, profile]);
+
   const value = useMemo(
     () => ({
       user,
@@ -286,6 +311,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout,
       updateProfile,
       refreshProfile,
+      getDisplayName,
     }),
     [
       user,
@@ -298,6 +324,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout,
       updateProfile,
       refreshProfile,
+      getDisplayName,
     ]
   );
 
