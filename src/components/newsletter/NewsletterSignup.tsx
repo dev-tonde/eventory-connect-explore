@@ -19,6 +19,7 @@ import {
 import { Mail, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { trackNewsletterSignup, trackFormSubmission } from "@/lib/analytics";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Basic email validation
 const isValidEmail = (email: string) =>
@@ -49,6 +50,7 @@ const NewsletterSignup = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { getDisplayName, profile } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +88,7 @@ const NewsletterSignup = () => {
         body: JSON.stringify({
           email: sanitizedEmail,
           genre: sanitizedGenre,
+          firstName: profile?.first_name || getDisplayName(),
         }),
       });
 
@@ -168,41 +171,84 @@ const NewsletterSignup = () => {
               className="space-y-4"
               autoComplete="off"
             >
-              <div>
-                <Input
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12"
-                  maxLength={80}
-                  autoComplete="off"
-                  aria-label="Email address"
-                  required
-                  disabled={loading}
-                />
+              {/* Desktop/Tablet: Inline layout */}
+              <div className="hidden md:flex md:space-x-4 md:space-y-0">
+                <div className="flex-1">
+                  <Input
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12"
+                    maxLength={80}
+                    autoComplete="off"
+                    aria-label="Email address"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <Select
+                    value={genre}
+                    onValueChange={setGenre}
+                    disabled={loading}
+                  >
+                    <SelectTrigger
+                      className="h-12"
+                      aria-label="Select event genre"
+                    >
+                      <SelectValue placeholder="Select your preferred event genre" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {genres.map((g) => (
+                        <SelectItem key={g} value={g}>
+                          {g}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div>
-                <Select
-                  value={genre}
-                  onValueChange={setGenre}
-                  disabled={loading}
-                >
-                  <SelectTrigger
+              {/* Mobile: Stacked layout */}
+              <div className="md:hidden space-y-4">
+                <div>
+                  <Input
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="h-12"
-                    aria-label="Select event genre"
+                    maxLength={80}
+                    autoComplete="off"
+                    aria-label="Email address"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div>
+                  <Select
+                    value={genre}
+                    onValueChange={setGenre}
+                    disabled={loading}
                   >
-                    <SelectValue placeholder="Select your preferred event genre" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {genres.map((g) => (
-                      <SelectItem key={g} value={g}>
-                        {g}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <SelectTrigger
+                      className="h-12"
+                      aria-label="Select event genre"
+                    >
+                      <SelectValue placeholder="Select your preferred event genre" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {genres.map((g) => (
+                        <SelectItem key={g} value={g}>
+                          {g}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <Button

@@ -27,12 +27,14 @@ const ProfileOverview = ({ showEditButton = true, onProfileUpdate }: ProfileOver
   };
 
   const displayName =
-    profile?.first_name && profile?.last_name
+    profile?.name ||
+    (profile?.first_name && profile?.last_name
       ? `${profile.first_name} ${profile.last_name}`
-      : profile?.username ||
+      : profile?.first_name ||
+        profile?.username ||
         profile?.email?.split("@")[0] ||
         user?.email?.split("@")[0] ||
-        "User";
+        "User");
 
   const handleRefreshProfile = async () => {
     await refetch();
