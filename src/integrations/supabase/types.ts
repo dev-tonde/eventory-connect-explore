@@ -3810,7 +3810,9 @@ export type Database = {
         Returns: string
       }
       generate_unique_username: {
-        Args: { first_name: string }
+        Args:
+          | { first_name: string }
+          | { first_name: string; last_name?: string }
         Returns: string
       }
       get_affiliate_stats: {
