@@ -1019,6 +1019,56 @@ export type Database = {
           },
         ]
       }
+      event_posters: {
+        Row: {
+          created_at: string | null
+          dimensions: Json | null
+          event_id: string | null
+          id: string
+          image_data: string | null
+          image_url: string
+          is_primary: boolean | null
+          organizer_id: string
+          prompt: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dimensions?: Json | null
+          event_id?: string | null
+          id?: string
+          image_data?: string | null
+          image_url: string
+          is_primary?: boolean | null
+          organizer_id: string
+          prompt?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dimensions?: Json | null
+          event_id?: string | null
+          id?: string
+          image_data?: string | null
+          image_url?: string
+          is_primary?: boolean | null
+          organizer_id?: string
+          prompt?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_posters_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_reviews: {
         Row: {
           created_at: string | null
@@ -1216,7 +1266,9 @@ export type Database = {
       }
       events: {
         Row: {
+          accessibility_info: string | null
           address: string | null
+          age_restrictions: string | null
           auto_archive: boolean | null
           category: string
           countdown_enabled: boolean | null
@@ -1224,14 +1276,24 @@ export type Database = {
           current_attendees: number | null
           date: string
           description: string | null
+          dresscode: string | null
+          enable_dynamic_pricing: boolean | null
           highlight_reel_generated: boolean | null
           id: string
           image_url: string | null
           is_active: boolean | null
+          languages: string[] | null
           location_coordinates: unknown | null
           max_attendees: number | null
+          max_price: number | null
+          meta_description: string | null
+          metadata: Json | null
+          min_price: number | null
           organizer_id: string | null
+          parking_info: string | null
           price: number
+          public_transport_info: string | null
+          seo_keywords: string[] | null
           social_links: Json | null
           tags: string[] | null
           time: string
@@ -1240,7 +1302,9 @@ export type Database = {
           venue: string
         }
         Insert: {
+          accessibility_info?: string | null
           address?: string | null
+          age_restrictions?: string | null
           auto_archive?: boolean | null
           category: string
           countdown_enabled?: boolean | null
@@ -1248,14 +1312,24 @@ export type Database = {
           current_attendees?: number | null
           date: string
           description?: string | null
+          dresscode?: string | null
+          enable_dynamic_pricing?: boolean | null
           highlight_reel_generated?: boolean | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          languages?: string[] | null
           location_coordinates?: unknown | null
           max_attendees?: number | null
+          max_price?: number | null
+          meta_description?: string | null
+          metadata?: Json | null
+          min_price?: number | null
           organizer_id?: string | null
+          parking_info?: string | null
           price?: number
+          public_transport_info?: string | null
+          seo_keywords?: string[] | null
           social_links?: Json | null
           tags?: string[] | null
           time: string
@@ -1264,7 +1338,9 @@ export type Database = {
           venue: string
         }
         Update: {
+          accessibility_info?: string | null
           address?: string | null
+          age_restrictions?: string | null
           auto_archive?: boolean | null
           category?: string
           countdown_enabled?: boolean | null
@@ -1272,14 +1348,24 @@ export type Database = {
           current_attendees?: number | null
           date?: string
           description?: string | null
+          dresscode?: string | null
+          enable_dynamic_pricing?: boolean | null
           highlight_reel_generated?: boolean | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          languages?: string[] | null
           location_coordinates?: unknown | null
           max_attendees?: number | null
+          max_price?: number | null
+          meta_description?: string | null
+          metadata?: Json | null
+          min_price?: number | null
           organizer_id?: string | null
+          parking_info?: string | null
           price?: number
+          public_transport_info?: string | null
+          seo_keywords?: string[] | null
           social_links?: Json | null
           tags?: string[] | null
           time?: string
@@ -2499,15 +2585,21 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string | null
+          date_of_birth: string | null
           email: string | null
           events_attended_count: number | null
+          events_created_count: number | null
           experience: string | null
           first_name: string | null
           followed_count: number | null
+          followers_count: number | null
+          following_count: number | null
           id: string
+          interests: string[] | null
           last_name: string | null
           name: string | null
           organization_name: string | null
+          phone_number: string | null
           role: string | null
           secondary_email: string | null
           social_links: Json | null
@@ -2519,15 +2611,21 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           email?: string | null
           events_attended_count?: number | null
+          events_created_count?: number | null
           experience?: string | null
           first_name?: string | null
           followed_count?: number | null
+          followers_count?: number | null
+          following_count?: number | null
           id: string
+          interests?: string[] | null
           last_name?: string | null
           name?: string | null
           organization_name?: string | null
+          phone_number?: string | null
           role?: string | null
           secondary_email?: string | null
           social_links?: Json | null
@@ -2539,15 +2637,21 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           email?: string | null
           events_attended_count?: number | null
+          events_created_count?: number | null
           experience?: string | null
           first_name?: string | null
           followed_count?: number | null
+          followers_count?: number | null
+          following_count?: number | null
           id?: string
+          interests?: string[] | null
           last_name?: string | null
           name?: string | null
           organization_name?: string | null
+          phone_number?: string | null
           role?: string | null
           secondary_email?: string | null
           social_links?: Json | null
@@ -3740,6 +3844,42 @@ export type Database = {
           updated_at?: string | null
           user_type?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      venue_suggestions: {
+        Row: {
+          address: string
+          city: string | null
+          coordinates: unknown | null
+          country: string | null
+          created_at: string | null
+          id: string
+          state: string | null
+          updated_at: string | null
+          venue_name: string
+        }
+        Insert: {
+          address: string
+          city?: string | null
+          coordinates?: unknown | null
+          country?: string | null
+          created_at?: string | null
+          id?: string
+          state?: string | null
+          updated_at?: string | null
+          venue_name: string
+        }
+        Update: {
+          address?: string
+          city?: string | null
+          coordinates?: unknown | null
+          country?: string | null
+          created_at?: string | null
+          id?: string
+          state?: string | null
+          updated_at?: string | null
+          venue_name?: string
         }
         Relationships: []
       }
