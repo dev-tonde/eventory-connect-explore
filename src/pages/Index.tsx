@@ -104,14 +104,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* User Progress (for authenticated users) */}
-      {isAuthenticated && (
-        <section className="py-8 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <UserPointsDisplay />
-          </div>
-        </section>
-      )}
 
       {/* AI Recommendations (for authenticated users) */}
       {isAuthenticated && (
@@ -139,8 +131,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Events Carousel */}
-      <FeaturedEventsSection events={filteredEvents} />
+      {/* Featured Events Carousel - Right after hero */}
+      <FeaturedEventsSection events={filteredEvents.slice(0, 8)} />
 
       {/* Events with Tab Filtering */}
       <EventsWithFilters />

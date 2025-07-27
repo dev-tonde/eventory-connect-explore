@@ -27,12 +27,12 @@ const EventsWithFilters = () => {
   const [activeTab, setActiveTab] = useState("all");
 
   const filterEventsByCategory = (category: string) => {
-    if (category === "all") return events.slice(0, 6);
+    if (category === "all") return events.slice(0, 8);
     return events
       .filter(
         (event) => event.category.toLowerCase() === category.toLowerCase()
       )
-      .slice(0, 6);
+      .slice(0, 8);
   };
 
   // Calculate category counts based on actual events data
@@ -212,7 +212,7 @@ const EventsWithFilters = () => {
 
           {categories.map((category) => (
             <TabsContent key={category.id} value={category.id}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {filterEventsByCategory(category.id).map((event) => (
                   <EventCard key={event.id} event={event} />
                 ))}
@@ -220,8 +220,18 @@ const EventsWithFilters = () => {
               {filterEventsByCategory(category.id).length === 0 && (
                 <div className="text-center py-12">
                   <p className="text-gray-600">
-                    No events found in this category.
+                    Sorry there are no events at the moment, check back later.
                   </p>
+                </div>
+              )}
+              {filterEventsByCategory(category.id).length > 0 && (
+                <div className="text-center mt-8">
+                  <Link to={`/events${category.id !== 'all' ? `?category=${category.id}` : ''}`}>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      More Events
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
                 </div>
               )}
             </TabsContent>
